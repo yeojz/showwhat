@@ -1,0 +1,39 @@
+import type { Context } from "../schemas/context.js";
+import type { DatetimeCondition } from "../schemas/condition.js";
+import type { ConditionEvaluator } from "./types.js";
+import { parseDate } from "./utils.js";
+
+export async function evaluateDatetime(
+  condition: DatetimeCondition,
+  ctx: Readonly<Context>,
+): Promise<boolean> {
+  let actual: Date;
+
+  if (Object.hasOwn(ctx, condition.key)) {
+    const raw = ctx[condition.key];
+    actual = parseDate(condition.key, String(raw));
+  } else if (condition.key === "at") {
+    // Default to "now" when the "at" key is absent (preserves existing behavior)
+    actual = new Date();
+  } else {
+    return false;
+  }
+
+  const expected = new Date(condition.value);
+
+  switch (condition.op) {
+    case "eq":
+      return actual.getTime() === expected.getTime();
+    case "gt":
+      return actual > expected;
+    case "gte":
+      return actual >= expected;
+    case "lt":
+      return actual < expected;
+    case "lte":
+      return actual <= expected;
+  }
+}
+
+export const datetimeEvaluator: ConditionEvaluator = ({ condition, context }) =>
+  evaluateDatetime(condition as DatetimeCondition, context);

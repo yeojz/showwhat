@@ -1,0 +1,27 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", ".vitepress/dist/**"],
+      "env": ["VITE_BASE_PATH"]
+    },
+    "dev": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "persistent": true,
+      "passThroughEnv": ["PORT"]
+    },
+    "@showwhat/docs#build": {
+      "dependsOn": ["sync:configurator"],
+      "outputs": [".vitepress/dist/**"],
+      "env": ["VITE_BASE_PATH"]
+    },
+    "sync:configurator": {
+      "dependsOn": ["@showwhat/webapp#build"],
+      "cache": false
+    },
+    "lint": {},
+    "typecheck": {}
+  }
+}

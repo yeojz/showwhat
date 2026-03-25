@@ -1,0 +1,45 @@
+{
+  "name": "showwhat-monorepo",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "build:webapp": "turbo run build --filter=@showwhat/webapp...",
+    "dev": "turbo run dev",
+    "dev:webapp": "turbo run dev --filter=@showwhat/webapp...",
+    "test": "turbo run build && vitest run --coverage",
+    "test:core": "vitest run --coverage --project core",
+    "test:configurator": "vitest run --coverage --project configurator",
+    "test:webapp": "vitest run --coverage --project webapp",
+    "lint": "turbo run lint",
+    "lint:webapp": "turbo run lint --filter=@showwhat/webapp...",
+    "build:docs": "turbo run build --filter=@showwhat/docs...",
+    "dev:docs": "VITE_BASE_PATH=/configurator/ turbo watch dev sync:configurator --filter=@showwhat/docs...",
+    "typecheck": "turbo run typecheck",
+    "test:dist-node": "cd internal/distribution-tests && pnpm install && pnpm test",
+    "test:dist-bun": "cd internal/distribution-tests-bun && bun install && bun test",
+    "test:dist-deno": "cd internal/distribution-tests-deno && deno install && deno test --no-check --allow-read tests/",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "lefthook"
+    ]
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.0",
+    "eslint": "^10.0.3",
+    "lefthook": "^2.1.4",
+    "prettier": "^3.2.0",
+    "turbo": "2.8.16",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^4.0.0"
+  }
+}

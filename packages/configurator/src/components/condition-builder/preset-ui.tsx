@@ -1,0 +1,170 @@
+import { useCallback, useMemo } from "react";
+import type { ComponentType } from "react";
+import type { Presets } from "@showwhat/core";
+import { PRIMITIVE_TYPES } from "@showwhat/core";
+import type { ConditionTypeMeta } from "./condition-registry.js";
+import type { ConditionValueEditorProps } from "../../types.js";
+import type { ConditionExtensions } from "./ConditionExtensionsContext.js";
+import { ConditionRow } from "./ConditionRow.js";
+import { KeyInput } from "./KeyInput.js";
+import { OperatorSelect } from "./OperatorSelect.js";
+import { TagInput } from "./TagInput.js";
+import { Input } from "../ui/input.js";
+import { DateTimeInput } from "../common/DateTimeInput.js";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.js";
+import { buildCustomCondition } from "./condition-builders.js";
+import { OP_OPTIONS as STRING_OPS } from "./StringConditionEditor.js";
+import { OP_OPTIONS as NUMBER_OPS } from "./NumberConditionEditor.js";
+import { OP_OPTIONS as DATETIME_OPS } from "./DatetimeConditionEditor.js";
+import { OP_OPTIONS as BOOL_OPS } from "./BoolConditionEditor.js";
+
+// ── Default values per built-in type ─────────────────────────────────────────
+
+const TYPE_DEFAULTS: Record<string, Record<string, unknown>> = {
+  string: { op: "eq", value: "" },
+  number: { op: "eq", value: 0 },
+  bool: { value: true },
+  datetime: { op: "eq", value: new Date().toISOString() },
+};
+
+// ── Meta generation ──────────────────────────────────────────────────────────
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[] {
+  return Object.entries(presets).map(([name, preset]) => {
+    const isBuiltin = PRIMITIVE_TYPES.has(preset.type);
+    const description = isBuiltin
+      ? `Match the ${preset.key} key (${preset.type})`
+      : `Custom ${preset.type} condition`;
+
+    const baseDefaults = isBuiltin ? { ...TYPE_DEFAULTS[preset.type], key: preset.key } : {};
+
+    return {
+      type: name,
+      label: capitalize(name),
+      description,
+      defaults: { ...baseDefaults, ...preset.defaults, type: name },
+    };
+  });
+}
+
+// ── Preset editor component factory ──────────────────────────────────────────
+
+export function createPresetEditor(
+  presetName: string,
+  builtinType: string,
+  presetKey: string,
+): ComponentType<ConditionValueEditorProps> {
+  function PresetConditionEditor({ condition, onChange }: ConditionValueEditorProps) {
+    const rec = useMemo(() => condition as Record<string, unknown>, [condition]);
+    const update = useCallback(
+      (field: string, value: unknown) => {
+        onChange(
+          buildCustomCondition({ ...rec, [field]: value, key: presetKey, type: presetName }),
+        );
+      },
+      [rec, onChange],
+    );
+
+    switch (builtinType) {
+      case "string": {
+        const isRegex = rec.op === "regex";
+        return (
+          <ConditionRow>
+            <KeyInput value={presetKey} disabled />
+            <OperatorSelect
+              value={String(rec.op ?? "eq")}
+              onChange={(v) => update("op", v)}
+              options={STRING_OPS}
+            />
+            {isRegex ? (
+              <Input
+                className="h-8 font-mono text-sm"
+                value={String(rec.value ?? "")}
+                placeholder="e.g. ^test.*$"
+                onChange={(e) => update("value", e.target.value)}
+              />
+            ) : (
+              <TagInput
+                value={(rec.value as string | string[]) ?? ""}
+                onChange={(v) => update("value", v)}
+                placeholder={`e.g. ${presetKey} value`}
+              />
+            )}
+          </ConditionRow>
+        );
+      }
+      case "number":
+        return (
+          <ConditionRow>
+            <KeyInput value={presetKey} disabled />
+            <OperatorSelect
+              value={String(rec.op ?? "eq")}
+              onChange={(v) => update("op", v)}
+              options={NUMBER_OPS}
+            />
+            <Input
+              type="number"
+              className="h-8 font-mono text-sm"
+              value={rec.value !== undefined ? String(rec.value) : ""}
+              placeholder="e.g. 100"
+              onChange={(e) => update("value", e.target.value === "" ? "" : Number(e.target.value))}
+            />
+          </ConditionRow>
+        );
+      case "bool":
+        return (
+          <ConditionRow>
+            <KeyInput value={presetKey} disabled />
+            <OperatorSelect value="eq" options={BOOL_OPS} disabled />
+            <Select
+              value={String(rec.value ?? "true")}
+              onValueChange={(v) => update("value", v === "true")}
+            >
+              <SelectTrigger className="h-8 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true">true</SelectItem>
+                <SelectItem value="false">false</SelectItem>
+              </SelectContent>
+            </Select>
+          </ConditionRow>
+        );
+      case "datetime":
+        return (
+          <ConditionRow>
+            <KeyInput value={presetKey} disabled />
+            <OperatorSelect
+              value={String(rec.op ?? "eq")}
+              onChange={(v) => update("op", v)}
+              options={DATETIME_OPS}
+            />
+            <DateTimeInput value={String(rec.value ?? "")} onChange={(v) => update("value", v)} />
+          </ConditionRow>
+        );
+    }
+    return null;
+  }
+
+  PresetConditionEditor.displayName = `PresetConditionEditor(${presetName})`;
+  return PresetConditionEditor;
+}
+
+// ── Convenience factory ──────────────────────────────────────────────────────
+
+export function createPresetUI(presets: Presets): ConditionExtensions {
+  const extraConditionTypes = createPresetConditionMeta(presets);
+  const editorOverrides = new Map<string, ComponentType<ConditionValueEditorProps>>();
+
+  for (const [name, preset] of Object.entries(presets)) {
+    if (PRIMITIVE_TYPES.has(preset.type) && preset.key) {
+      editorOverrides.set(name, createPresetEditor(name, preset.type, preset.key));
+    }
+  }
+
+  return { extraConditionTypes, editorOverrides };
+}

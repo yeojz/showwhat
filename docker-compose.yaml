@@ -1,0 +1,18 @@
+services:
+  webapp:
+    image: python:3-slim
+    working_dir: /app/apps/webapp/dist
+    command: python -m http.server 5173
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app:ro
+
+  docs:
+    image: python:3-slim
+    working_dir: /app/apps/docs/.vitepress/dist
+    command: python -m http.server 4173
+    ports:
+      - "4173:4173"
+    volumes:
+      - .:/app:ro

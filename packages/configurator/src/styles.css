@@ -1,0 +1,115 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import url("https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-background: #fafafa;
+  --color-foreground: #0a0a0a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0a0a0a;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #0a0a0a;
+  --color-primary: #f97316;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #f5f5f5;
+  --color-secondary-foreground: #0a0a0a;
+  --color-muted: #f5f5f5;
+  --color-muted-foreground: #737373;
+  --color-accent: #fff7ed;
+  --color-accent-foreground: #9a3412;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+  --color-border: #e5e5e5;
+  --color-input: #d4d4d4;
+  --color-ring: #f97316;
+  --color-surface: #f5f5f5;
+  --color-surface-foreground: #525252;
+  --color-status-active: #22c55e;
+  --color-status-inactive: #f59e0b;
+  --color-status-error: #ef4444;
+  --radius: 0.25rem;
+  --text-xs: 0.875rem;
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5rem;
+  --font-sans: "General Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@layer base {
+  .dark {
+    --color-background: #0a0a0a;
+    --color-foreground: #e5e5e5;
+    --color-card: #171717;
+    --color-card-foreground: #e5e5e5;
+    --color-popover: #171717;
+    --color-popover-foreground: #e5e5e5;
+    --color-primary: #fb923c;
+    --color-primary-foreground: #0a0a0a;
+    --color-secondary: #262626;
+    --color-secondary-foreground: #d4d4d4;
+    --color-muted: #171717;
+    --color-muted-foreground: #a3a3a3;
+    --color-accent: #1a1a1a;
+    --color-accent-foreground: #fed7aa;
+    --color-destructive: #ef4444;
+    --color-destructive-foreground: #ffffff;
+    --color-border: #262626;
+    --color-input: #404040;
+    --color-ring: #fb923c;
+    --color-surface: #171717;
+    --color-surface-foreground: #a3a3a3;
+    --color-status-active: #4ade80;
+    --color-status-inactive: #fbbf24;
+    --color-status-error: #f87171;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "ss01", "ss02", "cv01";
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@theme inline {
+  --animate-fade-up: fade-up 200ms ease-out both;
+  --animate-fade-in: fade-in 300ms ease-out both;
+  --animate-slide-in-right: slide-in-right 200ms ease-out both;
+}

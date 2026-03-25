@@ -1,0 +1,14 @@
+{
+  "name": "@showwhat/distribution-tests-bun",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@showwhat/core": "file:../../packages/core"
+  },
+  "pnpm": {
+    "overrides": {
+      "@showwhat/core": "file:../../packages/core"
+    }
+  }
+}

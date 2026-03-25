@@ -1,0 +1,9 @@
+node_modules
+.git
+.worktrees
+coverage
+*.test.ts
+*.test.tsx
+.turbo
+.env
+.env.*

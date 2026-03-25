@@ -1,0 +1,155 @@
+---
+title: Presets
+outline: [2, 3]
+---
+
+# Presets
+
+Presets are named shortcuts for [condition types](/docs/conditions). Instead of repeating `type: string`, `key: tier` across many definitions, you define a `tier` preset once and use `type: tier` everywhere. Presets work with both the core engine (evaluation) and the Configurator UI (custom editors with friendly labels).
+
+## Defining presets
+
+A preset map is a record of preset names to definitions. Each preset maps a friendly name to an underlying condition type.
+
+::: code-group
+
+```yaml [YAML]
+presets:
+  tier:
+    type: string
+    key: tier
+    defaults:
+      op: eq
+      value: free
+
+  age:
+    type: number
+    key: user_age
+    defaults:
+      op: gte
+      value: 18
+
+  premium:
+    type: bool
+    key: premium
+```
+
+```json [JSON]
+{
+  "presets": {
+    "tier": {
+      "type": "string",
+      "key": "tier",
+      "defaults": { "op": "eq", "value": "free" }
+    },
+    "age": {
+      "type": "number",
+      "key": "user_age",
+      "defaults": { "op": "gte", "value": 18 }
+    },
+    "premium": {
+      "type": "bool",
+      "key": "premium"
+    }
+  }
+}
+```
+
+:::
+
+| Field      | Required | Description                                                                 |
+| ---------- | -------- | --------------------------------------------------------------------------- |
+| `type`     | Yes      | The underlying condition type (`string`, `number`, `bool`, or `datetime`)   |
+| `key`      | Yes\*    | The context property to match against. Required for built-in types.         |
+| `defaults` | No       | Default field values used when adding this condition in the Configurator UI |
+
+::: tip
+Preset names cannot collide with built-in or reserved condition types (`string`, `number`, `bool`, `datetime`, `env`, `startAt`, `endAt`, `and`, `or`).
+:::
+
+## Using presets for evaluation
+
+Use `createPresetConditions` to generate evaluators from your preset map, then merge them with the default conditions:
+
+```ts
+import { showwhat, extendEvaluators, createPresetConditions } from "@showwhat/core";
+
+const presets = {
+  tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
+  age: { type: "number", key: "user_age" },
+};
+
+const presetConditions = createPresetConditions(presets);
+
+const result = await showwhat({
+  key: "banner",
+  context: { tier: "pro", user_age: 25 },
+  options: {
+    data,
+    evaluators: extendEvaluators(presetConditions),
+  },
+});
+```
+
+Definitions can then use preset types directly. The `key` is already bound by the preset, so you only specify `op` and `value`:
+
+```yaml
+definitions:
+  banner:
+    variations:
+      - value: "Welcome back, Pro!"
+        conditions:
+          - type: tier
+            op: eq
+            value: pro
+      - value: "Upgrade today"
+```
+
+## Using presets in the Configurator UI
+
+Use `createPresetUI` to generate UI extensions from your preset map, then pass them to the `<Configurator>` component:
+
+```tsx
+import { Configurator } from "@showwhat/configurator";
+import { createPresetUI } from "@showwhat/configurator";
+
+const conditionExtensions = createPresetUI(presets);
+
+function App() {
+  return <Configurator store={store} conditionExtensions={conditionExtensions} />;
+}
+```
+
+With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Premium"). Each preset renders a type-specific editor with the key pre-filled and locked.
+
+## API reference
+
+### Types
+
+| Type                  | Import from              | Description                                                          |
+| --------------------- | ------------------------ | -------------------------------------------------------------------- |
+| `Presets`             | `@showwhat/core`         | `Record<string, PresetDefinition>`                                   |
+| `PresetDefinition`    | `@showwhat/core`         | `{ type: string; key?: string; defaults?: Record<string, unknown> }` |
+| `BuiltinPresetType`   | `@showwhat/core`         | `"string" \| "number" \| "bool" \| "datetime"`                       |
+| `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                           |
+
+### Functions
+
+| Function                    | Import from              | Description                                                      |
+| --------------------------- | ------------------------ | ---------------------------------------------------------------- |
+| `createPresetConditions`    | `@showwhat/core`         | Creates evaluators from a preset map for use with `showwhat()`   |
+| `createPresetUI`            | `@showwhat/configurator` | Creates condition meta and editor overrides for the Configurator |
+| `createPresetConditionMeta` | `@showwhat/configurator` | Creates only the condition meta entries (without editors)        |
+
+### Validation
+
+Use `PresetsSchema` (Zod) to validate preset definitions at runtime:
+
+```ts
+import { PresetsSchema } from "@showwhat/core";
+
+const result = PresetsSchema.safeParse(input);
+if (!result.success) {
+  console.error(result.error.issues);
+}
+```
