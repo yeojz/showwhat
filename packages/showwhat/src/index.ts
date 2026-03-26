@@ -1,5 +1,5 @@
 import {
-  BuiltinContextSchema,
+  ContextSchema,
   builtinEvaluators,
   DefinitionNotFoundError,
   ValidationError,
@@ -29,7 +29,7 @@ export async function showwhat({
   context: Context;
   options: ShowWhatOptions;
 }): Promise<Resolution> {
-  const contextResult = BuiltinContextSchema.safeParse(context);
+  const contextResult = ContextSchema.safeParse(context);
   if (!contextResult.success) {
     throw new ValidationError(
       contextResult.error.issues.map((i) => `[${i.path.join(".")}] ${i.message}`).join("; "),

@@ -11,5 +11,5 @@ const ContextValueSchema: z.ZodType<ContextValue> = z.union([
 export const ContextSchema = z.record(z.string(), ContextValueSchema);
 
 type ContextPrimitive = string | number | boolean;
-type ContextValue = ContextPrimitive | ContextPrimitive[] | { [key: string]: ContextValue };
+export type ContextValue = ContextPrimitive | ContextPrimitive[] | { [key: string]: ContextValue };
 export type Context = Record<string, ContextValue>;

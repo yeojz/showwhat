@@ -139,14 +139,6 @@ export const BuiltinConditionSchema = z.discriminatedUnion("type", [
 ]);
 export type BuiltinCondition = z.infer<typeof BuiltinConditionSchema>;
 
-export const BuiltinContextSchema = z
-  .object({
-    env: z.string().optional(),
-    at: z.string().optional(),
-  })
-  .catchall(z.union([z.string(), z.number(), z.boolean()]));
-export type BuiltinContext = z.infer<typeof BuiltinContextSchema>;
-
 // ── Condition (explicit recursive type) ──────────────────────────────────────
 
 export type Condition =

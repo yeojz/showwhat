@@ -61,10 +61,30 @@ describe("showwhat", () => {
     await expect(
       showwhat({
         key: "checkout_v2",
-        context: { env: { nested: true } } as never,
+        context: { env: () => {} } as never,
         options: { data },
       }),
     ).rejects.toThrow(ValidationError);
+  });
+
+  it("accepts nested objects in context", async () => {
+    const data = await MemoryData.fromObject({ definitions: flags });
+    const result = await showwhat({
+      key: "checkout_v2",
+      context: { env: "prod", meta: { nested: true } },
+      options: { data },
+    });
+    expect(result.value).toBe(true);
+  });
+
+  it("accepts primitive arrays in context", async () => {
+    const data = await MemoryData.fromObject({ definitions: flags });
+    const result = await showwhat({
+      key: "checkout_v2",
+      context: { env: "prod", tags: ["a", "b"] },
+      options: { data },
+    });
+    expect(result.value).toBe(true);
   });
 
   it("supports time-based conditions", async () => {

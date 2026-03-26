@@ -5,7 +5,7 @@ import type {
   ResolutionDetails,
 } from "@openfeature/server-sdk";
 import { ErrorCode, StandardResolutionReasons } from "@openfeature/server-sdk";
-import type { ConditionEvaluators, DefinitionReader } from "showwhat";
+import type { ConditionEvaluators, DefinitionReader, Logger } from "showwhat";
 import { showwhat } from "showwhat";
 import { toShowwhatContext } from "./context.js";
 import { mapShowwhatError } from "./errors.js";
@@ -13,6 +13,7 @@ import { mapShowwhatError } from "./errors.js";
 export type ShowwhatProviderOptions = {
   data: DefinitionReader;
   evaluators?: ConditionEvaluators;
+  logger?: Logger;
 };
 
 export class ShowwhatProvider implements Provider {
@@ -21,10 +22,12 @@ export class ShowwhatProvider implements Provider {
 
   #data: DefinitionReader;
   #evaluators: ConditionEvaluators | undefined;
+  #logger: Logger | undefined;
 
   constructor(options: ShowwhatProviderOptions) {
     this.#data = options.data;
     this.#evaluators = options.evaluators;
+    this.#logger = options.logger;
   }
 
   async initialize(): Promise<void> {
@@ -87,7 +90,7 @@ export class ShowwhatProvider implements Provider {
     evalCtx: EvaluationContext,
     typeGuard: (value: unknown) => value is T,
   ): Promise<ResolutionDetails<T>> {
-    const ctx = toShowwhatContext(evalCtx);
+    const ctx = toShowwhatContext(evalCtx, this.#logger);
 
     try {
       const resolution = await showwhat({
