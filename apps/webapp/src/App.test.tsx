@@ -245,6 +245,19 @@ describe("App", () => {
     expect(matchMediaListeners.length).toBe(0);
   });
 
+  it("invokes applyTheme('system') when matchMedia change handler fires", () => {
+    localStorage.setItem("showwhat-theme", "system");
+    render(<App />);
+
+    expect(matchMediaListeners.length).toBeGreaterThan(0);
+    // Calling the handler should re-apply the system theme without error
+    act(() => {
+      matchMediaListeners[matchMediaListeners.length - 1]();
+    });
+    // After handler fires, theme is still system — matchMedia.matches is false so no dark class
+    expect(document.documentElement.classList.contains("dark")).toBe(false);
+  });
+
   // -----------------------------------------------------------------------
   // beforeunload handler
   // -----------------------------------------------------------------------
@@ -385,6 +398,25 @@ describe("App", () => {
     });
     expect(getByTestId("configurator")).toBeDefined();
     expect(queryByTestId("settings-page")).toBeNull();
+  });
+
+  it("calls navigate with the new tab when settings onTabChange is invoked", () => {
+    const { getByTestId } = render(<App />);
+
+    // Go to settings first
+    act(() => {
+      capturedOnOpenSettings!();
+    });
+    expect(getByTestId("settings-page")).toBeDefined();
+    expect(capturedOnTabChange).not.toBeNull();
+
+    // Invoke onTabChange — this covers the arrow function at line 103
+    act(() => {
+      capturedOnTabChange!("presets");
+    });
+
+    // The tab should be forwarded to SettingsPage
+    expect(capturedTab).toBe("presets");
   });
 
   // -----------------------------------------------------------------------

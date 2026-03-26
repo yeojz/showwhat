@@ -69,7 +69,7 @@ reports/
 
 # Working docs
 docs/
-!apps/docs
+!apps/docs/
 .plans/
 
 .worktrees

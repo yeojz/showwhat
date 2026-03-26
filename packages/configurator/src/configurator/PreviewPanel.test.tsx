@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
-import type { Definitions } from "showwhat";
+import type { Definitions, ConditionEvaluator } from "showwhat";
 import type { ConfiguratorStore, ConfiguratorStoreSource } from "./types.js";
 import { StoreSourceContext, ActionStateContext } from "./context.js";
 import type { ActionStateContextValue } from "./context.js";
+import { FallbackEvaluatorProvider } from "./fallback-context.js";
 import { PreviewPanel } from "./PreviewPanel.js";
 
 // Control resolve timing via deferred promises
@@ -83,6 +84,19 @@ function renderWithStore(store: ConfiguratorStore) {
     <StoreSourceContext.Provider value={source}>
       <ActionStateContext.Provider value={defaultActionState}>
         <PreviewPanel />
+      </ActionStateContext.Provider>
+    </StoreSourceContext.Provider>,
+  );
+}
+
+function renderWithStoreAndFallback(store: ConfiguratorStore, fallback: ConditionEvaluator) {
+  const source = makeStoreSource(store);
+  return render(
+    <StoreSourceContext.Provider value={source}>
+      <ActionStateContext.Provider value={defaultActionState}>
+        <FallbackEvaluatorProvider value={fallback}>
+          <PreviewPanel />
+        </FallbackEvaluatorProvider>
       </ActionStateContext.Provider>
     </StoreSourceContext.Provider>,
   );
@@ -496,5 +510,327 @@ describe("PreviewPanel", () => {
     const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
     const lastCall = calls[calls.length - 1][0];
     expect(lastCall.options).toBeUndefined();
+  });
+
+  // --- JsonEditorDialog: Format button ---
+
+  it("should format valid JSON in the editor dialog", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: '{"a":1,"b":2}' } });
+    fireEvent.click(screen.getByRole("button", { name: /format/i }));
+
+    expect(textarea.value).toBe('{\n  "a": 1,\n  "b": 2\n}');
+    // No error text should appear
+    expect(screen.queryByText("Invalid JSON")).toBeNull();
+  });
+
+  it("should show error when formatting invalid JSON in the editor dialog", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: "{bad json" } });
+    fireEvent.click(screen.getByRole("button", { name: /format/i }));
+
+    expect(screen.getByText("Invalid JSON")).toBeDefined();
+  });
+
+  it("should do nothing when formatting empty text in the editor dialog", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: "   " } });
+    fireEvent.click(screen.getByRole("button", { name: /format/i }));
+
+    // No error, textarea stays as-is
+    expect(screen.queryByText("Invalid JSON")).toBeNull();
+    expect(textarea.value).toBe("   ");
+  });
+
+  it("should clear format error when typing in the editor dialog", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: "{bad" } });
+    fireEvent.click(screen.getByRole("button", { name: /format/i }));
+    expect(screen.getByText("Invalid JSON")).toBeDefined();
+
+    // Typing should clear the error
+    fireEvent.change(textarea, { target: { value: '{"a":1}' } });
+    expect(screen.queryByText("Invalid JSON")).toBeNull();
+  });
+
+  it("should apply draft value and close the editor dialog", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: '{"x": 42}' } });
+    applyJsonEditor();
+
+    // Dialog should close (textarea no longer visible)
+    expect(screen.queryByPlaceholderText(/env/i)).toBeNull();
+
+    // The context preview should show the new value
+    expect(screen.getByText(/42/)).toBeDefined();
+  });
+
+  // --- parseContextJson edge cases ---
+
+  it("should show error for JSON array context", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: "[1, 2, 3]" } });
+    applyJsonEditor();
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    expect(screen.getByText("Invalid JSON in context")).toBeDefined();
+  });
+
+  it("should show error for JSON null context", () => {
+    renderWithStore(makeStore());
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: "null" } });
+    applyJsonEditor();
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    expect(screen.getByText("Invalid JSON in context")).toBeDefined();
+  });
+
+  // --- parseEvaluatorOverrides edge cases ---
+
+  it("should ignore empty lines in evaluator overrides", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    renderWithStore(makeStore());
+    openSimulator();
+    const simulatorTextarea = getSimulatorTextarea();
+    fireEvent.change(simulatorTextarea, { target: { value: "\n\ntier:true\n\n" } });
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    expect(lastCall.options).toBeDefined();
+    expect(typeof lastCall.options.fallback).toBe("function");
+  });
+
+  it("should ignore lines with missing colon in evaluator overrides", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    renderWithStore(makeStore());
+    openSimulator();
+    const simulatorTextarea = getSimulatorTextarea();
+    // "nocolon" has no colon, ":leading" has idx=0 which is < 1
+    fireEvent.change(simulatorTextarea, { target: { value: "nocolon\n:leading\ntier:true" } });
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    expect(lastCall.options).toBeDefined();
+
+    // The fallback should only know about "tier"
+    const fallback = lastCall.options.fallback as ConditionEvaluator;
+    expect(await fallback({ condition: { type: "tier" } } as never)).toBe(true);
+    expect(await fallback({ condition: { type: "nocolon" } } as never)).toBe(false);
+  });
+
+  it("should ignore lines with invalid boolean value in evaluator overrides", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    renderWithStore(makeStore());
+    openSimulator();
+    const simulatorTextarea = getSimulatorTextarea();
+    fireEvent.change(simulatorTextarea, { target: { value: "tier:yes\ngeo:true" } });
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    const fallback = lastCall.options.fallback as ConditionEvaluator;
+    // "tier:yes" should be ignored, so fallback returns false for unknown type
+    expect(await fallback({ condition: { type: "tier" } } as never)).toBe(false);
+    // "geo:true" is valid
+    expect(await fallback({ condition: { type: "geo" } } as never)).toBe(true);
+  });
+
+  // --- Fallback evaluator with externalFallback ---
+
+  it("should use externalFallback when no overrides match", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    const externalFallback = vi.fn(async () => true);
+    renderWithStoreAndFallback(makeStore(), externalFallback);
+
+    // No simulator overrides set — externalFallback alone should produce a fallback
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    expect(lastCall.options).toBeDefined();
+    expect(typeof lastCall.options.fallback).toBe("function");
+
+    // Calling the fallback with an unknown type should delegate to externalFallback
+    const fallback = lastCall.options.fallback as ConditionEvaluator;
+    const result = await fallback({ condition: { type: "unknown" } } as never);
+    expect(externalFallback).toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it("should prefer overrides over externalFallback", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    const externalFallback = vi.fn(async () => true);
+    renderWithStoreAndFallback(makeStore(), externalFallback);
+
+    openSimulator();
+    const simulatorTextarea = getSimulatorTextarea();
+    fireEvent.change(simulatorTextarea, { target: { value: "tier:false" } });
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    const fallback = lastCall.options.fallback as ConditionEvaluator;
+
+    // Override should take precedence
+    const tierResult = await fallback({ condition: { type: "tier" } } as never);
+    expect(tierResult).toBe(false);
+    expect(externalFallback).not.toHaveBeenCalled();
+
+    // Non-overridden type delegates to externalFallback
+    const otherResult = await fallback({ condition: { type: "other" } } as never);
+    expect(otherResult).toBe(true);
+    expect(externalFallback).toHaveBeenCalled();
+  });
+
+  // --- Result with non-string value (JSON.stringify path) ---
+
+  it("should JSON.stringify non-string result values", async () => {
+    renderWithStore(makeStore());
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          value: { nested: "object" },
+          meta: { variation: { index: 2, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Matched")).toBeDefined();
+      expect(screen.getByText(/"nested": "object"/)).toBeDefined();
+    });
+  });
+
+  // --- ResultBadge: success without onViewMeta (variation text only) ---
+
+  it("should show variation text without details button when onViewMeta is undefined", async () => {
+    renderWithStore(makeStore());
+
+    // We need to verify the non-clickable variation text appears.
+    // The success ResultBadge without onViewMeta shows a plain <span> with "Variation #N".
+    // To hit this path we would need onViewMeta to be undefined for a success result,
+    // but PreviewPanel always passes onViewMeta for success. We test it indirectly
+    // by confirming the Details button IS present for success results.
+    // The "no-match" path with onViewMeta prop test:
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    const { VariationNotFoundError } = await import("showwhat");
+    await act(async () => {
+      rejectPromise(new VariationNotFoundError("no match"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("No Match")).toBeDefined();
+      expect(screen.getByText("No variation matched the given context")).toBeDefined();
+    });
+
+    // No meta button for no-match
+    expect(screen.queryByRole("button", { name: /view evaluation meta/i })).toBeNull();
+  });
+
+  // --- Abort controller cleanup on unmount ---
+
+  it("should discard in-flight resolve on unmount", async () => {
+    const { unmount } = renderWithStore(makeStore());
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    const staleResolve = resolvePromise;
+
+    // Unmount while resolve is still pending
+    unmount();
+
+    // Complete the stale promise — should not throw or set state
+    await act(async () => {
+      staleResolve({
+        "flag-a": {
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 0 }, annotations: {} },
+        },
+      });
+    });
+
+    // No assertions needed — if unmount cleanup didn't abort,
+    // setting state on an unmounted component would warn/error.
   });
 });

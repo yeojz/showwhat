@@ -165,8 +165,8 @@ The library exports individual components for custom layouts:
 
 The condition builder provides specialised editors for each built-in condition type:
 
-- **string** — key, operator (`eq`/`neq`/`regex`), value(s)
-- **number** — key, operator (`eq`/`neq`/`gt`/`gte`/`lt`/`lte`), value
+- **string** — key, operator (`eq`/`neq`/`in`/`nin`/`regex`), value(s)
+- **number** — key, operator (`eq`/`neq`/`gt`/`gte`/`lt`/`lte`/`in`/`nin`), value
 - **datetime** — key, operator, ISO 8601 value
 - **bool** — key, value toggle
 - **env** — environment value(s)

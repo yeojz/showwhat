@@ -96,6 +96,17 @@ describe("formatConditionSummary", () => {
     expect(result).toContain("100");
   });
 
+  it("formats a number condition with array value", () => {
+    const conditions: Condition[] = [
+      { type: "number", key: "score", op: "in", value: [10, 20, 30] } as Condition,
+    ];
+    const result = formatConditionSummary(conditions);
+    expect(result).toContain("score");
+    expect(result).toContain("10");
+    expect(result).toContain("20");
+    expect(result).toContain("30");
+  });
+
   it("formats a number condition with gte operator", () => {
     const conditions: Condition[] = [{ type: "number", key: "score", op: "gte", value: 50 }];
     const result = formatConditionSummary(conditions);

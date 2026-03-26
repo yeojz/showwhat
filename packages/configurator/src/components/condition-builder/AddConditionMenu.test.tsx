@@ -72,4 +72,31 @@ describe("AddConditionMenu", () => {
     await user.click(screen.getByText("String"));
     expect(onAdd).toHaveBeenCalledWith("string");
   });
+
+  it("calls onAdd with 'env' when Environment is clicked", async () => {
+    const onAdd = vi.fn();
+    const user = userEvent.setup();
+    render(<AddConditionMenu onAdd={onAdd} />);
+    await user.click(screen.getByText("Add condition"));
+    await user.click(screen.getByText("Environment"));
+    expect(onAdd).toHaveBeenCalledWith("env");
+  });
+
+  it("calls onAdd with 'startAt' when Start At is clicked", async () => {
+    const onAdd = vi.fn();
+    const user = userEvent.setup();
+    render(<AddConditionMenu onAdd={onAdd} />);
+    await user.click(screen.getByText("Add condition"));
+    await user.click(screen.getByText("Start At"));
+    expect(onAdd).toHaveBeenCalledWith("startAt");
+  });
+
+  it("calls onAdd with 'endAt' when End At is clicked", async () => {
+    const onAdd = vi.fn();
+    const user = userEvent.setup();
+    render(<AddConditionMenu onAdd={onAdd} />);
+    await user.click(screen.getByText("Add condition"));
+    await user.click(screen.getByText("End At"));
+    expect(onAdd).toHaveBeenCalledWith("endAt");
+  });
 });

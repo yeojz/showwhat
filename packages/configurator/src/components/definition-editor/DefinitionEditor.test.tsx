@@ -235,6 +235,26 @@ describe("DefinitionEditor", () => {
     expect(onUpdate.mock.calls[0][0].active).toBe(false);
   });
 
+  it("should set active to undefined when toggling an inactive definition on", () => {
+    const onUpdate = vi.fn();
+    const inactiveDef: Definition = {
+      ...testDefinition,
+      active: false,
+    };
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={inactiveDef}
+        onUpdate={onUpdate}
+        onRename={vi.fn()}
+      />,
+    );
+    const activeSwitch = screen.getByRole("switch");
+    fireEvent.click(activeSwitch);
+    expect(onUpdate).toHaveBeenCalled();
+    expect(onUpdate.mock.calls[0][0].active).toBeUndefined();
+  });
+
   it("should add a variation when Add button is clicked", () => {
     const onUpdate = vi.fn();
     render(

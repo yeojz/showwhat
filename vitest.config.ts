@@ -36,6 +36,27 @@ export default defineConfig({
           functions: 100,
           lines: 100,
         },
+        "packages/showwhat/src/**": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
+        "apps/webapp/src/**": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
+        // Configurator: UI components in jsdom have v8 branch instrumentation
+        // artifacts (nullish-coalescing and ternary branches guarded by parent
+        // conditions that make the fallback unreachable in a jsdom environment).
+        "packages/configurator/src/**": {
+          statements: 99,
+          branches: 95,
+          functions: 98,
+          lines: 99,
+        },
       },
     },
     projects: [

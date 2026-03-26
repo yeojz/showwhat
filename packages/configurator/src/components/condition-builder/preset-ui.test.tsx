@@ -325,6 +325,92 @@ describe("PresetConditionEditor interactions", () => {
   });
 });
 
+describe("PresetConditionEditor null value fallbacks", () => {
+  it("string preset in-mode renders TagInput with empty string fallback when value is null", () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "in", value: null } as never}
+        onChange={vi.fn()}
+      />,
+    );
+    // TagInput should render with fallback value
+    expect(screen.getByDisplayValue("tier")).toBeDisabled();
+  });
+
+  it("number preset in-mode renders NumberTagInput with empty array fallback when value is null", () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "in", value: null } as never}
+        onChange={vi.fn()}
+      />,
+    );
+    // NumberTagInput should render with fallback value
+    expect(screen.getByDisplayValue("user_age")).toBeDisabled();
+  });
+
+  it("number preset scalar-mode calls onChange when empty string is entered", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "gt", value: 18 }}
+        onChange={onChange}
+      />,
+    );
+    const numInput = screen.getByDisplayValue("18");
+    await user.clear(numInput);
+    expect(onChange).toHaveBeenCalled();
+    // Clearing an input yields empty string which should emit ""
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0] as Record<
+      string,
+      unknown
+    >;
+    expect(lastCall.value).toBe("");
+  });
+
+  it("string preset renders plain input with null value fallback for eq op", () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "eq", value: null } as never}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByDisplayValue("tier")).toBeDisabled();
+  });
+
+  it("string preset renders regex input with null value fallback", () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "regex", value: null } as never}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByPlaceholderText("e.g. ^test.*$")).toBeDefined();
+  });
+
+  it("number preset renders scalar input with undefined value showing empty", () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "gt", value: undefined } as never}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.getByPlaceholderText("e.g. 100")).toBeDefined();
+  });
+});
+
 describe("createPresetEditor with unknown type", () => {
   it("returns null for unrecognized built-in type", () => {
     const Editor = createPresetEditor("test", "unknown_type", "key");
@@ -384,6 +470,250 @@ describe("PresetConditionEditor with missing values", () => {
       />,
     );
     expect(screen.getByDisplayValue("tier")).toBeDisabled();
+  });
+});
+
+describe("String preset op coercion", () => {
+  it("switching to 'in' wraps existing string value in array", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "eq", value: "pro" }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "in" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["pro"] }));
+  });
+
+  it("switching to 'nin' with empty value uses empty array", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "eq", value: "" }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "nin" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "nin", value: [] }));
+  });
+
+  it("switching to 'in' with existing array keeps it", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "nin", value: ["a", "b"] }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "in" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["a", "b"] }));
+  });
+
+  it("switching from 'in' to scalar extracts first element", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "in", value: ["alpha", "beta"] }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "eq" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "alpha" }));
+  });
+
+  it("switching from 'in' to scalar with empty array yields empty string", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "in", value: [] }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "eq" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "" }));
+  });
+});
+
+describe("Number preset op coercion", () => {
+  it("switching to 'in' wraps existing number value in array", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "gt", value: 42 }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "in" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [42] }));
+  });
+
+  it("switching to 'nin' with undefined value uses empty array", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "gt" } as never}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "nin" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "nin", value: [] }));
+  });
+
+  it("switching to 'in' with empty string value uses empty array", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "gt", value: "" } as never}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "in" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [] }));
+  });
+
+  it("switching to 'in' with existing array keeps it", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "nin", value: [1, 2, 3] }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "in" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [1, 2, 3] }));
+  });
+
+  it("switching from 'in' to scalar extracts first element", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "in", value: [10, 20] }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "eq" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: 10 }));
+  });
+
+  it("switching from 'in' to scalar with empty array yields 0", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "in", value: [] }}
+        onChange={onChange}
+      />,
+    );
+    const comboboxes = screen.getAllByRole("combobox");
+    await user.click(comboboxes[0]);
+    await user.click(screen.getByRole("option", { name: "eq" }));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: 0 }));
+  });
+});
+
+describe("Preset TagInput/NumberTagInput onChange in array mode", () => {
+  it("string preset in 'in' mode triggers onChange via TagInput", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "in", value: [] }}
+        onChange={onChange}
+      />,
+    );
+    const tagInput = screen.getByPlaceholderText("e.g. tier value");
+    await user.type(tagInput, "newval{Enter}");
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it("number preset in 'in' mode triggers onChange via NumberTagInput", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "in", value: [] } as never}
+        onChange={onChange}
+      />,
+    );
+    const tagInput = screen.getByPlaceholderText("e.g. user_age value");
+    await user.type(tagInput, "42{Enter}");
+    expect(onChange).toHaveBeenCalled();
+  });
+
+  it("string preset plain text input onChange triggers update", async () => {
+    const extensions = createPresetUI(SAMPLE_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "eq", value: "" }}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByPlaceholderText("e.g. tier value");
+    await user.type(input, "x");
+    expect(onChange).toHaveBeenCalled();
+    expect(onChange.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ type: "tier", value: "x" }),
+    );
   });
 });
 

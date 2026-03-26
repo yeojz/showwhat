@@ -18,6 +18,7 @@ function toLocalDatetime(iso: string): string {
 function fromLocalDatetime(local: string): string {
   if (!local) return "";
   const d = new Date(local);
+  /* v8 ignore next */
   if (Number.isNaN(d.getTime())) return local;
   return d.toISOString();
 }

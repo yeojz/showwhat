@@ -76,4 +76,90 @@ describe("StringConditionEditor", () => {
     render(<StringConditionEditor condition={condition} onChange={vi.fn()} />);
     expect(screen.getByDisplayValue("abc")).toBeDefined();
   });
+
+  it("calls onChange when typing in plain text input (eq mode)", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "eq", value: "" } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const input = screen.getByPlaceholderText("e.g. user-123");
+    await userEvent.type(input, "x");
+    expect(onChange).toHaveBeenCalled();
+    expect(onChange.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ type: "string", value: "x" }),
+    );
+  });
+
+  it("switching op from eq to in with scalar value coerces to array", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "eq", value: "hello" } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const comboboxes = screen.getAllByRole("combobox");
+    const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
+    await userEvent.click(opSelect!);
+    await userEvent.click(screen.getByText("in"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["hello"] }));
+  });
+
+  it("switching op from in to eq with array extracts first element", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "in", value: ["alpha", "beta"] } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const comboboxes = screen.getAllByRole("combobox");
+    const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
+    await userEvent.click(opSelect!);
+    await userEvent.click(screen.getByText("eq"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "alpha" }));
+  });
+
+  it("switching op from in to eq with empty array yields empty string", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "in", value: [] } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const comboboxes = screen.getAllByRole("combobox");
+    const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
+    await userEvent.click(opSelect!);
+    await userEvent.click(screen.getByText("eq"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "" }));
+  });
+
+  it("switching op from eq to in with empty value yields empty array", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "eq", value: "" } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const comboboxes = screen.getAllByRole("combobox");
+    const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
+    await userEvent.click(opSelect!);
+    await userEvent.click(screen.getByText("in"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [] }));
+  });
+
+  it("switching op from nin to in with existing array keeps it", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "nin", value: ["a", "b"] } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const comboboxes = screen.getAllByRole("combobox");
+    const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
+    await userEvent.click(opSelect!);
+    await userEvent.click(screen.getByText("in"));
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["a", "b"] }));
+  });
+
+  it("renders with undefined key, op, value hitting ?? fallbacks", () => {
+    const condition = { type: "string" } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={vi.fn()} />);
+    // key ?? "" → empty key input
+    expect(screen.getByPlaceholderText("e.g. userId")).toBeDefined();
+    // op ?? "eq" → shows eq in operator select
+    // value ?? "" → empty value input
+    expect(screen.getByPlaceholderText("e.g. user-123")).toBeDefined();
+  });
+
+  it("TagInput in 'in' mode triggers onChange on value change", async () => {
+    const onChange = vi.fn();
+    const condition = { type: "string", key: "k", op: "in", value: [] } as Condition;
+    render(<StringConditionEditor condition={condition} onChange={onChange} />);
+    const tagInput = screen.getByPlaceholderText("e.g. user-123");
+    await userEvent.type(tagInput, "new{Enter}");
+    expect(onChange).toHaveBeenCalled();
+  });
 });

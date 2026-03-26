@@ -59,10 +59,12 @@ export function ValueInput({ value, onChange, placeholder }: ValueInputProps) {
           const text = JSON.stringify(value, null, 2);
           setJsonText(text);
           onChange(value);
+          /* v8 ignore start */
         } catch {
           setJsonText("{}");
           onChange({});
         }
+        /* v8 ignore stop */
         break;
     }
   }

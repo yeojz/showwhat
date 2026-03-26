@@ -415,6 +415,29 @@ describe("definition-store", () => {
       // Should not throw
       expect(() => createDefinitionStore({ storage })).not.toThrow();
     });
+
+    it("defaults inlinePresets to empty object when persisted state has null inlinePresets", async () => {
+      const storage = createTestStorage();
+      // Simulate a persisted state from an older version where inlinePresets was null.
+      // null is preserved by JSON.stringify, so the merge will leave state.inlinePresets
+      // as null, and onRehydrateStorage should default it to {}.
+      const persisted = {
+        state: {
+          savedDefinitions: { "feature-a": { variations: [{ value: true }] } },
+          inlinePresets: null,
+          selectedKey: null,
+          sourceFileName: null,
+          sourceFormat: null,
+        },
+        version: 1,
+      };
+      storage.setItem("showwhat-configurator", JSON.stringify(persisted));
+
+      const store2 = createDefinitionStore({ storage });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      // onRehydrateStorage should default inlinePresets to {}
+      expect(store2.getState().inlinePresets).toEqual({});
+    });
   });
 
   describe("isKeyDirty", () => {

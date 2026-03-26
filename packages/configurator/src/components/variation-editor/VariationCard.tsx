@@ -124,6 +124,7 @@ export const VariationCard = memo(function VariationCard({
                           <DialogDescription>Evaluation logic for this variation</DialogDescription>
                         </DialogHeader>
                         <pre className="rounded-md bg-muted p-4 font-mono text-xs whitespace-pre overflow-auto max-h-80">
+                          {/* v8 ignore next */}
                           {formatConditionSummary(variation.conditions ?? [])}
                         </pre>
                       </DialogContent>

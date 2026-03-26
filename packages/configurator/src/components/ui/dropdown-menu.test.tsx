@@ -194,7 +194,19 @@ describe("DropdownMenu components", () => {
     expect(label.closest("[data-inset]")).toBeDefined();
   });
 
-  it("exports DropdownMenuPortal", () => {
-    expect(DropdownMenuPortal).toBeDefined();
+  it("renders DropdownMenuPortal with content", async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger>Open</DropdownMenuTrigger>
+        <DropdownMenuPortal>
+          <DropdownMenuContent>
+            <DropdownMenuItem>Portal Item</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenuPortal>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByText("Open"));
+    expect(screen.getByText("Portal Item")).toBeDefined();
   });
 });

@@ -115,4 +115,28 @@ describe("CustomConditionEditor", () => {
       expect.objectContaining({ type: "custom", id: "my-id" }),
     );
   });
+
+  it("renders type input with empty string when type is undefined (rec.type ?? '' fallback)", () => {
+    const condition = { key: "val" } as Condition;
+    render(<CustomConditionEditor condition={condition} onChange={vi.fn()} />);
+    const typeInput = screen.getByPlaceholderText(
+      "e.g. geoLocation, percentage",
+    ) as HTMLInputElement;
+    expect(typeInput.value).toBe("");
+  });
+
+  it("does not resync text when derived text equals current text (derived !== text is false)", () => {
+    // condition1 has args {key: "val"}, condition2 has different type but same args
+    const condition1 = { type: "custom", key: "val" } as Condition;
+    const condition2 = { type: "different", key: "val" } as Condition;
+    const { rerender } = render(
+      <CustomConditionEditor condition={condition1} onChange={vi.fn()} />,
+    );
+    const textarea = screen.getByPlaceholderText(/region/) as HTMLTextAreaElement;
+    const textBefore = textarea.value;
+    // Rerender with a different condition object, but same extracted args text
+    rerender(<CustomConditionEditor condition={condition2} onChange={vi.fn()} />);
+    // Text should remain the same since derived === text
+    expect(textarea.value).toBe(textBefore);
+  });
 });

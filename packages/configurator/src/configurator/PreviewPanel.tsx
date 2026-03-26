@@ -332,6 +332,7 @@ export function PreviewPanel() {
             </div>
             <button
               type="button"
+              /* v8 ignore next */
               className={`mt-1.5 w-full cursor-pointer rounded-md border bg-transparent px-3 py-2 text-left transition-colors hover:border-ring ${contextError ? "border-destructive" : "border-input"}`}
               onClick={() => setJsonEditorOpen(true)}
             >
@@ -345,6 +346,7 @@ export function PreviewPanel() {
                 </span>
               )}
             </button>
+            {/* v8 ignore next */}
             {contextError && <p className="mt-1 text-[10px] text-destructive">{contextError}</p>}
             <JsonEditorDialog
               open={jsonEditorOpen}

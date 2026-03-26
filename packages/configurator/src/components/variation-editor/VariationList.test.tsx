@@ -27,6 +27,8 @@ vi.mock("@dnd-kit/core", () => {
   };
 });
 
+let mockIsDragging = false;
+
 vi.mock("@dnd-kit/sortable", () => ({
   SortableContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   verticalListSortingStrategy: {},
@@ -37,7 +39,7 @@ vi.mock("@dnd-kit/sortable", () => ({
     setActivatorNodeRef: vi.fn(),
     transform: null,
     transition: null,
-    isDragging: false,
+    isDragging: mockIsDragging,
   }),
   arrayMove: <T,>(arr: T[], from: number, to: number) => {
     const result = [...arr];
@@ -169,6 +171,14 @@ describe("VariationList", () => {
 
     capturedOnDragEnd!({ active: { id: "nonexistent" }, over: { id: "v2" } });
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("should apply reduced opacity when dragging", () => {
+    mockIsDragging = true;
+    const { container } = render(<VariationList variations={twoVariations} onChange={vi.fn()} />);
+    const draggingEl = container.querySelector(".animate-fade-up")!;
+    expect(draggingEl.getAttribute("style")).toContain("opacity: 0.5");
+    mockIsDragging = false;
   });
 
   it("should pass filtered validation errors to each variation card", () => {

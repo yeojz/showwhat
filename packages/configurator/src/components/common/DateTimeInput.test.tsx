@@ -82,4 +82,16 @@ describe("DateTimeInput", () => {
     fireEvent.change(dateInputs[0], { target: { value: "" } });
     expect(onChange).toHaveBeenCalledWith("");
   });
+
+  it("converts valid datetime-local value to ISO string", () => {
+    const onChange = vi.fn();
+    render(<DateTimeInput value="" onChange={onChange} />);
+    const dateInputs = document.querySelectorAll("input[type='datetime-local']");
+    fireEvent.change(dateInputs[0], { target: { value: "2025-03-15T14:30" } });
+    // fromLocalDatetime("2025-03-15T14:30") should produce a valid ISO string
+    expect(onChange).toHaveBeenCalled();
+    const result = onChange.mock.calls[0][0];
+    expect(result).toContain("2025");
+    expect(result).toContain("T");
+  });
 });

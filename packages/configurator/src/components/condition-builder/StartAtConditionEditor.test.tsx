@@ -28,4 +28,29 @@ describe("StartAtConditionEditor", () => {
     render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
     expect(screen.getByDisplayValue("at")).toBeDefined();
   });
+
+  it("renders with explicit undefined value using empty string fallback", () => {
+    const condition = { type: "startAt", value: undefined } as unknown as Condition;
+    render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
+    expect(screen.getByDisplayValue("at")).toBeDefined();
+  });
+
+  it("renders with null value using empty string fallback", () => {
+    const condition = { type: "startAt", value: null } as unknown as Condition;
+    render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
+    expect(screen.getByDisplayValue("at")).toBeDefined();
+  });
+
+  it("calls onChange with startAt type when date value is changed from null", () => {
+    const onChange = vi.fn();
+    const condition = { type: "startAt", value: null } as unknown as Condition;
+    render(<StartAtConditionEditor condition={condition} onChange={onChange} />);
+    // Switch to raw mode to interact with the empty-value fallback path
+    fireEvent.click(screen.getByLabelText("Switch to raw input"));
+    const rawInput = screen.getByPlaceholderText("ISO 8601 datetime");
+    fireEvent.change(rawInput, { target: { value: "2025-06-01T00:00:00Z" } });
+    expect(onChange).toHaveBeenCalled();
+    const result = onChange.mock.calls[0][0] as Record<string, unknown>;
+    expect(result.type).toBe("startAt");
+  });
 });

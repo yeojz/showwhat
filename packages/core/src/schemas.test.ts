@@ -5,6 +5,7 @@ import {
   ConditionSchema,
   BuiltinConditionSchema,
   StringConditionSchema,
+  NumberConditionSchema,
   FileFormatSchema,
   ContextSchema,
 } from "./schemas/index.js";
@@ -209,6 +210,109 @@ describe("StringConditionSchema", () => {
         value: ["^us-", "^eu-"],
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("NumberConditionSchema", () => {
+  it("accepts eq op with number value", () => {
+    expect(
+      NumberConditionSchema.safeParse({
+        type: "number",
+        key: "score",
+        op: "eq",
+        value: 42,
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts in op with array value", () => {
+    expect(
+      NumberConditionSchema.safeParse({
+        type: "number",
+        key: "score",
+        op: "in",
+        value: [1, 2, 3],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts nin op with array value", () => {
+    expect(
+      NumberConditionSchema.safeParse({
+        type: "number",
+        key: "score",
+        op: "nin",
+        value: [10, 20],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects in op with non-array value", () => {
+    const result = NumberConditionSchema.safeParse({
+      type: "number",
+      key: "k",
+      op: "in",
+      value: 42,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) =>
+          i.message.includes('"in" operator requires an array value'),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects nin op with non-array value", () => {
+    const result = NumberConditionSchema.safeParse({
+      type: "number",
+      key: "k",
+      op: "nin",
+      value: 7,
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) =>
+          i.message.includes('"nin" operator requires an array value'),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects eq op with array value", () => {
+    const result = NumberConditionSchema.safeParse({
+      type: "number",
+      key: "k",
+      op: "eq",
+      value: [1, 2],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) =>
+          i.message.includes('"eq" operator requires a number value'),
+        ),
+      ).toBe(true);
+    }
+  });
+
+  it("rejects gt op with array value", () => {
+    const result = NumberConditionSchema.safeParse({
+      type: "number",
+      key: "k",
+      op: "gt",
+      value: [5],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) =>
+          i.message.includes('"gt" operator requires a number value'),
+        ),
+      ).toBe(true);
+    }
   });
 });
 

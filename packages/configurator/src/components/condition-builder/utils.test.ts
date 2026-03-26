@@ -63,6 +63,50 @@ describe("buildDefaultCondition", () => {
     const result = buildDefaultCondition("unknownType", "my-id");
     expect(result).toEqual({ type: "", id: "my-id" });
   });
+
+  it("builds a condition from extraTypes when type is not built-in", () => {
+    const extraTypes = [
+      {
+        type: "customExtra",
+        label: "Custom Extra",
+        description: "A custom condition",
+        defaults: { type: "customExtra", key: "", op: "eq", value: "" },
+      },
+    ];
+    const result = buildDefaultCondition("customExtra", undefined, extraTypes);
+    expect(result).toEqual(expect.objectContaining({ type: "customExtra" }));
+  });
+
+  it("builds a condition from extraTypes with an id", () => {
+    const extraTypes = [
+      {
+        type: "customExtra",
+        label: "Custom Extra",
+        description: "A custom condition",
+        defaults: { type: "customExtra", key: "", op: "eq", value: "" },
+      },
+    ];
+    const result = buildDefaultCondition("customExtra", "my-id", extraTypes);
+    expect(result).toEqual(expect.objectContaining({ type: "customExtra", id: "my-id" }));
+  });
+
+  it("falls back when extraTypes is provided but type is not found in it", () => {
+    const extraTypes = [
+      {
+        type: "other",
+        label: "Other",
+        description: "",
+        defaults: { type: "other" },
+      },
+    ];
+    const result = buildDefaultCondition("unknownType", undefined, extraTypes);
+    expect(result).toEqual({ type: "" });
+  });
+
+  it("falls back when extraTypes is an empty array", () => {
+    const result = buildDefaultCondition("unknownType", undefined, []);
+    expect(result).toEqual({ type: "" });
+  });
 });
 
 describe("re-exported builders", () => {

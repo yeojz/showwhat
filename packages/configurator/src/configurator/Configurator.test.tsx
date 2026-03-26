@@ -252,6 +252,91 @@ describe("Configurator async action handling", () => {
     expect(screen.getByDisplayValue("new-flag")).toBeInTheDocument();
   });
 
+  it("swallows updateDefinition rejection without crashing", async () => {
+    const user = userEvent.setup();
+    const store = createMockStore({
+      updateDefinition: vi.fn(async () => {
+        throw new Error("update failed");
+      }),
+    });
+    render(<Configurator store={store} />);
+    // Toggling the active switch triggers onUpdate -> updateDefinition -> .catch(() => {})
+    const activeSwitch = screen.getByRole("switch");
+    await user.click(activeSwitch);
+    expect(store.updateDefinition).toHaveBeenCalled();
+    // No error banner because onUpdate doesn't use runAction
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("swallows selectDefinition rejection without crashing", async () => {
+    const user = userEvent.setup();
+    const store = createMockStore({
+      definitions: {
+        "flag-a": baseDef,
+        "flag-b": { variations: [{ value: "off" }] },
+      },
+      selectDefinition: vi.fn(async () => {
+        throw new Error("select failed");
+      }),
+    });
+    render(<Configurator store={store} />);
+    await user.click(screen.getByText("flag-b"));
+    expect(store.selectDefinition).toHaveBeenCalledWith("flag-b");
+    // The .catch(() => {}) on selectDefinition swallows the error
+    // Error banner appears because runAction is used
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
+  it("swallows removeDefinition rejection without crashing", async () => {
+    const user = userEvent.setup();
+    const store = createMockStore({
+      removeDefinition: vi.fn(async () => {
+        throw new Error("remove failed");
+      }),
+    });
+    render(<Configurator store={store} />);
+    const removeButton = screen.getByLabelText("Remove flag-a");
+    await user.click(removeButton);
+    const confirmButton = await screen.findByRole("button", { name: "Delete" });
+    await user.click(confirmButton);
+    // The .catch(() => {}) swallows the rejection; component does not crash
+    await waitFor(() => {
+      expect(store.removeDefinition).toHaveBeenCalledWith("flag-a");
+    });
+  });
+
+  it("swallows saveDefinition rejection via catch", async () => {
+    const store = createMockStore({
+      saveDefinition: vi.fn(async () => {
+        throw new Error("save failed");
+      }),
+    });
+    render(<Configurator store={store} />);
+    const saveButton = screen.getByRole("button", { name: /^save$/i });
+    await userEvent.click(saveButton);
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
+  it("swallows discardDefinition rejection via catch", async () => {
+    const store = createMockStore({
+      discardDefinition: vi.fn(async () => {
+        throw new Error("discard failed");
+      }),
+    });
+    render(<Configurator store={store} />);
+    const discardButton = screen.getByRole("button", { name: /discard/i });
+    await userEvent.click(discardButton);
+    const confirmButton = await screen.findByRole("button", { name: /^discard$/i });
+    await userEvent.click(confirmButton);
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+  });
+
   it("keeps rename mode open when renameDefinition rejects", async () => {
     const user = userEvent.setup();
     const store = createRejectingStore({ renameDefinition: new Error("rename failed") });

@@ -213,6 +213,63 @@ describe("VariationCard", () => {
     expect(onChange).toHaveBeenCalled();
   });
 
+  it("should show empty string when both description and value are absent", () => {
+    render(
+      <VariationCard
+        variation={{ value: undefined as unknown as string }}
+        index={0}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    // The summary span should be present but empty (String(undefined ?? "") = "")
+    const badges = screen.getAllByText("0");
+    expect(badges.length).toBeGreaterThan(0);
+  });
+
+  it("should show empty summary when description is empty and value is null", () => {
+    render(
+      <VariationCard
+        variation={{ description: "", value: null as unknown as string }}
+        index={0}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    // Empty description is falsy, null value goes through ?? "" path
+    expect(screen.getByText("0")).toBeDefined();
+  });
+
+  it("should call onChange with conditions array when modifying existing conditions", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const variationWithTwoConditions = {
+      value: "test",
+      conditions: [
+        { type: "env" as const, op: "eq" as const, value: "production" },
+        { type: "env" as const, op: "eq" as const, value: "staging" },
+      ],
+    };
+    render(
+      <VariationCard
+        variation={variationWithTwoConditions}
+        index={0}
+        onChange={onChange}
+        onRemove={vi.fn()}
+      />,
+    );
+    // Expand the card
+    await user.click(screen.getByRole("button", { expanded: false }));
+    // Remove one condition -- leaves one still, so conditions.length > 0
+    const removeButtons = screen.getAllByLabelText("Remove condition");
+    await user.click(removeButtons[0]);
+    expect(onChange).toHaveBeenCalled();
+    const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
+    // conditions should still be defined (length > 0 branch)
+    expect(lastCall.conditions).toBeDefined();
+    expect(lastCall.conditions.length).toBe(1);
+  });
+
   it("shows validation errors outside of conditions when expanded", async () => {
     const user = userEvent.setup();
     render(

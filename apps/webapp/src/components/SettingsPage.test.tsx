@@ -389,4 +389,46 @@ describe("SettingsPage", () => {
     expect(screen.queryByText("Custom Presets")).toBeNull();
     expect(screen.queryByText("From Source")).toBeNull();
   });
+
+  it("calls onTabChange when a tab trigger is clicked", async () => {
+    const user = userEvent.setup();
+    const onTabChange = vi.fn();
+    render(<SettingsPage tab="sources" onTabChange={onTabChange} onBack={vi.fn()} />);
+
+    await user.click(screen.getByTestId("tab-presets"));
+    expect(onTabChange).toHaveBeenCalledWith("presets");
+  });
+
+  it("does not expand an inline preset row when it has no key and no defaults", async () => {
+    storeState = {
+      ...storeState,
+      inlinePresets: {
+        simple: { type: "boolean" },
+      },
+    };
+    const user = userEvent.setup();
+    render(<SettingsPage tab="presets" onTabChange={vi.fn()} onBack={vi.fn()} />);
+
+    // The row should render but clicking should not expand it (no details)
+    await user.click(screen.getByText("simple"));
+    // No <pre> tag should appear since there's nothing to show
+    expect(screen.queryByText(/^type: boolean/)).toBeNull();
+  });
+
+  it("formats preset YAML without key line when preset has no key", async () => {
+    storeState = {
+      ...storeState,
+      inlinePresets: {
+        nokey: { type: "string", defaults: { op: "eq", value: "test" } },
+      },
+    };
+    const user = userEvent.setup();
+    render(<SettingsPage tab="presets" onTabChange={vi.fn()} onBack={vi.fn()} />);
+
+    // Expand the row — it has defaults so it should be expandable
+    await user.click(screen.getByText("nokey"));
+    const pre = screen.getByText(/^type: string/);
+    expect(pre.textContent).not.toContain("key:");
+    expect(pre.textContent).toContain("op: eq");
+  });
 });

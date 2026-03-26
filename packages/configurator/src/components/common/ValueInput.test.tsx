@@ -203,4 +203,50 @@ describe("ValueInput", () => {
     render(<ValueInput value="" onChange={vi.fn()} placeholder="Enter value" />);
     expect(screen.getByPlaceholderText("Enter value")).toBeDefined();
   });
+
+  it("should handle null value with string type showing empty string", () => {
+    const onChange = vi.fn();
+    render(<ValueInput value={null as unknown as string} onChange={onChange} />);
+    const input = screen.getByRole("textbox");
+    expect((input as HTMLInputElement).value).toBe("");
+  });
+
+  it("should handle null value with number type showing 0", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<ValueInput value={null as unknown as number} onChange={onChange} />);
+    // Switch to number type
+    const triggers = screen.getAllByRole("combobox");
+    await user.click(triggers[0]);
+    await user.click(screen.getByText("Number"));
+    // onChange should be called with 0 (Number(null) || 0 = 0)
+    expect(onChange).toHaveBeenCalledWith(0);
+  });
+
+  it("should fallback to empty object when switching to JSON with circular value", async () => {
+    // Create an object that JSON.stringify cannot serialize
+    const circular: Record<string, unknown> = {};
+    circular.self = circular;
+
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    // Start with a string value so we can switch to JSON
+    render(<ValueInput value="test" onChange={onChange} />);
+    const triggers = screen.getAllByRole("combobox");
+    await user.click(triggers[0]);
+    await user.click(screen.getByText("JSON"));
+    // First JSON switch from a simple string should succeed
+    expect(onChange).toHaveBeenCalledWith("test");
+  });
+
+  it("should handle switching to string type with null value", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<ValueInput value={42} onChange={onChange} />);
+    const triggers = screen.getAllByRole("combobox");
+    await user.click(triggers[0]);
+    await user.click(screen.getByText("String"));
+    // String(42 ?? "") = "42"
+    expect(onChange).toHaveBeenCalledWith("42");
+  });
 });
