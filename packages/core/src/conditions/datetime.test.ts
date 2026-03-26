@@ -123,6 +123,32 @@ describe("datetimeEvaluator", () => {
   });
 });
 
+describe("datetime type guard", () => {
+  it("returns false when context value is an array", async () => {
+    expect(
+      await evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, { at: [MID] }),
+    ).toBe(false);
+  });
+
+  it("returns false when context value is a number", async () => {
+    expect(
+      await evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, { at: 1234567890 }),
+    ).toBe(false);
+  });
+
+  it("returns false when context value is a boolean", async () => {
+    expect(
+      await evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, { at: true }),
+    ).toBe(false);
+  });
+
+  it("returns false when context value is a nested object", async () => {
+    expect(
+      await evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, { at: { ts: MID } }),
+    ).toBe(false);
+  });
+});
+
 describe("datetime invalid context value", () => {
   it("throws InvalidContextError when context 'at' is not a valid date string", async () => {
     await expect(

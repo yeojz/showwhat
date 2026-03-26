@@ -11,7 +11,8 @@ export async function evaluateDatetime(
 
   if (Object.hasOwn(ctx, condition.key)) {
     const raw = ctx[condition.key];
-    actual = parseDate(condition.key, String(raw));
+    if (typeof raw !== "string") return false;
+    actual = parseDate(condition.key, raw);
   } else if (condition.key === "at") {
     // Default to "now" when the "at" key is absent (preserves existing behavior)
     actual = new Date();
