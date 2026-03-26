@@ -1,5 +1,5 @@
 {
-  "name": "@showwhat/distribution-tests-deno",
+  "name": "@repo/distribution-tests-deno",
   "version": "0.0.0",
   "private": true,
   "type": "module",

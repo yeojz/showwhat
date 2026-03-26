@@ -1,5 +1,5 @@
 {
-  "name": "@showwhat/distribution-tests-bun",
+  "name": "@repo/distribution-tests-bun",
   "version": "0.0.0",
   "private": true,
   "type": "module",

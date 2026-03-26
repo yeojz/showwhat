@@ -12,12 +12,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/showwhat/showwhat.git",
+    "url": "https://github.com/yeojz/showwhat.git",
     "directory": "packages/openfeature"
   },
-  "homepage": "https://github.com/showwhat/showwhat",
+  "homepage": "https://showwhat.yeojz.dev",
   "bugs": {
-    "url": "https://github.com/showwhat/showwhat/issues"
+    "url": "https://github.com/yeojz/showwhat/issues"
   },
   "type": "module",
   "main": "./dist/index.js",

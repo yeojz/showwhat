@@ -12,13 +12,13 @@
       "persistent": true,
       "passThroughEnv": ["PORT"]
     },
-    "@showwhat/docs#build": {
+    "@repo/docs#build": {
       "dependsOn": ["sync:configurator"],
       "outputs": [".vitepress/dist/**"],
       "env": ["VITE_BASE_PATH"]
     },
     "sync:configurator": {
-      "dependsOn": ["@showwhat/webapp#build"],
+      "dependsOn": ["@repo/webapp#build"],
       "cache": false
     },
     "lint": {},

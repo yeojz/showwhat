@@ -1,5 +1,5 @@
 {
-  "name": "@showwhat/distribution-tests-node",
+  "name": "@repo/distribution-tests-node",
   "version": "0.0.0",
   "private": true,
   "type": "module",
