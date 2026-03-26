@@ -2,6 +2,14 @@
   "name": "showwhat",
   "version": "1.0.0",
   "description": "Feature flag resolution engine",
+  "keywords": [
+    "feature-flags",
+    "feature-toggles",
+    "feature-management",
+    "flag-evaluation",
+    "targeting",
+    "showwhat"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

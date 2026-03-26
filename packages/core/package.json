@@ -2,6 +2,14 @@
   "name": "@showwhat/core",
   "version": "1.0.0",
   "description": "Core rule engine and schemas for showwhat",
+  "keywords": [
+    "feature-flags",
+    "feature-toggles",
+    "rule-engine",
+    "schema",
+    "targeting",
+    "showwhat"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",

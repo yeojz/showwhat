@@ -2,6 +2,14 @@
   "name": "@showwhat/configurator",
   "version": "1.0.0",
   "description": "Reusable configurator component library for showwhat feature flags",
+  "keywords": [
+    "feature-flags",
+    "configurator",
+    "react",
+    "ui-components",
+    "feature-management",
+    "showwhat"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
