@@ -99,6 +99,7 @@ export class ShowwhatProvider implements Provider {
         options: {
           data: this.#data,
           evaluators: this.#evaluators,
+          logger: this.#logger,
         },
       });
 

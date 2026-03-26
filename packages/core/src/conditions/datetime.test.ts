@@ -155,4 +155,37 @@ describe("datetime invalid context value", () => {
       evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, { at: "not-a-date" }),
     ).rejects.toThrow('Invalid context value for "at": "not-a-date"');
   });
+
+  it("throws InvalidContextError for offset timezone (+08:00)", async () => {
+    await expect(
+      evaluate(
+        { type: "datetime", key: "at", op: "gte", value: PAST },
+        { at: "2024-01-01T00:00:00+08:00" },
+      ),
+    ).rejects.toThrow('Invalid context value for "at"');
+  });
+
+  it("throws InvalidContextError for negative offset (-05:00)", async () => {
+    await expect(
+      evaluate(
+        { type: "datetime", key: "at", op: "gte", value: PAST },
+        { at: "2024-01-01T00:00:00-05:00" },
+      ),
+    ).rejects.toThrow('Invalid context value for "at"');
+  });
+
+  it("throws InvalidContextError for bare datetime without timezone", async () => {
+    await expect(
+      evaluate(
+        { type: "datetime", key: "at", op: "gte", value: PAST },
+        { at: "2024-01-01T00:00:00" },
+      ),
+    ).rejects.toThrow('Invalid context value for "at"');
+  });
+
+  it("throws InvalidContextError for date-only string", async () => {
+    await expect(
+      evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, { at: "2024-01-01" }),
+    ).rejects.toThrow('Invalid context value for "at"');
+  });
 });
