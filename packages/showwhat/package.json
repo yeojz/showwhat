@@ -1,13 +1,18 @@
 {
   "name": "showwhat",
-  "version": "1.0.0",
-  "description": "Feature flag resolution engine",
+  "version": "1.0.1",
+  "description": "A schema-based resolution engine for configuration and feature flags",
   "keywords": [
     "feature-flags",
     "feature-toggles",
     "feature-management",
+    "config-management",
     "flag-evaluation",
+    "resolution",
+    "engine",
     "targeting",
+    "schema",
+    "specification",
     "showwhat"
   ],
   "license": "MIT",

@@ -1,7 +1,7 @@
 {
   "name": "@showwhat/openfeature",
-  "version": "1.0.0",
-  "description": "OpenFeature provider for showwhat",
+  "version": "1.0.1",
+  "description": "OpenFeature provider for showwhat library",
   "keywords": [
     "feature-flags",
     "openfeature",

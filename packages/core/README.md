@@ -1,8 +1,6 @@
 # @showwhat/core
 
-> **Most users should install [`showwhat`](../showwhat) instead.** This package contains the low-level engine internals. The `showwhat` package re-exports everything from `@showwhat/core` and adds the main `showwhat()` entry point.
-
-Low-level condition engine and schemas for **showwhat** - a lightweight, extensible feature flag library.
+Low-level condition engine and schemas for [`showwhat`](https://www.npmjs.com/package/showwhat) - a lightweight, extensible configuration and feature flag library.
 
 ## Installation
 

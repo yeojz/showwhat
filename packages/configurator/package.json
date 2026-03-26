@@ -1,13 +1,14 @@
 {
   "name": "@showwhat/configurator",
-  "version": "1.0.0",
-  "description": "Reusable configurator component library for showwhat feature flags",
+  "version": "1.0.1",
+  "description": "Reusable configurator component library for showwhat library",
   "keywords": [
     "feature-flags",
     "configurator",
     "react",
     "ui-components",
     "feature-management",
+    "config-management",
     "showwhat"
   ],
   "license": "MIT",
@@ -50,7 +51,6 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "showwhat": "workspace:*",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
     "radix-ui": "^1.4.3",

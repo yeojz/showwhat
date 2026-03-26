@@ -1,12 +1,14 @@
 {
   "name": "@showwhat/core",
-  "version": "1.0.0",
-  "description": "Core rule engine and schemas for showwhat",
+  "version": "1.0.1",
+  "description": "Core rule engine and schemas for showwhat library",
   "keywords": [
     "feature-flags",
     "feature-toggles",
     "rule-engine",
+    "configuration",
     "schema",
+    "specification",
     "targeting",
     "showwhat"
   ],
