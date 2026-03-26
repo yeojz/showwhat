@@ -81,7 +81,7 @@ jobs:
 
       - name: Get published version
         id: version
-        run: echo "version=$(jq -r '.version' packages/otplib/package.json)" >> $GITHUB_OUTPUT
+        run: echo "version=$(jq -r '.version' packages/showwhat/package.json)" >> $GITHUB_OUTPUT
 
       - name: Pack release artifacts
         run: |
