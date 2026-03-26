@@ -6,10 +6,10 @@
   "description": "showwhat documentation site",
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev --port ${PORT:-5173}",
-    "sync:configurator": "mkdir -p public/configurator && cp -r ../webapp/dist/* public/configurator/",
     "build": "vitepress build",
-    "preview": "vitepress preview"
+    "dev": "vitepress dev --port ${PORT:-5173}",
+    "preview": "vitepress preview",
+    "sync:configurator": "mkdir -p public/configurator && cp -r ../webapp/dist/* public/configurator/"
   },
   "devDependencies": {
     "vitepress": "^1.6.3",

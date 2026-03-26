@@ -37,6 +37,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "clean": "rm -rf dist .tsbuildinfo",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit"
   },

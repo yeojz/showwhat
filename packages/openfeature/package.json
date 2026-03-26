@@ -36,8 +36,9 @@
   ],
   "scripts": {
     "build": "tsup",
-    "test": "vitest run --coverage",
+    "clean": "rm -rf dist .tsbuildinfo",
     "lint": "eslint src",
+    "test": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

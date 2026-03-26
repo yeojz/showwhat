@@ -35,9 +35,10 @@
   ],
   "scripts": {
     "build": "tsup",
-    "postbuild": "node scripts/assert-package-artifacts.mjs",
+    "clean": "rm -rf dist .tsbuildinfo",
     "dev": "tsup --watch",
     "lint": "eslint src",
+    "postbuild": "node scripts/assert-package-artifacts.mjs",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
