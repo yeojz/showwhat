@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Presets } from "@showwhat/core";
-import type { Definitions } from "@showwhat/core/schemas";
+import type { Presets } from "showwhat";
+import type { Definitions } from "showwhat";
 
 // Capture useFileImport / useFileExport return values
 const mockImportFile = vi.fn();

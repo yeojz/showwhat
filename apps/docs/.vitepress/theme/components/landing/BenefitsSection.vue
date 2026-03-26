@@ -55,7 +55,7 @@
           <h3>Extensible conditions</h3>
           <p>
             Built-in primitives for strings, numbers, datetimes, and booleans. <br />Shorthand types
-            for environments and time windows. Add your own with <code>extendEvaluators()</code>.
+            for environments and time windows. Add your own with <code>registerEvaluators()</code>.
           </p>
         </div>
         <div class="skip-card">

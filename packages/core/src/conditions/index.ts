@@ -26,16 +26,3 @@ export const builtinEvaluators: ConditionEvaluators<BuiltinCondition["type"]> = 
   startAt: startAtEvaluator,
   endAt: endAtEvaluator,
 };
-
-const COMPOSITE_TYPES = new Set(["and", "or"]);
-
-export function extendEvaluators<T extends string>(
-  extra: ConditionEvaluators<T>,
-): ConditionEvaluators<BuiltinCondition["type"] | T> {
-  for (const key of Object.keys(extra)) {
-    if (COMPOSITE_TYPES.has(key)) {
-      throw new Error(`Cannot register reserved condition type "${key}"`);
-    }
-  }
-  return { ...builtinEvaluators, ...extra };
-}

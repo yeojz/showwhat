@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ErrorCode, StandardResolutionReasons } from "@openfeature/server-sdk";
-import type { DefinitionReader, Definition, Definitions } from "@showwhat/core";
-import { MemoryData } from "@showwhat/core";
+import type { DefinitionReader, Definition, Definitions } from "showwhat";
+import { MemoryData } from "showwhat";
 import { ShowwhatProvider } from "./provider.js";
 
 async function createProvider(definitions: Record<string, unknown>): Promise<ShowwhatProvider> {

@@ -1,5 +1,5 @@
 import type { EvaluationContext } from "@openfeature/server-sdk";
-import type { Context } from "@showwhat/core";
+import type { Context } from "showwhat";
 
 /**
  * Flattens an OpenFeature EvaluationContext into a showwhat Context.

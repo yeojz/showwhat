@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CustomConditionEditor } from "./CustomConditionEditor.js";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 
 describe("CustomConditionEditor", () => {
   it("renders with a custom condition showing type and args", () => {

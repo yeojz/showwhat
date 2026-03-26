@@ -8,21 +8,22 @@ export async function evaluateString(
 ): Promise<boolean> {
   if (!Object.hasOwn(ctx, condition.key)) return false;
   const actual = String(ctx[condition.key]);
-  const values = Array.isArray(condition.value) ? condition.value : [condition.value];
 
   switch (condition.op) {
     case "eq":
-      return values.includes(actual);
+      return actual === condition.value;
     case "neq":
-      return !values.includes(actual);
+      return actual !== condition.value;
+    case "in":
+      return (condition.value as string[]).includes(actual);
+    case "nin":
+      return !(condition.value as string[]).includes(actual);
     case "regex":
-      return values.some((p) => {
-        try {
-          return new RegExp(p).test(actual);
-        } catch {
-          return false;
-        }
-      });
+      try {
+        return new RegExp(condition.value as string).test(actual);
+      } catch {
+        return false;
+      }
   }
 }
 

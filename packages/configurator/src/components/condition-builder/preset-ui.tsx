@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from "react";
 import type { ComponentType } from "react";
-import type { Presets } from "@showwhat/core";
-import { PRIMITIVE_TYPES } from "@showwhat/core";
+import type { Presets } from "showwhat";
+import { PRIMITIVE_TYPES } from "showwhat";
 import type { ConditionTypeMeta } from "./condition-registry.js";
 import type { ConditionValueEditorProps } from "../../types.js";
 import type { ConditionExtensions } from "./ConditionExtensionsContext.js";
@@ -9,6 +9,7 @@ import { ConditionRow } from "./ConditionRow.js";
 import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
 import { TagInput } from "./TagInput.js";
+import { NumberTagInput } from "./NumberTagInput.js";
 import { Input } from "../ui/input.js";
 import { DateTimeInput } from "../common/DateTimeInput.js";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.js";
@@ -71,16 +72,46 @@ export function createPresetEditor(
 
     switch (builtinType) {
       case "string": {
-        const isRegex = rec.op === "regex";
+        const op = rec.op as string;
+        const isArray = op === "in" || op === "nin";
+        const isRegex = op === "regex";
+        const handleOpChange = (newOp: string) => {
+          const isArrayOp = newOp === "in" || newOp === "nin";
+          const currentValue = rec.value;
+          const coercedValue = isArrayOp
+            ? Array.isArray(currentValue)
+              ? currentValue
+              : currentValue
+                ? [String(currentValue)]
+                : []
+            : Array.isArray(currentValue)
+              ? ((currentValue as string[])[0] ?? "")
+              : currentValue;
+          onChange(
+            buildCustomCondition({
+              ...rec,
+              op: newOp,
+              value: coercedValue,
+              key: presetKey,
+              type: presetName,
+            }),
+          );
+        };
         return (
           <ConditionRow>
             <KeyInput value={presetKey} disabled />
             <OperatorSelect
               value={String(rec.op ?? "eq")}
-              onChange={(v) => update("op", v)}
+              onChange={handleOpChange}
               options={STRING_OPS}
             />
-            {isRegex ? (
+            {isArray ? (
+              <TagInput
+                value={(rec.value as string | string[]) ?? ""}
+                onChange={(v) => update("value", v)}
+                placeholder={`e.g. ${presetKey} value`}
+              />
+            ) : isRegex ? (
               <Input
                 className="h-8 font-mono text-sm"
                 value={String(rec.value ?? "")}
@@ -88,33 +119,69 @@ export function createPresetEditor(
                 onChange={(e) => update("value", e.target.value)}
               />
             ) : (
-              <TagInput
-                value={(rec.value as string | string[]) ?? ""}
-                onChange={(v) => update("value", v)}
+              <Input
+                className="h-8 text-sm"
+                value={String(rec.value ?? "")}
                 placeholder={`e.g. ${presetKey} value`}
+                onChange={(e) => update("value", e.target.value)}
               />
             )}
           </ConditionRow>
         );
       }
-      case "number":
+      case "number": {
+        const numOp = rec.op as string;
+        const isNumArray = numOp === "in" || numOp === "nin";
+        const handleNumOpChange = (newOp: string) => {
+          const isArrayOp = newOp === "in" || newOp === "nin";
+          const currentValue = rec.value;
+          const coercedValue = isArrayOp
+            ? Array.isArray(currentValue)
+              ? currentValue
+              : currentValue !== undefined && currentValue !== ""
+                ? [Number(currentValue)]
+                : []
+            : Array.isArray(currentValue)
+              ? ((currentValue as number[])[0] ?? 0)
+              : currentValue;
+          onChange(
+            buildCustomCondition({
+              ...rec,
+              op: newOp,
+              value: coercedValue,
+              key: presetKey,
+              type: presetName,
+            }),
+          );
+        };
         return (
           <ConditionRow>
             <KeyInput value={presetKey} disabled />
             <OperatorSelect
               value={String(rec.op ?? "eq")}
-              onChange={(v) => update("op", v)}
+              onChange={handleNumOpChange}
               options={NUMBER_OPS}
             />
-            <Input
-              type="number"
-              className="h-8 font-mono text-sm"
-              value={rec.value !== undefined ? String(rec.value) : ""}
-              placeholder="e.g. 100"
-              onChange={(e) => update("value", e.target.value === "" ? "" : Number(e.target.value))}
-            />
+            {isNumArray ? (
+              <NumberTagInput
+                value={(rec.value as number | number[]) ?? []}
+                onChange={(v) => update("value", v)}
+                placeholder={`e.g. ${presetKey} value`}
+              />
+            ) : (
+              <Input
+                type="number"
+                className="h-8 font-mono text-sm"
+                value={rec.value !== undefined ? String(rec.value) : ""}
+                placeholder="e.g. 100"
+                onChange={(e) =>
+                  update("value", e.target.value === "" ? "" : Number(e.target.value))
+                }
+              />
+            )}
           </ConditionRow>
         );
+      }
       case "bool":
         return (
           <ConditionRow>

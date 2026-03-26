@@ -1,4 +1,4 @@
-import type { Definition, Definitions } from "@showwhat/core/schemas";
+import type { Definition, Definitions } from "showwhat";
 
 export interface ValidationIssue {
   path: (string | number)[];

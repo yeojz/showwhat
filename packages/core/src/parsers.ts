@@ -36,7 +36,7 @@ export async function parseObject(raw: unknown): Promise<FileFormat> {
   return result.data;
 }
 
-export async function parsePresetsFile(raw: unknown): Promise<Presets> {
+export async function parsePresetsObject(raw: unknown): Promise<Presets> {
   assertPlainObject(raw, "Expected object with presets key");
   const result = PresetsSchema.safeParse(raw.presets ?? {});
   if (!result.success) {
@@ -46,5 +46,5 @@ export async function parsePresetsFile(raw: unknown): Promise<Presets> {
 }
 
 export async function parsePresetsYaml(input: string): Promise<Presets> {
-  return parsePresetsFile(loadYaml(input));
+  return parsePresetsObject(loadYaml(input));
 }

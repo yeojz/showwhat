@@ -7,15 +7,10 @@ export async function evaluateEnv(
   condition: EnvCondition,
   ctx: Readonly<Context>,
 ): Promise<boolean> {
-  return evaluateString(
-    {
-      type: "string",
-      key: "env",
-      op: "eq",
-      value: condition.value,
-    },
-    ctx,
-  );
+  if (Array.isArray(condition.value)) {
+    return evaluateString({ type: "string", key: "env", op: "in", value: condition.value }, ctx);
+  }
+  return evaluateString({ type: "string", key: "env", op: "eq", value: condition.value }, ctx);
 }
 
 export const envEvaluator: ConditionEvaluator = ({ condition, context }) =>

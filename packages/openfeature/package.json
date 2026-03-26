@@ -34,7 +34,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@showwhat/core": "workspace:*"
+    "showwhat": "workspace:*"
   },
   "peerDependencies": {
     "@openfeature/server-sdk": "^1.0.0"

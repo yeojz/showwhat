@@ -1,6 +1,6 @@
 import { memo } from "react";
-import type { Condition } from "@showwhat/core/schemas";
-import { isAndCondition, isOrCondition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
+import { isAndCondition, isOrCondition } from "showwhat";
 import { X } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConditionValueEditor } from "./ConditionValueEditor.js";

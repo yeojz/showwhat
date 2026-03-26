@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { VariationCard } from "./VariationCard.js";
-import type { Variation } from "@showwhat/core/schemas";
+import type { Variation } from "showwhat";
 
 describe("VariationCard", () => {
   const defaultVariation: Variation = {

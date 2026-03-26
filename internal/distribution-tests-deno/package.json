@@ -4,11 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@showwhat/core": "file:../../packages/core"
-  },
-  "pnpm": {
-    "overrides": {
-      "@showwhat/core": "file:../../packages/core"
-    }
+    "js-yaml": "^4.1.0",
+    "zod": "^4.0.0"
   }
 }

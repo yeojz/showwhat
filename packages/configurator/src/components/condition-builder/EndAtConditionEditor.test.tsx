@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { EndAtConditionEditor } from "./EndAtConditionEditor.js";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 
 describe("EndAtConditionEditor", () => {
   it("renders with an endAt condition", () => {

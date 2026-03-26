@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NumberConditionEditor } from "./NumberConditionEditor.js";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 
 describe("NumberConditionEditor", () => {
   it("renders with a number condition", () => {

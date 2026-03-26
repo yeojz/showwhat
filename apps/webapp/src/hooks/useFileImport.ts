@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
-import { parseYaml, parseObject } from "@showwhat/core";
-import type { Presets } from "@showwhat/core";
-import type { Definitions } from "@showwhat/core/schemas";
+import { parseYaml, parseObject } from "showwhat";
+import type { Presets } from "showwhat";
+import type { Definitions } from "showwhat";
 
 export type FileImportResult = {
   definitions: Definitions;

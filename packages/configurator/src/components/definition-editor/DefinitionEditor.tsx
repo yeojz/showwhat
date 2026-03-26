@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { Variation } from "@showwhat/core/schemas";
+import type { Variation } from "showwhat";
 import { AlertTriangle, Plus, Save, Undo2 } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConfirmDialog } from "../common/ConfirmDialog.js";

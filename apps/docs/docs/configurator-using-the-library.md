@@ -8,7 +8,7 @@ outline: [2, 3]
 The configurator UI is published as `@showwhat/configurator` — a React component library you can embed in your own applications.
 
 ```bash
-pnpm add @showwhat/configurator
+npm install @showwhat/configurator
 ```
 
 ```ts

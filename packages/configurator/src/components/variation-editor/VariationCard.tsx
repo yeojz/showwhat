@@ -1,5 +1,5 @@
 import { memo, useState } from "react";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { ChevronRight, Eye, GripVertical, Trash2 } from "lucide-react";
 import { Button } from "../ui/button.js";

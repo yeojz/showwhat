@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
-import { PresetsSchema } from "@showwhat/core";
-import type { Presets } from "@showwhat/core";
+import { PresetsSchema } from "showwhat";
+import type { Presets } from "showwhat";
 import yaml from "js-yaml";
 
 type PresetStoreState = {

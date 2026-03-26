@@ -175,16 +175,7 @@ jobs:
 
   all-checks:
     if: always()
-    needs:
-      [
-        lint,
-        typecheck,
-        build-and-test,
-        test-node,
-        test-bun,
-        test-deno,
-        security-audit,
-      ]
+    needs: [lint, typecheck, build-and-test, test-node, test-bun, test-deno, security-audit]
     runs-on: ubuntu-latest
     steps:
       - name: Verify all required checks passed

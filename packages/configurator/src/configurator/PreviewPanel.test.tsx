@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
-import type { Definitions } from "@showwhat/core/schemas";
+import type { Definitions } from "showwhat";
 import type { ConfiguratorStore, ConfiguratorStoreSource } from "./types.js";
 import { StoreSourceContext, ActionStateContext } from "./context.js";
 import type { ActionStateContextValue } from "./context.js";
@@ -10,7 +10,7 @@ import { PreviewPanel } from "./PreviewPanel.js";
 let resolvePromise: (value: unknown) => void;
 let rejectPromise: (reason: unknown) => void;
 
-vi.mock("@showwhat/core", () => ({
+vi.mock("showwhat", () => ({
   resolve: vi.fn(
     () =>
       new Promise((res, rej) => {
@@ -232,7 +232,7 @@ describe("PreviewPanel", () => {
   });
 
   it("should show inactive result when definition is inactive", async () => {
-    const { DefinitionInactiveError } = await import("@showwhat/core");
+    const { DefinitionInactiveError } = await import("showwhat");
     renderWithStore(makeStore());
 
     const button = screen.getByRole("button", { name: /resolve/i });
@@ -248,7 +248,7 @@ describe("PreviewPanel", () => {
   });
 
   it("should show no-match result when variation is not found", async () => {
-    const { VariationNotFoundError } = await import("@showwhat/core");
+    const { VariationNotFoundError } = await import("showwhat");
     renderWithStore(makeStore());
 
     const button = screen.getByRole("button", { name: /resolve/i });
@@ -264,7 +264,7 @@ describe("PreviewPanel", () => {
   });
 
   it("should show error result when definition is not found", async () => {
-    const { DefinitionNotFoundError } = await import("@showwhat/core");
+    const { DefinitionNotFoundError } = await import("showwhat");
     renderWithStore(makeStore());
 
     const button = screen.getByRole("button", { name: /resolve/i });
@@ -451,7 +451,7 @@ describe("PreviewPanel", () => {
   });
 
   it("should pass fallback from condition simulator to resolve", async () => {
-    const { resolve: mockResolve } = await import("@showwhat/core");
+    const { resolve: mockResolve } = await import("showwhat");
     renderWithStore(makeStore());
 
     openSimulator();
@@ -478,7 +478,7 @@ describe("PreviewPanel", () => {
   });
 
   it("should not pass fallback when condition simulator is empty", async () => {
-    const { resolve: mockResolve } = await import("@showwhat/core");
+    const { resolve: mockResolve } = await import("showwhat");
     renderWithStore(makeStore());
 
     const button = screen.getByRole("button", { name: /resolve/i });

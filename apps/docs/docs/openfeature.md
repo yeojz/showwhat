@@ -7,17 +7,17 @@ title: OpenFeature
 Use showwhat through the standard [OpenFeature](https://openfeature.dev/) Server SDK. The `@showwhat/openfeature` package provides a `Provider` that maps OpenFeature evaluations to showwhat's rule engine.
 
 ```bash
-pnpm add @showwhat/openfeature @openfeature/server-sdk
+npm install @showwhat/openfeature @openfeature/server-sdk
 ```
 
-`@openfeature/server-sdk` is a peer dependency (^1.0.0).
+`@openfeature/server-sdk` is a peer dependency.
 
 ## Quick start
 
 ```ts
 import { OpenFeature } from "@openfeature/server-sdk";
 import { ShowwhatProvider } from "@showwhat/openfeature";
-import { MemoryData } from "@showwhat/core";
+import { MemoryData } from "showwhat";
 
 const data = await MemoryData.fromYaml(yamlString);
 
@@ -39,7 +39,7 @@ const enabled = await client.getBooleanValue("checkout_v2", false, {
 
 ```ts
 import { ShowwhatProvider } from "@showwhat/openfeature";
-import { MemoryData, extendEvaluators } from "@showwhat/core";
+import { MemoryData, registerEvaluators } from "showwhat";
 
 const data = await MemoryData.fromObject({
   definitions: {
@@ -51,7 +51,7 @@ const data = await MemoryData.fromObject({
 
 const provider = new ShowwhatProvider({
   data,
-  evaluators: extendEvaluators({ tier: tierEvaluator }),
+  evaluators: registerEvaluators({ tier: tierEvaluator }),
 });
 ```
 
@@ -116,10 +116,10 @@ The provider maps showwhat results to OpenFeature resolution reasons:
 
 Any `DefinitionReader` works:
 
-| Source       | Package          | Description                                                                                  |
-| ------------ | ---------------- | -------------------------------------------------------------------------------------------- |
-| `MemoryData` | `@showwhat/core` | In-memory definitions (tests, embeds)                                                        |
-| Custom       | -                | Implement `DefinitionReader` ([examples](/docs/custom-data-sources#example-implementations)) |
+| Source       | Package    | Description                                                                                  |
+| ------------ | ---------- | -------------------------------------------------------------------------------------------- |
+| `MemoryData` | `showwhat` | In-memory definitions (tests, embeds)                                                        |
+| Custom       | -          | Implement `DefinitionReader` ([examples](/docs/custom-data-sources#example-implementations)) |
 
 ## Exports
 

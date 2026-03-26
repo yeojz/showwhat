@@ -1,6 +1,6 @@
 <picture>
-  <source srcset="./public/logo-v2-w.svg" media="(prefers-color-scheme: dark)">
-  <img src="./public/logo-v2-b.svg" alt="showwhat-logo" width="100">
+  <source srcset="public/logo-v2-w.svg" media="(prefers-color-scheme: dark)">
+  <img src="public/logo-v2-b.svg" alt="showwhat-logo" width="100">
 </picture>
 
 # showwhat
@@ -15,20 +15,27 @@ Define feature configs as **variations with conditions** in YAML or JSON. At run
 
 | Package                                             | Description                                              |
 | --------------------------------------------------- | -------------------------------------------------------- |
+| [`showwhat`](./packages/showwhat)                   | Resolution engine and main API                           |
 | [`@showwhat/core`](./packages/core)                 | Rule engine, schemas, parsers, and in-memory data source |
-| [`@showwhat/configurator`](./packages/configurator) | Reusable React UI library for editing definitions        |
-| [`@showwhat/openfeature`](./packages/openfeature)   | OpenFeature provider                                     |
-| [`@showwhat/webapp`](./apps/webapp)                 | File-based web shell for the configurator                |
+| [`@showwhat/configurator`](./packages/configurator) | React UI library for visual rule editing                 |
+| [`@showwhat/openfeature`](./packages/openfeature)   | OpenFeature provider integration                         |
+| [`@showwhat/webapp`](./apps/webapp)                 | Web app for managing definitions                         |
 | [`@showwhat/docs`](./apps/docs)                     | Documentation site                                       |
 
 ## Quick start
 
 ```bash
-pnpm add @showwhat/core
+pnpm install showwhat
+pnpm add showwhat
+yarn add showwhat
+
+# Other runtimes
+bun add showwhat
+deno install npm:showwhat
 ```
 
 ```ts
-import { showwhat, MemoryData } from "@showwhat/core";
+import { showwhat, MemoryData } from "showwhat";
 
 const data = await MemoryData.fromYaml(`
 definitions:
@@ -70,23 +77,6 @@ definitions:
 `env` · `string` · `number` · `bool` · `datetime` · `startAt` · `endAt` · `and` · `or`
 
 See the [Conditions guide](https://showwhat.yeojz.dev/docs/conditions) for full details.
-
-## Monorepo
-
-```
-packages/
-  core/        @showwhat/core
-apps/
-  webapp/   @showwhat/webapp
-```
-
-Built with [Turbo](https://turbo.build), [tsup](https://tsup.egoist.dev), and [Vitest](https://vitest.dev).
-
-```bash
-pnpm install
-pnpm build
-pnpm test
-```
 
 ## Security
 

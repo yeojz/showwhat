@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseYaml, parseObject, parsePresetsFile, parsePresetsYaml } from "./parsers.js";
+import { parseYaml, parseObject, parsePresetsObject, parsePresetsYaml } from "./parsers.js";
 import {
   ParseError,
   DataError,
@@ -204,27 +204,27 @@ definitions:
   });
 });
 
-describe("parsePresetsFile", () => {
+describe("parsePresetsObject", () => {
   it("parses valid presets object", async () => {
-    const result = await parsePresetsFile({
+    const result = await parsePresetsObject({
       presets: { tier: { type: "string", key: "tier" } },
     });
     expect(result).toEqual({ tier: { type: "string", key: "tier" } });
   });
 
   it("returns empty map when presets key is missing", async () => {
-    const result = await parsePresetsFile({});
+    const result = await parsePresetsObject({});
     expect(result).toEqual({});
   });
 
   it("throws on non-object input", async () => {
-    await expect(parsePresetsFile("bad")).rejects.toThrow();
-    await expect(parsePresetsFile(null)).rejects.toThrow();
-    await expect(parsePresetsFile([1])).rejects.toThrow();
+    await expect(parsePresetsObject("bad")).rejects.toThrow();
+    await expect(parsePresetsObject(null)).rejects.toThrow();
+    await expect(parsePresetsObject([1])).rejects.toThrow();
   });
 
   it("throws on invalid presets shape", async () => {
-    await expect(parsePresetsFile({ presets: { tier: { type: "" } } })).rejects.toThrow();
+    await expect(parsePresetsObject({ presets: { tier: { type: "" } } })).rejects.toThrow();
   });
 });
 

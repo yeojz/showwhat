@@ -10,6 +10,8 @@ import { buildCustomCondition } from "./condition-builders.js";
 export const OP_OPTIONS = [
   { value: "eq", label: "eq" },
   { value: "neq", label: "neq" },
+  { value: "in", label: "in" },
+  { value: "nin", label: "nin" },
   { value: "regex", label: "regex" },
 ];
 
@@ -28,7 +30,26 @@ export function StringConditionEditor({ condition, onChange }: ConditionValueEdi
     },
     [rec, onChange],
   );
-  const isRegex = rec.op === "regex";
+  const handleOpChange = useCallback(
+    (newOp: string) => {
+      const isArrayOp = newOp === "in" || newOp === "nin";
+      const currentValue = rec.value;
+      const coercedValue = isArrayOp
+        ? Array.isArray(currentValue)
+          ? currentValue
+          : currentValue
+            ? [String(currentValue)]
+            : []
+        : Array.isArray(currentValue)
+          ? ((currentValue as string[])[0] ?? "")
+          : currentValue;
+      onChange(buildCustomCondition({ ...rec, op: newOp, value: coercedValue, type: "string" }));
+    },
+    [rec, onChange],
+  );
+  const op = rec.op as string;
+  const isArray = op === "in" || op === "nin";
+  const isRegex = op === "regex";
 
   return (
     <ConditionRow>
@@ -39,10 +60,16 @@ export function StringConditionEditor({ condition, onChange }: ConditionValueEdi
       />
       <OperatorSelect
         value={String(rec.op ?? "eq")}
-        onChange={(v) => update("op", v)}
+        onChange={handleOpChange}
         options={OP_OPTIONS}
       />
-      {isRegex ? (
+      {isArray ? (
+        <TagInput
+          value={(rec.value as string | string[]) ?? ""}
+          onChange={(v) => update("value", v)}
+          placeholder="e.g. user-123"
+        />
+      ) : isRegex ? (
         <Input
           className="h-8 font-mono text-sm"
           value={String(rec.value ?? "")}
@@ -50,10 +77,11 @@ export function StringConditionEditor({ condition, onChange }: ConditionValueEdi
           onChange={(e) => update("value", e.target.value)}
         />
       ) : (
-        <TagInput
-          value={(rec.value as string | string[]) ?? ""}
-          onChange={(v) => update("value", v)}
+        <Input
+          className="h-8 text-sm"
+          value={String(rec.value ?? "")}
           placeholder="e.g. user-123"
+          onChange={(e) => update("value", e.target.value)}
         />
       )}
     </ConditionRow>

@@ -5,7 +5,7 @@ import { StoreSourceContext, ActionStateContext } from "./context.js";
 import type { ActionStateContextValue } from "./context.js";
 import { useConfiguratorSelector } from "./useConfiguratorSelector.js";
 import type { ConfiguratorStore, ConfiguratorStoreSource } from "./types.js";
-import type { Definition, Definitions } from "@showwhat/core/schemas";
+import type { Definition, Definitions } from "showwhat";
 
 const baseDef: Definition = { variations: [{ value: "on" }] };
 

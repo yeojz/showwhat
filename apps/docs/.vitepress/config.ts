@@ -98,16 +98,9 @@ export default defineConfig({
           text: "Getting Started",
           items: [
             { text: "Introduction", link: "/docs/" },
+            { text: "Sample Config", link: "/docs/sample-config" },
             { text: "Security", link: "/docs/security" },
             { text: "Comparison", link: "/docs/comparison" },
-          ],
-        },
-        {
-          text: "Configurator",
-          items: [
-            { text: "Overview", link: "/docs/configurator" },
-            { text: "Using the App", link: "/docs/configurator-using-the-app" },
-            { text: "Using the Library", link: "/docs/configurator-using-the-library" },
           ],
         },
         {
@@ -118,6 +111,14 @@ export default defineConfig({
             { text: "Context", link: "/docs/context" },
             { text: "Presets", link: "/docs/presets" },
             { text: "Data Sources", link: "/docs/data-sources" },
+          ],
+        },
+        {
+          text: "Configurator",
+          items: [
+            { text: "Overview", link: "/docs/configurator" },
+            { text: "Using the App", link: "/docs/configurator-using-the-app" },
+            { text: "Using the Library", link: "/docs/configurator-using-the-library" },
           ],
         },
         {

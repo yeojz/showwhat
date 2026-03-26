@@ -72,7 +72,7 @@ Preset names cannot collide with built-in or reserved condition types (`string`,
 Use `createPresetConditions` to generate evaluators from your preset map, then merge them with the default conditions:
 
 ```ts
-import { showwhat, extendEvaluators, createPresetConditions } from "@showwhat/core";
+import { showwhat, registerEvaluators, createPresetConditions } from "showwhat";
 
 const presets = {
   tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
@@ -86,7 +86,7 @@ const result = await showwhat({
   context: { tier: "pro", user_age: 25 },
   options: {
     data,
-    evaluators: extendEvaluators(presetConditions),
+    evaluators: registerEvaluators(presetConditions),
   },
 });
 ```
@@ -128,16 +128,16 @@ With extensions provided, presets appear in the "Add condition" menu with friend
 
 | Type                  | Import from              | Description                                                          |
 | --------------------- | ------------------------ | -------------------------------------------------------------------- |
-| `Presets`             | `@showwhat/core`         | `Record<string, PresetDefinition>`                                   |
-| `PresetDefinition`    | `@showwhat/core`         | `{ type: string; key?: string; defaults?: Record<string, unknown> }` |
-| `BuiltinPresetType`   | `@showwhat/core`         | `"string" \| "number" \| "bool" \| "datetime"`                       |
+| `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`                                   |
+| `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string; defaults?: Record<string, unknown> }` |
+| `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"`                       |
 | `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                           |
 
 ### Functions
 
 | Function                    | Import from              | Description                                                      |
 | --------------------------- | ------------------------ | ---------------------------------------------------------------- |
-| `createPresetConditions`    | `@showwhat/core`         | Creates evaluators from a preset map for use with `showwhat()`   |
+| `createPresetConditions`    | `showwhat`               | Creates evaluators from a preset map for use with `showwhat()`   |
 | `createPresetUI`            | `@showwhat/configurator` | Creates condition meta and editor overrides for the Configurator |
 | `createPresetConditionMeta` | `@showwhat/configurator` | Creates only the condition meta entries (without editors)        |
 
@@ -146,7 +146,7 @@ With extensions provided, presets appear in the "Add condition" menu with friend
 Use `PresetsSchema` (Zod) to validate preset definitions at runtime:
 
 ```ts
-import { PresetsSchema } from "@showwhat/core";
+import { PresetsSchema } from "showwhat";
 
 const result = PresetsSchema.safeParse(input);
 if (!result.success) {

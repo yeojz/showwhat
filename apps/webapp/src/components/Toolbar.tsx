@@ -14,8 +14,8 @@ import { useShallow } from "zustand/react/shallow";
 import { useFileImport } from "../hooks/useFileImport.js";
 import { useFileExport } from "../hooks/useFileExport.js";
 import { useDefinitionStore } from "../store/definition-store.js";
-import type { Presets } from "@showwhat/core";
-import type { Definitions } from "@showwhat/core/schemas";
+import type { Presets } from "showwhat";
+import type { Definitions } from "showwhat";
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 

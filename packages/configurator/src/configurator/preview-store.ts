@@ -1,4 +1,4 @@
-import type { Resolution } from "@showwhat/core";
+import type { Resolution } from "showwhat";
 
 export type PreviewResult =
   | {

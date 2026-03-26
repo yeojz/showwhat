@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { DefinitionList } from "./DefinitionList.js";
-import type { Definitions } from "@showwhat/core/schemas";
+import type { Definitions } from "showwhat";
 
 const testDefinitions: Definitions = {
   "feature-a": { variations: [{ value: true }, { value: false }] },

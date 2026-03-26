@@ -9,7 +9,7 @@ An in-memory data source. Parse YAML or JSON directly — no filesystem, no I/O 
 ## From YAML
 
 ```ts
-import { MemoryData } from "@showwhat/core";
+import { MemoryData } from "showwhat";
 
 const data = await MemoryData.fromYaml(`
 definitions:
@@ -26,7 +26,7 @@ definitions:
 ## From an object
 
 ```ts
-import { MemoryData } from "@showwhat/core";
+import { MemoryData } from "showwhat";
 
 const data = await MemoryData.fromObject({
   definitions: {

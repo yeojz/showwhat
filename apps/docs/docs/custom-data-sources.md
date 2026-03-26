@@ -64,7 +64,7 @@ type DefinitionData = DefinitionReader & DefinitionWriter;
 You can check at runtime whether a reader also supports writes:
 
 ```ts
-import { isWritable } from "@showwhat/core";
+import { isWritable } from "showwhat";
 
 if (isWritable(data)) {
   await data.put("new_flag", definition);
@@ -76,7 +76,7 @@ if (isWritable(data)) {
 Pass your data source via the `data` option — the same way you'd use `MemoryData`:
 
 ```ts
-import { showwhat } from "@showwhat/core";
+import { showwhat } from "showwhat";
 
 const data = new MyApiData({ baseUrl: "https://api.example.com/flags" });
 
@@ -97,8 +97,8 @@ Read all definitions from one YAML or JSON file on disk:
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { parseYaml, parseObject } from "@showwhat/core";
-import type { DefinitionReader, Definition, Definitions } from "@showwhat/core";
+import { parseYaml, parseObject } from "showwhat";
+import type { DefinitionReader, Definition, Definitions } from "showwhat";
 
 class FileData implements DefinitionReader {
   private defs: Definitions | null = null;
@@ -147,8 +147,8 @@ flags/
 ```ts
 import { readdir, readFile } from "node:fs/promises";
 import { join, parse as parsePath } from "node:path";
-import { parseYaml, parseObject } from "@showwhat/core";
-import type { DefinitionReader, Definition, Definitions } from "@showwhat/core";
+import { parseYaml, parseObject } from "showwhat";
+import type { DefinitionReader, Definition, Definitions } from "showwhat";
 
 class KeyedFileData implements DefinitionReader {
   private extensions = new Set([".yaml", ".yml", ".json"]);
@@ -191,8 +191,8 @@ class KeyedFileData implements DefinitionReader {
 Fetch definitions from a remote endpoint:
 
 ```ts
-import { parseObject } from "@showwhat/core";
-import type { DefinitionReader, Definition, Definitions } from "@showwhat/core";
+import { parseObject } from "showwhat";
+import type { DefinitionReader, Definition, Definitions } from "showwhat";
 
 class HttpData implements DefinitionReader {
   constructor(private baseUrl: string) {}

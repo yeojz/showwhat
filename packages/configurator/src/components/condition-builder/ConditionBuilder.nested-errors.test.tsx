@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ConditionBuilder } from "./ConditionBuilder.js";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import type { ValidationIssueDisplay } from "../../types.js";
 
 describe("ConditionBuilder nested error propagation", () => {

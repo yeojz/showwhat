@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Condition, Definitions } from "@showwhat/core/schemas";
+import type { Condition, Definitions } from "showwhat";
 import { AUTO_ID_PREFIX, ensureIds, isAutoId, stripAutoIds } from "./id.js";
 
 describe("isAutoId", () => {

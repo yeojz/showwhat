@@ -17,7 +17,14 @@ See [Comparison](/docs/comparison) for how this differs from feature flag platfo
 Install the core package:
 
 ```bash
-pnpm add @showwhat/core
+# Node.js
+npm install showwhat
+pnpm add showwhat
+yarn add showwhat
+
+# Other runtimes
+bun add showwhat
+deno install npm:showwhat
 ```
 
 ### Your first definition
@@ -57,7 +64,7 @@ Each definition has **variations** evaluated top-to-bottom. The first variation 
 ### Resolve a definition
 
 ```ts
-import { showwhat, MemoryData } from "@showwhat/core";
+import { showwhat, MemoryData } from "showwhat";
 
 const data = await MemoryData.fromYaml(`
 definitions:

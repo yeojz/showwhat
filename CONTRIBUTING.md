@@ -1,5 +1,7 @@
 # Contributing
 
+Thank you for your interest in contributing to showhat! This guide covers everything you need to get started.
+
 ## Setup
 
 ```bash
@@ -51,8 +53,8 @@ apps/docs/              # @showwhat/docs — VitePress documentation site
 
 - `type` for data shapes, props, options, and return types
 - `interface` for contracts meant to be implemented or extended (e.g. `DefinitionReader`, `ConfiguratorStore`, `ConditionTypeMeta`)
-- No `enum` — use string unions
-- No `any` — use `unknown`
+- No `enum` - use string unions
+- No `any` - use `unknown`
 - No `@ts-ignore` or `@ts-expect-error`
 
 ### Comments
@@ -72,8 +74,6 @@ apps/docs/              # @showwhat/docs — VitePress documentation site
 
 - `schemas/` — Zod schemas and types (no imports from `conditions/`)
 - `conditions/` — evaluator logic (imports types from `schemas/`)
-- `data.ts` — `DefinitionReader`, `DefinitionWriter`, `DefinitionData` interfaces + `MemoryData` class
-- Exports: `@showwhat/core`, `@showwhat/core/schemas`, `@showwhat/core/data`
 
 ### Configurator (`packages/configurator`)
 
@@ -83,40 +83,33 @@ apps/docs/              # @showwhat/docs — VitePress documentation site
 - Tailwind v4: theme tokens in CSS `@theme` block, not JS config
 - Styles exported via `@showwhat/configurator/styles.css`
 
-### Data layer naming
-
-- Interfaces: `DefinitionReader`, `DefinitionWriter`, `DefinitionData` (not `Storage*`)
-- Classes: `MemoryData` (not `*Adapter`)
-- Error: `DataError` (not `StorageError`)
-- Option: `options.data` (not `options.adapter`)
-
 ### Browser packages
 
 - `configurator` and `webapp` must not have `"types": ["node"]` in tsconfig
 - Test files excluded from tsc build via tsconfig `exclude`
 
-## Pull requests
+## Pull Request Guidelines
 
-- Target the `main` branch.
-- Keep PRs focused — one concern per PR.
-- All CI checks must pass before merge.
+1. **Create an issue first** for significant changes
+2. **Keep PRs focused** - one feature or fix per PR
+3. **Include tests** for new functionality
+4. **Update documentation** if adding/changing APIs
+5. **Run all checks** before submitting:
+   ```bash
+   pnpm fix && pnpm typecheck && pnpm test:ci
+   ```
 
-## Commit convention
+### Commit Messages
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/).
-
-```
-<type>(<scope>): <short summary>
-```
-
-Common types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`.
-
-Examples:
+Follow conventional commits:
 
 ```
-feat(core): add matchString regex condition
-fix(data-fs): handle missing file on first read
-docs: update quick start example
+feat: add new feature
+fix: resolve issue with token generation
+docs: update API documentation
+test: add edge case tests
+refactor: simplify validation logic
+chore: update dependencies
 ```
 
 ## Testing expectations
@@ -124,3 +117,7 @@ docs: update quick start example
 - New features should include unit tests.
 - Bug fixes should include a regression test where practical.
 - All packages must pass `npx vitest run` and `npx tsc --noEmit` with no errors.
+
+## License
+
+By contributing, you agree that your contributions will be licensed under the MIT License.

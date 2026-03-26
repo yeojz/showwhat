@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ConditionGroup } from "./ConditionGroup.js";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 
 describe("ConditionGroup", () => {
   const twoConditions: Condition[] = [

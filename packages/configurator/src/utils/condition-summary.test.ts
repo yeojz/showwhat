@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import { formatConditionSummary } from "./condition-summary.js";
 
 describe("formatConditionSummary", () => {
@@ -48,13 +48,30 @@ describe("formatConditionSummary", () => {
     expect(result).toContain("/^test.*/");
   });
 
-  it("formats a string condition with array values", () => {
+  it("formats a string condition with in operator and array values", () => {
     const conditions: Condition[] = [
-      { type: "string", key: "userId", op: "eq", value: ["a", "b"] },
+      { type: "string", key: "userId", op: "in", value: ["a", "b"] },
     ];
     const result = formatConditionSummary(conditions);
     expect(result).toContain('"a"');
     expect(result).toContain('"b"');
+  });
+
+  it("formats a string condition with in operator", () => {
+    const conditions: Condition[] = [
+      { type: "string", key: "region", op: "in", value: ["us", "eu"] },
+    ];
+    const result = formatConditionSummary(conditions);
+    expect(result).toContain("in");
+    expect(result).toContain('"us"');
+    expect(result).toContain('"eu"');
+  });
+
+  it("formats a string condition with nin operator", () => {
+    const conditions: Condition[] = [{ type: "string", key: "region", op: "nin", value: ["cn"] }];
+    const result = formatConditionSummary(conditions);
+    expect(result).toContain("not in");
+    expect(result).toContain('"cn"');
   });
 
   it("formats env condition with array values", () => {

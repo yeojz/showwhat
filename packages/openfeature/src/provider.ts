@@ -5,8 +5,8 @@ import type {
   ResolutionDetails,
 } from "@openfeature/server-sdk";
 import { ErrorCode, StandardResolutionReasons } from "@openfeature/server-sdk";
-import type { ConditionEvaluators, DefinitionReader } from "@showwhat/core";
-import { showwhat } from "@showwhat/core";
+import type { ConditionEvaluators, DefinitionReader } from "showwhat";
+import { showwhat } from "showwhat";
 import { toShowwhatContext } from "./context.js";
 import { mapShowwhatError } from "./errors.js";
 

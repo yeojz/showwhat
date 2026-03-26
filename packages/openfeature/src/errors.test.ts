@@ -7,7 +7,7 @@ import {
   ValidationError,
   DataError,
   ShowwhatError,
-} from "@showwhat/core";
+} from "showwhat";
 import { mapShowwhatError } from "./errors.js";
 
 describe("mapShowwhatError", () => {

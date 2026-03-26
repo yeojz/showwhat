@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { ConditionEvaluator } from "@showwhat/core";
+import type { ConditionEvaluator } from "showwhat";
 
 const FallbackEvaluatorContext = createContext<ConditionEvaluator | null>(null);
 

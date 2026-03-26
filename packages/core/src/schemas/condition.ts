@@ -28,22 +28,60 @@ export const CONTEXT_KEYS = {
 
 // ── Primitive condition schemas ──────────────────────────────────────────────
 
-export const StringConditionSchema = z.object({
-  id: z.string().optional(),
-  type: z.literal("string"),
-  key: z.string().min(1),
-  op: z.enum(["eq", "neq", "regex"]),
-  value: z.union([z.string(), z.array(z.string())]),
-});
+export const StringConditionSchema = z
+  .object({
+    id: z.string().optional(),
+    type: z.literal("string"),
+    key: z.string().min(1),
+    op: z.enum(["eq", "neq", "in", "nin", "regex"]),
+    value: z.union([z.string(), z.array(z.string())]),
+  })
+  .superRefine((val, ctx) => {
+    const isArrayOp = val.op === "in" || val.op === "nin";
+    const isArray = Array.isArray(val.value);
+    if (isArrayOp && !isArray) {
+      ctx.addIssue({
+        code: "custom",
+        message: `"${val.op}" operator requires an array value`,
+        path: ["value"],
+      });
+    }
+    if (!isArrayOp && isArray) {
+      ctx.addIssue({
+        code: "custom",
+        message: `"${val.op}" operator requires a string value`,
+        path: ["value"],
+      });
+    }
+  });
 export type StringCondition = z.infer<typeof StringConditionSchema>;
 
-export const NumberConditionSchema = z.object({
-  id: z.string().optional(),
-  type: z.literal("number"),
-  key: z.string().min(1),
-  op: z.enum(["eq", "neq", "gt", "gte", "lt", "lte"]),
-  value: z.number(),
-});
+export const NumberConditionSchema = z
+  .object({
+    id: z.string().optional(),
+    type: z.literal("number"),
+    key: z.string().min(1),
+    op: z.enum(["eq", "neq", "gt", "gte", "lt", "lte", "in", "nin"]),
+    value: z.union([z.number(), z.array(z.number())]),
+  })
+  .superRefine((val, ctx) => {
+    const isArrayOp = val.op === "in" || val.op === "nin";
+    const isArray = Array.isArray(val.value);
+    if (isArrayOp && !isArray) {
+      ctx.addIssue({
+        code: "custom",
+        message: `"${val.op}" operator requires an array value`,
+        path: ["value"],
+      });
+    }
+    if (!isArrayOp && isArray) {
+      ctx.addIssue({
+        code: "custom",
+        message: `"${val.op}" operator requires a number value`,
+        path: ["value"],
+      });
+    }
+  });
 export type NumberCondition = z.infer<typeof NumberConditionSchema>;
 
 export const DatetimeConditionSchema = z.object({
@@ -152,17 +190,14 @@ export const ConditionSchema: z.ZodType<Condition> = z
     if (val.type === CONDITION_TYPES.string) {
       const sc = val as StringCondition;
       if (sc.op === "regex") {
-        const patterns = Array.isArray(sc.value) ? sc.value : [sc.value];
-        for (const p of patterns) {
-          try {
-            new RegExp(p);
-          } catch (e) {
-            ctx.addIssue({
-              code: "custom",
-              message: `Invalid regex pattern "${p}": ${(e as Error).message}`,
-              path: ["value"],
-            });
-          }
+        try {
+          new RegExp(sc.value as string);
+        } catch (e) {
+          ctx.addIssue({
+            code: "custom",
+            message: `Invalid regex pattern "${sc.value}": ${(e as Error).message}`,
+            path: ["value"],
+          });
         }
       }
     }

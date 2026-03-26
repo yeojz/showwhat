@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import type { Definitions } from "@showwhat/core/schemas";
-import type { Presets } from "@showwhat/core";
+import type { Definitions } from "showwhat";
+import type { Presets } from "showwhat";
 
 const mockParseYaml = vi.fn();
 const mockParseObject = vi.fn();
 
-vi.mock("@showwhat/core", () => ({
+vi.mock("showwhat", () => ({
   parseYaml: (...args: unknown[]) => mockParseYaml(...args),
   parseObject: (...args: unknown[]) => mockParseObject(...args),
 }));

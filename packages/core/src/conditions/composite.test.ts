@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ConditionSchema } from "../schemas/condition.js";
-import { builtinEvaluators, extendEvaluators } from "./index.js";
+import { builtinEvaluators } from "./index.js";
 import type { ConditionEvaluator } from "./index.js";
 import { evaluateCondition } from "./composite.js";
 
@@ -174,7 +174,7 @@ describe("evaluateCondition", () => {
         depths.push(depth);
         return true;
       };
-      const evaluators = extendEvaluators({ tracker });
+      const evaluators = { ...builtinEvaluators, tracker };
 
       await evaluateCondition({
         condition: {
@@ -195,7 +195,7 @@ describe("evaluateCondition", () => {
         depths.push(depth);
         return true;
       };
-      const evaluators = extendEvaluators({ tracker });
+      const evaluators = { ...builtinEvaluators, tracker };
 
       await evaluateCondition({
         condition: {
@@ -244,7 +244,7 @@ describe("evaluateCondition", () => {
         depths.push(depth);
         return true;
       };
-      const evaluators = extendEvaluators({ tracker });
+      const evaluators = { ...builtinEvaluators, tracker };
 
       await evaluateCondition({
         condition: {
@@ -311,7 +311,7 @@ describe("evaluateCondition", () => {
 
   it("uses extended evaluators for custom condition types", async () => {
     const alwaysTrue: ConditionEvaluator = async () => true;
-    const extended = extendEvaluators({ custom: alwaysTrue });
+    const extended = { ...builtinEvaluators, custom: alwaysTrue };
     const result = await evaluateCondition({
       condition: {
         type: "or",
@@ -322,25 +322,5 @@ describe("evaluateCondition", () => {
       annotations: {},
     });
     expect(result).toBe(true);
-  });
-});
-
-describe("extendEvaluators reserved type guard", () => {
-  const noop: ConditionEvaluator = async () => true;
-
-  it("throws when registering 'and'", () => {
-    expect(() => extendEvaluators({ and: noop } as never)).toThrow(
-      'Cannot register reserved condition type "and"',
-    );
-  });
-
-  it("throws when registering 'or'", () => {
-    expect(() => extendEvaluators({ or: noop } as never)).toThrow(
-      'Cannot register reserved condition type "or"',
-    );
-  });
-
-  it("allows registering non-reserved custom types", () => {
-    expect(() => extendEvaluators({ percent: noop })).not.toThrow();
   });
 });

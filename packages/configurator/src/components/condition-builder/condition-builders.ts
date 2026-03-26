@@ -1,4 +1,4 @@
-import type { Condition, AndCondition, OrCondition } from "@showwhat/core/schemas";
+import type { Condition, AndCondition, OrCondition } from "showwhat";
 
 /** Build an AND composite condition. */
 export function buildAndCondition(conditions: Condition[], id?: string): AndCondition {

@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { createDefinitionStore } from "./definition-store.js";
 import { createTestStorage } from "./test-storage.js";
 import type { StateStorage } from "zustand/middleware";
-import type { Definitions, Definition } from "@showwhat/core/schemas";
-import type { Presets } from "@showwhat/core";
+import type { Definitions, Definition } from "showwhat";
+import type { Presets } from "showwhat";
 import type { FileDefinitionState } from "./definition-store.js";
 
 const sampleDefinitions: Definitions = {

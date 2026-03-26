@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import { AUTO_ID_PREFIX, ensureIds } from "../../utils/id.js";
 import { getDefaultCondition } from "./AddConditionMenu.js";
 import { useConditionExtensions } from "./ConditionExtensionsContext.js";

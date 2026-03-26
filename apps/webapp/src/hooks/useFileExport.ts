@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import yaml from "js-yaml";
-import type { Presets } from "@showwhat/core";
-import type { Definitions } from "@showwhat/core/schemas";
+import type { Presets } from "showwhat";
+import type { Definitions } from "showwhat";
 import { stripAutoIds } from "@showwhat/configurator";
 
 function buildFileContent(definitions: Definitions, presets?: Presets): Record<string, unknown> {

@@ -83,7 +83,7 @@ describe("ConditionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects string condition with invalid regex in array", () => {
+  it("rejects regex op with array value", () => {
     const result = ConditionSchema.safeParse({
       type: "string",
       key: "name",
@@ -104,17 +104,6 @@ describe("StringConditionSchema", () => {
     });
     expect(result.success).toBe(true);
     if (result.success) expect(result.data.op).toBe("eq");
-  });
-
-  it("accepts eq op with array value", () => {
-    expect(
-      StringConditionSchema.safeParse({
-        type: "string",
-        key: "env",
-        op: "eq",
-        value: ["prod", "staging"],
-      }).success,
-    ).toBe(true);
   });
 
   it("accepts neq op", () => {
@@ -163,6 +152,61 @@ describe("StringConditionSchema", () => {
         key: "env",
         op: "exact",
         value: "prod",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts in op with array value", () => {
+    expect(
+      StringConditionSchema.safeParse({
+        type: "string",
+        key: "region",
+        op: "in",
+        value: ["us-east-1", "us-west-2"],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts nin op with array value", () => {
+    expect(
+      StringConditionSchema.safeParse({
+        type: "string",
+        key: "region",
+        op: "nin",
+        value: ["eu-central-1"],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects eq op with array value", () => {
+    expect(
+      StringConditionSchema.safeParse({
+        type: "string",
+        key: "env",
+        op: "eq",
+        value: ["prod", "staging"],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects in op with string value", () => {
+    expect(
+      StringConditionSchema.safeParse({
+        type: "string",
+        key: "region",
+        op: "in",
+        value: "us-east-1",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects regex op with array value", () => {
+    expect(
+      StringConditionSchema.safeParse({
+        type: "string",
+        key: "region",
+        op: "regex",
+        value: ["^us-", "^eu-"],
       }).success,
     ).toBe(false);
   });

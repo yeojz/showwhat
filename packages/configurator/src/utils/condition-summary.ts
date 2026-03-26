@@ -1,5 +1,5 @@
-import type { Condition } from "@showwhat/core/schemas";
-import { isAndCondition, isOrCondition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
+import { isAndCondition, isOrCondition } from "showwhat";
 import { getConditionMeta } from "../components/condition-builder/condition-registry.js";
 
 function formatLeafOperator(c: Condition): { op: string; val: string } {
@@ -10,6 +10,8 @@ function formatLeafOperator(c: Condition): { op: string; val: string } {
   const opSymbols: Record<string, string> = {
     eq: "=",
     neq: "!=",
+    in: "in",
+    nin: "not in",
     regex: "~",
     gt: ">",
     gte: ">=",
@@ -27,6 +29,9 @@ function formatLeafOperator(c: Condition): { op: string; val: string } {
   }
 
   if (c.type === "number") {
+    if (Array.isArray(raw)) {
+      return { op: opSymbol, val: raw.map(String).join(", ") };
+    }
     return { op: opSymbol, val: String(raw) };
   }
 

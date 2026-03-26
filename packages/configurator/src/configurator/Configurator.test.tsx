@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom/vitest";
 import { Configurator } from "./Configurator.js";
 import type { ConfiguratorStore } from "./types.js";
-import type { Definition, Definitions } from "@showwhat/core/schemas";
+import type { Definition, Definitions } from "showwhat";
 
 const baseDef: Definition = {
   variations: [{ value: "on" }],

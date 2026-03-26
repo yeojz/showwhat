@@ -31,7 +31,7 @@ Need to load definitions from a database, API, or filesystem? Implement `Definit
 For read-write sources, implement both `DefinitionReader` and `DefinitionWriter` to get a `DefinitionData`. Use `isWritable()` to narrow at runtime:
 
 ```ts
-import { isWritable } from "@showwhat/core";
+import { isWritable } from "showwhat";
 
 if (isWritable(data)) {
   await data.put("my_flag", definition);

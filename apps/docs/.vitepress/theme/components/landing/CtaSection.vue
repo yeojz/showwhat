@@ -3,7 +3,7 @@
     <section class="cta">
       <h2>Write your first definition now.</h2>
       <div class="cta-install">
-        <code>pnpm add @showwhat/core</code>
+        <code>npm install showwhat</code>
       </div>
       <div class="cta-links">
         <a href="/docs/" class="btn btn-primary">Read the docs</a>

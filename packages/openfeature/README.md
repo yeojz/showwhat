@@ -1,21 +1,21 @@
 # @showwhat/openfeature
 
-[OpenFeature](https://openfeature.dev/) provider for **showwhat** — use showwhat's rule engine through the standard OpenFeature Server SDK.
+[OpenFeature](https://openfeature.dev/) provider for **showwhat** - use showwhat's rule engine through the standard OpenFeature Server SDK.
 
 ## Installation
 
 ```bash
-pnpm add @showwhat/openfeature @openfeature/server-sdk
+npm install showwhat @showwhat/openfeature @openfeature/server-sdk
 ```
 
-`@openfeature/server-sdk` is a peer dependency (^1.0.0).
+`@openfeature/server-sdk` is a peer dependency.
 
 ## Quick start
 
 ```ts
 import { OpenFeature } from "@openfeature/server-sdk";
 import { ShowwhatProvider } from "@showwhat/openfeature";
-import { MemoryData } from "@showwhat/core";
+import { MemoryData } from "showwhat";
 
 const data = await MemoryData.fromYaml(yamlString);
 
@@ -39,4 +39,4 @@ const enabled = await client.getBooleanValue("checkout_v2", false, {
 
 ## Documentation
 
-- [OpenFeature Integration](https://showwhat.yeojz.dev/docs/openfeature) — provider options, context mapping, evaluation types, error mapping, and lifecycle
+- [OpenFeature Integration](https://showwhat.yeojz.dev/docs/openfeature) - provider options, context mapping, evaluation types, error mapping, and lifecycle

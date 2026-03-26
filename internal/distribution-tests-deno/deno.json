@@ -1,3 +1,9 @@
 {
-  "nodeModulesDir": "manual"
+  "nodeModulesDir": "manual",
+  "imports": {
+    "showwhat": "../../packages/showwhat/dist/index.js",
+    "@showwhat/core": "../../packages/core/dist/index.js",
+    "js-yaml": "npm:js-yaml@^4.1.0",
+    "zod": "npm:zod@^4.0.0"
+  }
 }

@@ -1,4 +1,4 @@
-import type { Condition, Definition, Definitions, Variation } from "@showwhat/core/schemas";
+import type { Condition, Definition, Definitions, Variation } from "showwhat";
 
 // ── DefinitionList ─────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createPresetConditions } from "./presets.js";
 import { PresetsSchema } from "./schemas/index.js";
-import { extendEvaluators, evaluateCondition } from "./conditions/index.js";
+import { builtinEvaluators, evaluateCondition } from "./conditions/index.js";
 import type { Context } from "./schemas/context.js";
 
 describe("PresetsSchema", () => {
@@ -67,6 +67,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "eq", value: "free" },
       context: ctx,
       annotations: {},
+      depth: "",
     });
     expect(result).toBe(true);
 
@@ -74,8 +75,30 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "neq", value: "free" },
       context: ctx,
       annotations: {},
+      depth: "",
     });
     expect(resultNeq).toBe(false);
+  });
+
+  it("string preset supports in operator", async () => {
+    const presetConditions = createPresetConditions({
+      tier: { type: "string", key: "tier" },
+    });
+    const result = await presetConditions.tier({
+      condition: { type: "tier", op: "in", value: ["free", "basic"] },
+      context: { tier: "free" },
+      annotations: {},
+      depth: "",
+    });
+    expect(result).toBe(true);
+
+    const resultFalse = await presetConditions.tier({
+      condition: { type: "tier", op: "in", value: ["pro", "enterprise"] },
+      context: { tier: "free" },
+      annotations: {},
+      depth: "",
+    });
+    expect(resultFalse).toBe(false);
   });
 
   it("string preset supports regex operator", async () => {
@@ -86,6 +109,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "regex", value: "^fr" },
       context: { tier: "free" },
       annotations: {},
+      depth: "",
     });
     expect(result).toBe(true);
   });
@@ -100,6 +124,7 @@ describe("createPresetConditions", () => {
         condition: { type: "age", op: "gt", value: 18 },
         context: { user_age: 25 },
         annotations: {},
+        depth: "",
       }),
     ).toBe(true);
     expect(
@@ -107,6 +132,7 @@ describe("createPresetConditions", () => {
         condition: { type: "age", op: "lt", value: 18 },
         context: { user_age: 25 },
         annotations: {},
+        depth: "",
       }),
     ).toBe(false);
     expect(
@@ -114,6 +140,7 @@ describe("createPresetConditions", () => {
         condition: { type: "age", op: "eq", value: 25 },
         context: { user_age: 25 },
         annotations: {},
+        depth: "",
       }),
     ).toBe(true);
   });
@@ -128,6 +155,7 @@ describe("createPresetConditions", () => {
         condition: { type: "admin", value: true },
         context: { is_admin: true },
         annotations: {},
+        depth: "",
       }),
     ).toBe(true);
     expect(
@@ -135,6 +163,7 @@ describe("createPresetConditions", () => {
         condition: { type: "admin", value: true },
         context: { is_admin: false },
         annotations: {},
+        depth: "",
       }),
     ).toBe(false);
   });
@@ -150,6 +179,7 @@ describe("createPresetConditions", () => {
         condition: { type: "cutoff", op: "gt", value: ts },
         context: { event_time: "2025-06-01T00:00:00.000Z" },
         annotations: {},
+        depth: "",
       }),
     ).toBe(true);
     expect(
@@ -157,6 +187,7 @@ describe("createPresetConditions", () => {
         condition: { type: "cutoff", op: "lt", value: ts },
         context: { event_time: "2025-06-01T00:00:00.000Z" },
         annotations: {},
+        depth: "",
       }),
     ).toBe(false);
   });
@@ -169,15 +200,16 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "eq", value: "free" },
       context: {},
       annotations: {},
+      depth: "",
     });
     expect(result).toBe(false);
   });
 
-  it("works with extendConditions round-trip", () => {
+  it("works with preset conditions round-trip", () => {
     const presetConditions = createPresetConditions({
       tier: { type: "string", key: "tier" },
     });
-    const extended = extendEvaluators(presetConditions);
+    const extended = { ...builtinEvaluators, ...presetConditions };
     expect(extended).toHaveProperty("tier");
     expect(extended).toHaveProperty("string");
     expect(extended).toHaveProperty("env");
@@ -187,7 +219,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       tier: { type: "string", key: "tier" },
     });
-    const extended = extendEvaluators(presetConditions);
+    const extended = { ...builtinEvaluators, ...presetConditions };
 
     const result = await evaluateCondition({
       condition: { type: "tier", op: "eq", value: "pro" },

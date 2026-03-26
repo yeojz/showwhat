@@ -14,14 +14,10 @@ import { ScrollArea } from "@/components/ui/scroll-area.js";
 import { Separator } from "@/components/ui/separator.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { ChevronRight, Eye, Loader2, Maximize2, Play } from "lucide-react";
-import { resolve } from "@showwhat/core";
-import type { ConditionEvaluator } from "@showwhat/core";
-import {
-  DefinitionInactiveError,
-  DefinitionNotFoundError,
-  VariationNotFoundError,
-} from "@showwhat/core";
-import type { Context } from "@showwhat/core/schemas";
+import { resolve } from "showwhat";
+import type { ConditionEvaluator } from "showwhat";
+import { DefinitionInactiveError, DefinitionNotFoundError, VariationNotFoundError } from "showwhat";
+import type { Context } from "showwhat";
 import { useConfiguratorSelector } from "./useConfiguratorSelector.js";
 import type { PreviewResult } from "./preview-store.js";
 import { selectDefinitions, selectSelectedKey } from "./selectors.js";

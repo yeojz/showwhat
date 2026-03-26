@@ -1,24 +1,19 @@
-<picture>
-  <source srcset="./public/logo-v2-w.svg" media="(prefers-color-scheme: dark)">
-  <img src="./public/logo-v2-b.svg" alt="showwhat-logo" width="100">
-</picture>
-
 # @showwhat/core
 
-Core condition engine and schemas for **showwhat** — a lightweight, extensible feature flag library.
+> **Most users should install [`showwhat`](../showwhat) instead.** This package contains the low-level engine internals. The `showwhat` package re-exports everything from `@showwhat/core` and adds the main `showwhat()` entry point.
+
+Low-level condition engine and schemas for **showwhat** - a lightweight, extensible feature flag library.
 
 ## Installation
 
 ```bash
 npm install @showwhat/core
-# or
-pnpm add @showwhat/core
 ```
 
 ## Quick start
 
 ```ts
-import { MemoryData, showwhat } from "@showwhat/core";
+import { MemoryData, resolve, builtinEvaluators } from "@showwhat/core";
 
 const data = await MemoryData.fromObject({
   definitions: {
@@ -28,19 +23,23 @@ const data = await MemoryData.fromObject({
   },
 });
 
-const result = await showwhat({
-  key: "checkout_v2",
+const def = await data.get("checkout_v2");
+
+const result = await resolve({
+  definitions: { checkout_v2: def! },
   context: { env: "prod" },
-  options: { data },
+  options: { evaluators: builtinEvaluators },
 });
-console.log(result.value); // true
+console.log(result.checkout_v2.value); // true
 ```
+
+> **Note:** The resolver is strict — evaluators must be passed explicitly. There is no default evaluator set injected automatically.
 
 ## Features
 
 - Built-in condition types: `string`, `number`, `datetime`, `bool`, `env`, `startAt`, `endAt`
 - Composite conditions with `and`/`or` logic
-- Custom condition types via `extendEvaluators()`
+- Custom condition types via `registerEvaluators()`
 - YAML and JSON parsing with schema validation
 - Pluggable data sources (`DefinitionReader` / `DefinitionWriter`)
 - Typed error hierarchy

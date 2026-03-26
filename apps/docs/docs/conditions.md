@@ -14,28 +14,35 @@ Conditions determine when a variation matches. Each condition has a `type` and t
 Matches a string value from the context.
 
 ```yaml
-# Exact match
+# Exact match (single value)
 conditions:
   - type: string
     key: region
     op: eq
     value: us-east-1
 
-# Array of values (matches any)
-conditions:
-  - type: string
-    key: region
-    op: eq
-    value: [us-east-1, us-west-2]
-
-# Not equal
+# Not equal (single value)
 conditions:
   - type: string
     key: region
     op: neq
     value: eu-central-1
 
-# Regex match
+# Matches any value in list
+conditions:
+  - type: string
+    key: region
+    op: in
+    value: [us-east-1, us-west-2]
+
+# Matches none of the values in list
+conditions:
+  - type: string
+    key: region
+    op: nin
+    value: [eu-central-1, ap-southeast-1]
+
+# Regex match (single pattern)
 conditions:
   - type: string
     key: region
@@ -43,31 +50,54 @@ conditions:
     value: "^us-"
 ```
 
-| Field   | Required | Description                         |
-| ------- | -------- | ----------------------------------- |
-| `key`   | Yes      | The context property to check       |
-| `op`    | Yes      | `"eq"`, `"neq"`, or `"regex"`       |
-| `value` | Yes      | String or array of strings to match |
+| Field   | Required | Description                                                    |
+| ------- | -------- | -------------------------------------------------------------- |
+| `key`   | Yes      | The context property to check                                  |
+| `op`    | Yes      | `"eq"`, `"neq"`, `"in"`, `"nin"`, or `"regex"`                 |
+| `value` | Yes      | String for `eq`/`neq`/`regex`, array of strings for `in`/`nin` |
+
+::: tip
+Use `eq`/`neq` for single-value comparison, `in`/`nin` for matching against a list, and `regex` for pattern matching. If you need to match multiple patterns with regex, use alternation: `"^us-|^eu-"`.
+:::
 
 ### `number`
 
 Matches a numeric value from the context. Works with integers and decimals.
 
 ```yaml
+# Comparison (single value)
 conditions:
   - type: number
     key: age
     op: gte
     value: 18
+
+# Matches any value in list
+conditions:
+  - type: number
+    key: statusCode
+    op: in
+    value: [200, 201, 204]
+
+# Matches none of the values in list
+conditions:
+  - type: number
+    key: statusCode
+    op: nin
+    value: [400, 401, 403, 404]
 ```
 
-| Field   | Required | Description                                       |
-| ------- | -------- | ------------------------------------------------- |
-| `key`   | Yes      | The context property to check                     |
-| `op`    | Yes      | `"eq"`, `"neq"`, `"gt"`, `"gte"`, `"lt"`, `"lte"` |
-| `value` | Yes      | Number to compare against                         |
+| Field   | Required | Description                                                                  |
+| ------- | -------- | ---------------------------------------------------------------------------- |
+| `key`   | Yes      | The context property to check                                                |
+| `op`    | Yes      | `"eq"`, `"neq"`, `"gt"`, `"gte"`, `"lt"`, `"lte"`, `"in"`, or `"nin"`        |
+| `value` | Yes      | Number for `eq`/`neq`/`gt`/`gte`/`lt`/`lte`, array of numbers for `in`/`nin` |
 
 String context values are coerced to numbers automatically. If the value cannot be parsed, the condition does not match.
+
+::: tip
+Use `in`/`nin` to check membership in a set of numbers, such as HTTP status codes or category IDs.
+:::
 
 ### `datetime`
 

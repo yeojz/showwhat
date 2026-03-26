@@ -51,7 +51,7 @@ describe("logger integration with resolver", () => {
     await resolve({
       definitions: defs,
       context: { env: "prod" },
-      options: { logger },
+      options: { evaluators: builtinEvaluators, logger },
     });
 
     const messages = logger.calls.map((c) => c.message);
@@ -65,7 +65,7 @@ describe("logger integration with resolver", () => {
     await resolve({
       definitions: defs,
       context: { env: "dev" },
-      options: { logger },
+      options: { evaluators: builtinEvaluators, logger },
     });
 
     const messages = logger.calls.map((c) => c.message);
@@ -78,7 +78,7 @@ describe("logger integration with resolver", () => {
       resolve({
         definitions: {},
         context: { env: "prod" },
-        options: { logger },
+        options: { evaluators: builtinEvaluators, logger },
       }),
     ).resolves.toEqual({});
   });
@@ -93,7 +93,7 @@ describe("logger integration with resolver", () => {
       resolve({
         definitions: inactiveDefs,
         context: { env: "prod" },
-        options: { logger },
+        options: { evaluators: builtinEvaluators, logger },
       }),
     ).rejects.toThrow();
 
@@ -110,7 +110,7 @@ describe("logger integration with resolver", () => {
     await resolve({
       definitions: catchAllDefs,
       context: { env: "prod" },
-      options: { logger },
+      options: { evaluators: builtinEvaluators, logger },
     });
 
     const messages = logger.calls.map((c) => c.message);
@@ -122,6 +122,7 @@ describe("logger integration with resolver", () => {
     await resolve({
       definitions: defs,
       context: { env: "prod" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
@@ -135,6 +136,7 @@ describe("logger integration with evaluateCondition", () => {
       condition: { type: "env", op: "eq", value: "prod" },
       context: { env: "prod" },
       evaluators: builtinEvaluators,
+      annotations: {},
       logger,
     });
 
@@ -149,6 +151,7 @@ describe("logger integration with evaluateCondition", () => {
         condition: { type: "nonexistent" },
         context: { env: "prod" },
         evaluators: builtinEvaluators,
+        annotations: {},
         logger,
       }),
     ).rejects.toThrow('Unknown condition type "nonexistent"');
@@ -166,6 +169,7 @@ describe("logger integration with evaluateCondition", () => {
       },
       context: { env: "prod" },
       evaluators: builtinEvaluators,
+      annotations: {},
       logger,
     });
 
@@ -185,6 +189,7 @@ describe("logger integration with evaluateCondition", () => {
       },
       context: { env: "prod" },
       evaluators: builtinEvaluators,
+      annotations: {},
       logger,
     });
 
@@ -201,7 +206,7 @@ describe("logger includes structured data", () => {
         myFlag: { variations: [{ value: "hello" }] },
       },
       context: { env: "prod" },
-      options: { logger },
+      options: { evaluators: builtinEvaluators, logger },
     });
 
     const resolved = logger.calls.find((c) => c.message === "resolved");
@@ -218,6 +223,7 @@ describe("logger includes structured data", () => {
       condition: { type: "env", op: "eq", value: "prod" },
       context: { env: "prod" },
       evaluators: builtinEvaluators,
+      annotations: {},
       logger,
     });
 

@@ -9,7 +9,7 @@ import {
   useActionRunner,
 } from "./context.js";
 import type { ConfiguratorStore, ConfiguratorStoreSource } from "./types.js";
-import type { Definition } from "@showwhat/core/schemas";
+import type { Definition } from "showwhat";
 
 const baseDef: Definition = { variations: [{ value: "on" }] };
 

@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import type { Variation } from "@showwhat/core/schemas";
+import type { Variation } from "showwhat";
 import {
   DndContext,
   closestCenter,

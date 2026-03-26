@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { StartAtConditionEditor } from "./StartAtConditionEditor.js";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 
 describe("StartAtConditionEditor", () => {
   it("renders with a startAt condition", () => {

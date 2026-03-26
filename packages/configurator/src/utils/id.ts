@@ -1,4 +1,4 @@
-import type { Condition, Definitions } from "@showwhat/core/schemas";
+import type { Condition, Definitions } from "showwhat";
 
 export const AUTO_ID_PREFIX = "_tmp:";
 

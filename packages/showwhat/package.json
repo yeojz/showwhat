@@ -1,0 +1,45 @@
+{
+  "name": "showwhat",
+  "version": "1.0.0",
+  "description": "Feature flag resolution engine",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/showwhat/showwhat.git",
+    "directory": "packages/showwhat"
+  },
+  "homepage": "https://github.com/showwhat/showwhat",
+  "bugs": {
+    "url": "https://github.com/showwhat/showwhat/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@showwhat/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.4.0",
+    "@vitest/coverage-v8": "^4.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^4.0.0"
+  }
+}

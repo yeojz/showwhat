@@ -89,6 +89,40 @@ describe("number (lte op)", () => {
   });
 });
 
+describe("number (in op)", () => {
+  it("returns true when context value is in the array", async () => {
+    expect(await evaluate({ type: "number", key: "x", op: "in", value: [1, 2, 3] }, { x: 2 })).toBe(
+      true,
+    );
+  });
+
+  it("returns false when context value is not in the array", async () => {
+    expect(await evaluate({ type: "number", key: "x", op: "in", value: [1, 2, 3] }, { x: 4 })).toBe(
+      false,
+    );
+  });
+
+  it("returns true when context value matches after coercion", async () => {
+    expect(
+      await evaluate({ type: "number", key: "x", op: "in", value: [200, 201, 204] }, { x: "200" }),
+    ).toBe(true);
+  });
+});
+
+describe("number (nin op)", () => {
+  it("returns true when context value is not in the array", async () => {
+    expect(
+      await evaluate({ type: "number", key: "x", op: "nin", value: [1, 2, 3] }, { x: 4 }),
+    ).toBe(true);
+  });
+
+  it("returns false when context value is in the array", async () => {
+    expect(
+      await evaluate({ type: "number", key: "x", op: "nin", value: [1, 2, 3] }, { x: 2 }),
+    ).toBe(false);
+  });
+});
+
 describe("number coercion", () => {
   it("coerces string '42' to number 42 for eq", async () => {
     expect(await evaluate({ type: "number", key: "x", op: "eq", value: 42 }, { x: "42" })).toBe(

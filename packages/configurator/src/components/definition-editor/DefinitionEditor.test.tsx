@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { DefinitionEditor } from "./DefinitionEditor.js";
-import type { Definition } from "@showwhat/core/schemas";
+import type { Definition } from "showwhat";
 
 function renderDefinitionEditorWithErrors() {
   const definition: Definition = {

@@ -37,20 +37,20 @@ Return `true` to match, `false` to skip the variation.
 
 `ConditionEvaluators<T>` is a `Record<T, ConditionEvaluator>` mapping condition type strings to evaluator functions.
 
-`extendEvaluators` is generic — it preserves type information about your custom condition keys.
+`registerEvaluators` is generic — it preserves type information about your custom condition keys.
 
 ## Writing and registering custom conditions
 
-Write an async function that receives an args object containing the condition, context, and annotations, then returns a boolean. Use `extendEvaluators` to merge your evaluators with the built-ins — see the [percentage rollout example](#example-percentage-rollouts) below for a complete example.
+Write an async function that receives an args object containing the condition, context, and annotations, then returns a boolean. Use `registerEvaluators` to merge your evaluators with the built-ins — see the [percentage rollout example](#example-percentage-rollouts) below for a complete example.
 
-`extendEvaluators` returns a new `ConditionEvaluators` map that includes all built-in evaluators plus yours. You cannot override the reserved composite types `and` and `or` — attempting to do so throws an error.
+`registerEvaluators` returns a new `ConditionEvaluators` map that includes all built-in evaluators plus yours. You cannot override the reserved composite types `and` and `or` — attempting to do so throws an error.
 
 ### Passing evaluators
 
 Pass your evaluators via the `evaluators` option:
 
 ```ts
-import { showwhat } from "@showwhat/core";
+import { showwhat } from "showwhat";
 
 const result = await showwhat({
   key: "new_checkout",
@@ -62,7 +62,7 @@ const result = await showwhat({
 Or at the resolver level:
 
 ```ts
-import { resolve } from "@showwhat/core";
+import { resolve } from "showwhat";
 
 const results = await resolve({
   definitions,
@@ -127,7 +127,7 @@ Without a fallback, unknown condition types throw a `ShowwhatError`.
 Evaluators can write to the `annotations` record to attach metadata that appears in the `Resolution` result. This is useful for debugging, auditing, or passing evaluator-specific data back to the caller.
 
 ```ts
-const myEvaluators = extendEvaluators({
+const myEvaluators = registerEvaluators({
   percentage: async ({ condition, context, annotations }) => {
     const { value } = condition as { type: "percentage"; value: number };
     const userId = context.userId;
@@ -144,12 +144,12 @@ The annotations object is shared across all evaluators for a given resolution an
 
 ## Summary
 
-| API                       | Purpose                                               |
-| ------------------------- | ----------------------------------------------------- |
-| `ConditionEvaluator`      | Type signature for evaluator functions                |
-| `ConditionEvaluators<T>`  | Evaluators map type — `Record<T, ConditionEvaluator>` |
-| `extendEvaluators(extra)` | Merge custom evaluators with built-ins                |
-| `options.evaluators`      | Pass your evaluators to `showwhat()` or `resolve()`   |
+| API                         | Purpose                                               |
+| --------------------------- | ----------------------------------------------------- |
+| `ConditionEvaluator`        | Type signature for evaluator functions                |
+| `ConditionEvaluators<T>`    | Evaluators map type — `Record<T, ConditionEvaluator>` |
+| `registerEvaluators(extra)` | Merge custom evaluators with built-ins                |
+| `options.evaluators`        | Pass your evaluators to `showwhat()` or `resolve()`   |
 
 ## Examples
 
@@ -162,9 +162,9 @@ The examples below use [`murmurhash`](https://www.npmjs.com/package/murmurhash),
 ```ts
 import murmurhash from "murmurhash";
 // or: import fnv1a from "@sindresorhus/fnv1a";
-import { extendEvaluators } from "@showwhat/core";
+import { registerEvaluators } from "showwhat";
 
-const myEvaluators = extendEvaluators({
+const myEvaluators = registerEvaluators({
   percentage: async ({ condition, context }) => {
     const { value } = condition as { type: "percentage"; value: number };
     const userId = context.userId;
@@ -199,7 +199,7 @@ showwhat handles the evaluation — tracking impressions, measuring conversion, 
 A condition that targets users based on attributes from context:
 
 ```ts
-const myEvaluators = extendEvaluators({
+const myEvaluators = registerEvaluators({
   userAttribute: async ({ condition, context }) => {
     const { attribute, value } = condition as {
       type: "userAttribute";

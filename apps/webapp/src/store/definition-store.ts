@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
-import { DefinitionsSchema } from "@showwhat/core/schemas";
-import type { Definition, Definitions } from "@showwhat/core/schemas";
-import type { Presets } from "@showwhat/core";
+import { DefinitionsSchema } from "showwhat";
+import type { Definition, Definitions } from "showwhat";
+import type { Presets } from "showwhat";
 import type { ConfiguratorStore, ValidationIssue } from "@showwhat/configurator";
 
 /** Remove a key from an object, returning a new object. */

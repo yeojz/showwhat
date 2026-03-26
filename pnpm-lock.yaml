@@ -47,9 +47,6 @@ importers:
       '@showwhat/configurator':
         specifier: workspace:*
         version: link:../../packages/configurator
-      '@showwhat/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       js-yaml:
         specifier: ^4.1.0
         version: 4.1.1
@@ -62,6 +59,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.4(react@19.2.4)
+      showwhat:
+        specifier: workspace:*
+        version: link:../../packages/showwhat
       zustand:
         specifier: ^5.0.5
         version: 5.0.11(@types/react@19.2.14)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
@@ -120,9 +120,6 @@ importers:
       '@dnd-kit/utilities':
         specifier: ^3.2.2
         version: 3.2.2(react@19.2.4)
-      '@showwhat/core':
-        specifier: workspace:*
-        version: link:../core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -135,6 +132,9 @@ importers:
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      showwhat:
+        specifier: workspace:*
+        version: link:../showwhat
       tailwind-merge:
         specifier: ^3.3.0
         version: 3.5.0
@@ -212,13 +212,35 @@ importers:
 
   packages/openfeature:
     dependencies:
-      '@showwhat/core':
+      showwhat:
         specifier: workspace:*
-        version: link:../core
+        version: link:../showwhat
     devDependencies:
       '@openfeature/server-sdk':
         specifier: ^1.20.0
         version: 1.20.2(@openfeature/core@1.9.2)
+      '@types/node':
+        specifier: ^25.4.0
+        version: 25.4.0
+      '@vitest/coverage-v8':
+        specifier: ^4.0.0
+        version: 4.0.18(vitest@4.0.18(@types/node@25.4.0)(jiti@2.6.1)(jsdom@28.1.0)(lightningcss@1.31.1))
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^4.0.0
+        version: 4.0.18(@types/node@25.4.0)(jiti@2.6.1)(jsdom@28.1.0)(lightningcss@1.31.1)
+
+  packages/showwhat:
+    dependencies:
+      '@showwhat/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
       '@types/node':
         specifier: ^25.4.0
         version: 25.4.0

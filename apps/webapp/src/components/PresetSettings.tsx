@@ -3,7 +3,7 @@ import { Button, Textarea } from "@showwhat/configurator";
 import { ArrowUpCircle, Check, ChevronRight } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePresetStore } from "../store/preset-store.js";
-import type { Presets } from "@showwhat/core";
+import type { Presets } from "showwhat";
 
 export function PresetEditor() {
   const { presetYaml, setPresetYaml } = usePresetStore(

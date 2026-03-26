@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import type { Definition } from "@showwhat/core/schemas";
+import type { Definition } from "showwhat";
 import { DefinitionList } from "@/components/definition-list/DefinitionList.js";
 import { DefinitionEditor } from "@/components/definition-editor/DefinitionEditor.js";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary.js";
@@ -22,7 +22,7 @@ import {
 } from "./selectors.js";
 import type { ConditionExtensions } from "@/components/condition-builder/ConditionExtensionsContext.js";
 import { ConditionExtensionsProvider } from "@/components/condition-builder/ConditionExtensionsContext.js";
-import type { ConditionEvaluator } from "@showwhat/core";
+import type { ConditionEvaluator } from "showwhat";
 import { FallbackEvaluatorProvider } from "./fallback-context.js";
 
 /**

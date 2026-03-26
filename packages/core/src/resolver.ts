@@ -1,9 +1,10 @@
 import type { Definitions, Resolution, Variation, Context } from "./schemas/index.js";
-import { builtinEvaluators, evaluateCondition } from "./conditions/index.js";
+import { evaluateCondition } from "./conditions/index.js";
 import type { Annotations, ConditionEvaluator, ConditionEvaluators } from "./conditions/index.js";
 import {
   DefinitionInactiveError,
   DefinitionNotFoundError,
+  ShowwhatError,
   VariationNotFoundError,
 } from "./errors.js";
 import type { Logger } from "./logger.js";
@@ -16,7 +17,10 @@ export type ResolverOptions = {
 };
 
 function getEvaluators(options?: ResolverOptions): ConditionEvaluators {
-  return options?.evaluators ?? builtinEvaluators;
+  if (!options?.evaluators) {
+    throw new ShowwhatError("No evaluators registered. Pass evaluators via options.");
+  }
+  return options.evaluators;
 }
 
 function getLogger(options?: ResolverOptions): Logger {

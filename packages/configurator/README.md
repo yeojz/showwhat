@@ -5,7 +5,7 @@ A reusable React component library for visually editing showwhat feature flag de
 ## Installation
 
 ```bash
-pnpm add @showwhat/configurator
+npm install @showwhat/configurator
 ```
 
 Peer dependencies: React 19, React DOM 19.

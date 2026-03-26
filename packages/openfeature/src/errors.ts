@@ -6,7 +6,7 @@ import {
   ValidationError,
   DataError,
   ShowwhatError,
-} from "@showwhat/core";
+} from "showwhat";
 
 type ErrorMapping = {
   errorCode: ErrorCode;

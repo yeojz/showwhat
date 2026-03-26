@@ -39,5 +39,5 @@ However, if you need out-of-the-box enterprise multi-team governance, built-in A
 - **Git workflows** (PRs, branch protection, commit history) are your governance model
 - You need config values beyond booleans (objects, arrays, nested structures)
 - You prefer **no infrastructure** to operate or vendor to depend on
-- You want to extend the condition system with your own evaluators via [`extendEvaluators()`](/docs/custom-conditions)
+- You want to extend the condition system with your own evaluators via [`registerEvaluators()`](/docs/custom-conditions)
 - You need [OpenFeature](/docs/openfeature) compatibility to serve flags to any language

@@ -78,5 +78,5 @@ import {
   SchemaValidationError,
   InvalidContextError,
   DataError,
-} from "@showwhat/core";
+} from "showwhat";
 ```

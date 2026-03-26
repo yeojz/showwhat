@@ -1,4 +1,4 @@
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import { X } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { Badge } from "../ui/badge.js";

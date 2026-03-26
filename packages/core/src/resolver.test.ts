@@ -9,7 +9,7 @@ import {
   InvalidContextError,
   VariationNotFoundError,
 } from "./errors.js";
-import { extendEvaluators } from "./conditions/index.js";
+import { builtinEvaluators } from "./conditions/index.js";
 import type { ConditionEvaluator } from "./conditions/index.js";
 
 async function resolveOne(
@@ -20,7 +20,8 @@ async function resolveOne(
     options,
   }: { definitions: Definitions; context: Context; options?: ResolverOptions },
 ): Promise<Resolution> {
-  return (await resolve({ definitions: { [key]: definitions[key] }, context, options }))[key];
+  const opts = { evaluators: builtinEvaluators, ...options };
+  return (await resolve({ definitions: { [key]: definitions[key] }, context, options: opts }))[key];
 }
 
 const yaml = `
@@ -104,7 +105,7 @@ definitions:
         conditions:
           - type: string
             key: region
-            op: eq
+            op: in
             value: [eu-west-1, eu-central-1]
       - value: "default"
 
@@ -181,7 +182,7 @@ describe("string match resolution", () => {
     expect(r.meta.variation.conditionCount).toBe(1);
   });
 
-  it("matches array of values (OR)", async () => {
+  it("matches one of the values with in op", async () => {
     expect(
       (
         await resolveOne("region_flag", {
@@ -254,6 +255,7 @@ describe("condition-based resolution", () => {
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod", at: "2025-01-01T00:00:00Z" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("Normal ops");
     expect(result!.variationIndex).toBe(1);
@@ -263,6 +265,7 @@ describe("condition-based resolution", () => {
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod", at: "2026-03-03T03:00:00Z" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("Deployment at 2am UTC");
     expect(result!.variationIndex).toBe(0);
@@ -272,6 +275,7 @@ describe("condition-based resolution", () => {
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod", at: "2026-03-03T07:00:00Z" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("Normal ops");
   });
@@ -280,6 +284,7 @@ describe("condition-based resolution", () => {
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod", at: "2026-03-03T02:00:00Z" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("Deployment at 2am UTC");
   });
@@ -301,6 +306,7 @@ describe("condition-based resolution", () => {
         { value: "b", conditions: [{ type: "env" as const, op: "eq" as const, value: "staging" }] },
       ],
       context: { env: "dev" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result).toBeNull();
   });
@@ -309,6 +315,7 @@ describe("condition-based resolution", () => {
     const result = await resolveVariation({
       variations: [{ value: "invalid", conditions: [] }, { value: "fallback" }],
       context: { env: "prod" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("invalid");
     expect(result!.variationIndex).toBe(0);
@@ -324,6 +331,7 @@ describe("condition-based resolution", () => {
           },
         ],
         context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
       }),
     ).rejects.toThrow('Unknown condition type "nonexistent_rule"');
   });
@@ -408,9 +416,13 @@ describe("no matching variation", () => {
         variations: [{ value: "a", conditions: [{ type: "env", op: "eq", value: "prod" }] }],
       },
     };
-    await expect(resolve({ definitions: noFallback, context: { env: "dev" } })).rejects.toThrow(
-      VariationNotFoundError,
-    );
+    await expect(
+      resolve({
+        definitions: noFallback,
+        context: { env: "dev" },
+        options: { evaluators: builtinEvaluators },
+      }),
+    ).rejects.toThrow(VariationNotFoundError);
   });
 });
 
@@ -422,9 +434,13 @@ describe("inactive definition", () => {
         variations: [{ value: "should not resolve" }],
       },
     };
-    await expect(resolve({ definitions: defs, context: { env: "prod" } })).rejects.toThrow(
-      DefinitionInactiveError,
-    );
+    await expect(
+      resolve({
+        definitions: defs,
+        context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
+      }),
+    ).rejects.toThrow(DefinitionInactiveError);
   });
 
   it("resolves normally when active is undefined", async () => {
@@ -433,7 +449,11 @@ describe("inactive definition", () => {
         variations: [{ value: "works" }],
       },
     };
-    const result = await resolve({ definitions: defs, context: { env: "prod" } });
+    const result = await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      options: { evaluators: builtinEvaluators },
+    });
     expect(result["noActive"].value).toBe("works");
   });
 
@@ -444,7 +464,11 @@ describe("inactive definition", () => {
         variations: [{ value: "works" }],
       },
     };
-    const result = await resolve({ definitions: defs, context: { env: "prod" } });
+    const result = await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      options: { evaluators: builtinEvaluators },
+    });
     expect(result["enabled"].value).toBe("works");
   });
 });
@@ -452,15 +476,23 @@ describe("inactive definition", () => {
 describe("resolve errors", () => {
   it("throws DefinitionNotFoundError when a key maps to undefined", async () => {
     const definitions = { broken: undefined } as unknown as Definitions;
-    await expect(resolve({ definitions, context: { env: "prod" } })).rejects.toThrow(
-      DefinitionNotFoundError,
-    );
+    await expect(
+      resolve({
+        definitions,
+        context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
+      }),
+    ).rejects.toThrow(DefinitionNotFoundError);
   });
 });
 
 describe("resolve", () => {
   it("resolves every flag for a given context", async () => {
-    const all = await resolve({ definitions: flags, context: { env: "prod" } });
+    const all = await resolve({
+      definitions: flags,
+      context: { env: "prod" },
+      options: { evaluators: builtinEvaluators },
+    });
     expect(all["checkout_v2"].value).toBe(true);
     expect(all["max_upload_mb"].value).toBe(50);
     expect(all["beta_feature"].value).toBe(true);
@@ -468,7 +500,11 @@ describe("resolve", () => {
   });
 
   it("returns null for flags with no matching condition and no fallback", async () => {
-    const all = await resolve({ definitions: flags, context: { env: "preview" } });
+    const all = await resolve({
+      definitions: flags,
+      context: { env: "preview" },
+      options: { evaluators: builtinEvaluators },
+    });
     expect(all["max_upload_mb"].value).toBe(10);
   });
 });
@@ -479,7 +515,7 @@ describe("custom condition evaluators", () => {
       const c = condition as { threshold: number };
       return Number((context as Record<string, unknown>).score) >= c.threshold;
     };
-    const customEvaluators = extendEvaluators({ threshold: thresholdEvaluator });
+    const customEvaluators = { ...builtinEvaluators, threshold: thresholdEvaluator };
 
     const result = await resolveVariation({
       variations: [
@@ -500,6 +536,7 @@ describe("custom condition evaluators", () => {
           { value: "fallback" },
         ],
         context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
       }),
     ).rejects.toThrow('Unknown condition type "unknown_custom"');
   });
@@ -512,7 +549,7 @@ describe("custom condition evaluators", () => {
         { value: "fallback" },
       ],
       context: { env: "prod" },
-      options: { fallback },
+      options: { evaluators: builtinEvaluators, fallback },
     });
     expect(result!.variation.value).toBe("matched");
   });
@@ -525,14 +562,14 @@ describe("custom condition evaluators", () => {
         { value: "default" },
       ],
       context: { env: "prod" },
-      options: { fallback },
+      options: { evaluators: builtinEvaluators, fallback },
     });
     expect(result!.variation.value).toBe("default");
   });
 
-  it("extendEvaluators preserves built-in evaluators", async () => {
+  it("custom evaluators preserve built-ins", async () => {
     const myEvaluator: ConditionEvaluator = async () => true;
-    const extended = extendEvaluators({ custom: myEvaluator });
+    const extended = { ...builtinEvaluators, custom: myEvaluator };
 
     const result = await resolveVariation({
       variations: [
@@ -571,6 +608,7 @@ describe("composite condition evaluation", () => {
           { value: "fallback" },
         ],
         context: { env: "prod", userId: "user-1" },
+        options: { evaluators: builtinEvaluators },
       });
       expect(result!.variation.value).toBe("matched");
     });
@@ -593,6 +631,7 @@ describe("composite condition evaluation", () => {
           { value: "fallback" },
         ],
         context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
       });
       expect(result!.variation.value).toBe("fallback");
     });
@@ -617,6 +656,7 @@ describe("composite condition evaluation", () => {
           { value: "fallback" },
         ],
         context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
       });
       expect(result!.variation.value).toBe("matched");
     });
@@ -639,6 +679,7 @@ describe("composite condition evaluation", () => {
           { value: "fallback" },
         ],
         context: { env: "prod" },
+        options: { evaluators: builtinEvaluators },
       });
       expect(result!.variation.value).toBe("fallback");
     });
@@ -674,18 +715,19 @@ describe("composite condition evaluation", () => {
           { value: "fallback" },
         ],
         context: { env: "staging", userId: "beta-123" },
+        options: { evaluators: builtinEvaluators },
       });
       expect(result!.variation.value).toBe("matched");
     });
   });
 
-  describe("composites with extendEvaluators", () => {
+  describe("composites with custom evaluators", () => {
     it("works alongside a custom evaluator", async () => {
       const scoreEvaluator: ConditionEvaluator = async ({ condition, context }) => {
         const c = condition as { threshold: number };
         return Number((context as Record<string, unknown>)["score"]) >= c.threshold;
       };
-      const customEvaluators = extendEvaluators({ score: scoreEvaluator });
+      const customEvaluators = { ...builtinEvaluators, score: scoreEvaluator };
 
       const result = await resolveVariation({
         variations: [
@@ -716,6 +758,7 @@ describe("ctx.at evaluation time", () => {
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod", at: "2026-03-03T03:00:00Z" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("Deployment at 2am UTC");
   });
@@ -725,6 +768,7 @@ describe("ctx.at evaluation time", () => {
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod" },
+      options: { evaluators: builtinEvaluators },
     });
     expect(result!.variation.value).toBe("Normal ops");
   });
@@ -734,7 +778,25 @@ describe("ctx.at evaluation time", () => {
       resolveVariation({
         variations: flags["maintenance_banner"].variations,
         context: { env: "prod", at: "not-a-date" },
+        options: { evaluators: builtinEvaluators },
       }),
     ).rejects.toThrow(InvalidContextError);
+  });
+});
+
+describe("strict evaluators", () => {
+  it("throws ShowwhatError when no evaluators provided", async () => {
+    await expect(resolve({ definitions: flags, context: { env: "prod" } })).rejects.toThrow(
+      "No evaluators registered",
+    );
+  });
+
+  it("throws ShowwhatError for resolveVariation without evaluators", async () => {
+    await expect(
+      resolveVariation({
+        variations: [{ value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] }],
+        context: { env: "prod" },
+      }),
+    ).rejects.toThrow("No evaluators registered");
   });
 });

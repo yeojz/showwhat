@@ -19,14 +19,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./schemas": {
-      "types": "./dist/schemas/index.d.ts",
-      "import": "./dist/schemas/index.js"
-    },
-    "./data": {
-      "types": "./dist/data.d.ts",
-      "import": "./dist/data.js"
     }
   },
   "engines": {

@@ -53,7 +53,7 @@ const format = ref("yaml");
           <pre
             v-show="format === 'yaml'"
             class="code-block"
-          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/core"</span>;
+          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"showwhat"</span>;
 
 <span class="hl-kw">const</span> data = <span class="hl-kw">await</span> MemoryData.<span class="hl-fn">fromYaml</span>(yaml);
 <span class="hl-kw">const</span> result = <span class="hl-kw">await</span> <span class="hl-fn">showwhat</span>({
@@ -66,7 +66,7 @@ result.value; <span class="hl-cmt">// true</span></code></pre>
           <pre
             v-show="format === 'json'"
             class="code-block"
-          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/core"</span>;
+          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"showwhat"</span>;
 
 <span class="hl-kw">const</span> data = MemoryData.<span class="hl-fn">fromObject</span>(JSON.<span class="hl-fn">parse</span>(json));
 <span class="hl-kw">const</span> result = <span class="hl-kw">await</span> <span class="hl-fn">showwhat</span>({

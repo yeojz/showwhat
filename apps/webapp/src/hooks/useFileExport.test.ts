@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import type { Definitions } from "@showwhat/core/schemas";
-import type { Presets } from "@showwhat/core";
+import type { Definitions } from "showwhat";
+import type { Presets } from "showwhat";
 
 // Mock stripAutoIds to return input unchanged
 vi.mock("@showwhat/configurator", () => ({

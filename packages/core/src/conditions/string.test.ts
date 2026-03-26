@@ -8,12 +8,6 @@ describe("string (eq op)", () => {
     );
   });
 
-  it("returns true when context key matches one of an array of values", async () => {
-    expect(
-      await evaluate({ type: "string", key: "x", op: "eq", value: ["foo", "bar"] }, { x: "bar" }),
-    ).toBe(true);
-  });
-
   it("returns false when context key is absent", async () => {
     expect(await evaluate({ type: "string", key: "x", op: "eq", value: "foo" }, {})).toBe(false);
   });
@@ -37,18 +31,6 @@ describe("string (neq op)", () => {
       await evaluate({ type: "string", key: "x", op: "neq", value: "foo" }, { x: "foo" }),
     ).toBe(false);
   });
-
-  it("returns true when context key does not match any of an array", async () => {
-    expect(
-      await evaluate({ type: "string", key: "x", op: "neq", value: ["foo", "bar"] }, { x: "baz" }),
-    ).toBe(true);
-  });
-
-  it("returns false when context key matches one of an array", async () => {
-    expect(
-      await evaluate({ type: "string", key: "x", op: "neq", value: ["foo", "bar"] }, { x: "foo" }),
-    ).toBe(false);
-  });
 });
 
 describe("string (regex op)", () => {
@@ -57,15 +39,6 @@ describe("string (regex op)", () => {
       await evaluate(
         { type: "string", key: "x", op: "regex", value: "^hello-" },
         { x: "hello-world" },
-      ),
-    ).toBe(true);
-  });
-
-  it("returns true when context key matches one of an array of regex patterns", async () => {
-    expect(
-      await evaluate(
-        { type: "string", key: "x", op: "regex", value: ["^hello$", "^world$"] },
-        { x: "world" },
       ),
     ).toBe(true);
   });
@@ -83,6 +56,42 @@ describe("string (regex op)", () => {
     expect(
       await evaluate({ type: "string", key: "x", op: "regex", value: "^foo" }, { x: "bar-thing" }),
     ).toBe(false);
+  });
+});
+
+describe("string (in op)", () => {
+  it("returns true when context key matches one of the values", async () => {
+    expect(
+      await evaluate({ type: "string", key: "x", op: "in", value: ["foo", "bar"] }, { x: "bar" }),
+    ).toBe(true);
+  });
+
+  it("returns false when context key matches none of the values", async () => {
+    expect(
+      await evaluate({ type: "string", key: "x", op: "in", value: ["foo", "bar"] }, { x: "baz" }),
+    ).toBe(false);
+  });
+
+  it("returns false when context key is absent", async () => {
+    expect(await evaluate({ type: "string", key: "x", op: "in", value: ["foo"] }, {})).toBe(false);
+  });
+});
+
+describe("string (nin op)", () => {
+  it("returns true when context key matches none of the values", async () => {
+    expect(
+      await evaluate({ type: "string", key: "x", op: "nin", value: ["foo", "bar"] }, { x: "baz" }),
+    ).toBe(true);
+  });
+
+  it("returns false when context key matches one of the values", async () => {
+    expect(
+      await evaluate({ type: "string", key: "x", op: "nin", value: ["foo", "bar"] }, { x: "foo" }),
+    ).toBe(false);
+  });
+
+  it("returns false when context key is absent", async () => {
+    expect(await evaluate({ type: "string", key: "x", op: "nin", value: ["foo"] }, {})).toBe(false);
   });
 });
 

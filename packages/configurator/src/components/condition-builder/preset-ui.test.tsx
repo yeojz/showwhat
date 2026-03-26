@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { Presets } from "@showwhat/core";
+import type { Presets } from "showwhat";
 import { createPresetConditionMeta, createPresetUI, createPresetEditor } from "./preset-ui.js";
 import { AddConditionMenu } from "./AddConditionMenu.js";
 import { ConditionValueEditor } from "./ConditionValueEditor.js";

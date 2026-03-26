@@ -6,7 +6,13 @@ outline: [2, 3]
 # Core API
 
 ```bash
-pnpm add @showwhat/core
+npm install showwhat
+pnpm add showwhat
+yarn add showwhat
+
+# Other runtimes
+bun add showwhat
+deno install npm:showwhat
 ```
 
 ## `showwhat()`
@@ -14,7 +20,7 @@ pnpm add @showwhat/core
 The main entry point. Resolves a single definition key against a context.
 
 ```ts
-import { showwhat } from "@showwhat/core";
+import { showwhat } from "showwhat";
 
 const result = await showwhat({
   key: "checkout_v2",
@@ -63,7 +69,7 @@ The `annotations` record contains metadata populated by custom evaluators during
 Resolve all definitions in a set against a context. If any key fails, the entire call rejects.
 
 ```ts
-import { resolve } from "@showwhat/core";
+import { resolve } from "showwhat";
 
 const results = await resolve({
   definitions: { flag_a: defA, flag_b: defB },
@@ -89,7 +95,7 @@ results.flag_b.value; // resolved value
 Low-level: resolve a single list of variations. Returns the first matching variation or `null`.
 
 ```ts
-import { resolveVariation } from "@showwhat/core";
+import { resolveVariation } from "showwhat";
 
 const result = await resolveVariation({
   variations: definition.variations,
@@ -117,7 +123,7 @@ if (result) {
 Parse a YAML string into a validated `FileFormat` object (containing `definitions` and optional `presets`).
 
 ```ts
-import { parseYaml } from "@showwhat/core";
+import { parseYaml } from "showwhat";
 
 const { definitions, presets } = parseYaml(yamlString);
 ```
@@ -129,33 +135,33 @@ const { definitions, presets } = parseYaml(yamlString);
 Validate a plain object as a `FileFormat` object (containing `definitions` and optional `presets`).
 
 ```ts
-import { parseObject } from "@showwhat/core";
+import { parseObject } from "showwhat";
 
 const { definitions } = parseObject({
   definitions: { my_flag: { variations: [{ value: true }] } },
 });
 ```
 
-## `parsePresetsFile()`
+## `parsePresetsObject()`
 
 Parse a plain object as a validated `Presets` map. Use this when reading a standalone preset file (e.g. `_presets.yaml`).
 
 ```ts
-import { parsePresetsFile } from "@showwhat/core";
+import { parsePresetsObject } from "showwhat";
 
-const presets = parsePresetsFile(rawObject);
+const presets = parsePresetsObject(rawObject);
 ```
 
 **Throws:** `SchemaValidationError` on schema violation.
 
-## `extendEvaluators()`
+## `registerEvaluators()`
 
 Create a new evaluators map with additional condition types.
 
 ```ts
-import { extendEvaluators } from "@showwhat/core";
+import { registerEvaluators } from "showwhat";
 
-const myEvaluators = extendEvaluators({
+const myEvaluators = registerEvaluators({
   myCustomType: async ({ condition, context }) => {
     return (condition as { value: string }).value === context.someKey;
   },
@@ -167,7 +173,7 @@ const myEvaluators = extendEvaluators({
 Evaluate a single condition against a context.
 
 ```ts
-import { evaluateCondition, builtinEvaluators } from "@showwhat/core";
+import { evaluateCondition, builtinEvaluators } from "showwhat";
 
 const matched = await evaluateCondition({
   condition: { type: "env", value: "prod" },

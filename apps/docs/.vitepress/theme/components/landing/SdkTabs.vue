@@ -38,7 +38,7 @@ const sdkTabs = [
           <pre
             v-show="activeTab === 'node'"
             class="code-block"
-          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/core"</span>;
+          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"showwhat"</span>;
 <span class="hl-kw">import</span> { readFile } <span class="hl-kw">from</span> <span class="hl-str">"node:fs/promises"</span>;
 
 <span class="hl-kw">const</span> yaml = <span class="hl-kw">await</span> <span class="hl-fn">readFile</span>(<span class="hl-str">"./flags.yaml"</span>, <span class="hl-str">"utf-8"</span>);
@@ -53,7 +53,7 @@ const sdkTabs = [
             class="code-block"
           ><code><span class="hl-kw">import</span> { OpenFeature } <span class="hl-kw">from</span> <span class="hl-str">"@openfeature/server-sdk"</span>;
 <span class="hl-kw">import</span> { ShowwhatProvider } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/openfeature"</span>;
-<span class="hl-kw">import</span> { MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/core"</span>;
+<span class="hl-kw">import</span> { MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"showwhat"</span>;
 
 <span class="hl-kw">const</span> data = <span class="hl-kw">await</span> MemoryData.<span class="hl-fn">fromYaml</span>(yaml);
 <span class="hl-kw">await</span> OpenFeature.<span class="hl-fn">setProviderAndWait</span>(
@@ -67,7 +67,7 @@ const sdkTabs = [
           <pre
             v-show="activeTab === 'edge'"
             class="code-block"
-          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/core"</span>;
+          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"showwhat"</span>;
 
 <span class="hl-kw">const</span> yaml = <span class="hl-kw">await</span> <span class="hl-fn">fetch</span>(CONFIG_URL).then(r =&gt; r.text());
 <span class="hl-kw">const</span> data = <span class="hl-kw">await</span> MemoryData.<span class="hl-fn">fromYaml</span>(yaml);
@@ -80,7 +80,7 @@ const sdkTabs = [
           <pre
             v-show="activeTab === 'deno'"
             class="code-block"
-          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"npm:@showwhat/core"</span>;
+          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"npm:showwhat"</span>;
 
 <span class="hl-kw">const</span> yaml = <span class="hl-kw">await</span> Deno.<span class="hl-fn">readTextFile</span>(<span class="hl-str">"./flags.yaml"</span>);
 <span class="hl-kw">const</span> data = <span class="hl-kw">await</span> MemoryData.<span class="hl-fn">fromYaml</span>(yaml);
@@ -93,7 +93,7 @@ const sdkTabs = [
           <pre
             v-show="activeTab === 'bun'"
             class="code-block"
-          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"@showwhat/core"</span>;
+          ><code><span class="hl-kw">import</span> { showwhat, MemoryData } <span class="hl-kw">from</span> <span class="hl-str">"showwhat"</span>;
 
 <span class="hl-kw">const</span> yaml = <span class="hl-kw">await</span> Bun.<span class="hl-fn">file</span>(<span class="hl-str">"./flags.yaml"</span>).text();
 <span class="hl-kw">const</span> data = <span class="hl-kw">await</span> MemoryData.<span class="hl-fn">fromYaml</span>(yaml);

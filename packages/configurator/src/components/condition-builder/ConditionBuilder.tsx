@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import { Badge } from "../ui/badge.js";
 import { ConditionBlock } from "./ConditionBlock.js";
 import { AddConditionMenu } from "./AddConditionMenu.js";

@@ -1,4 +1,4 @@
-import type { Condition } from "@showwhat/core/schemas";
+import type { Condition } from "showwhat";
 import { buildAndCondition, buildOrCondition, buildCustomCondition } from "./condition-builders.js";
 import { BUILTIN_CONDITION_TYPES } from "./condition-registry.js";
 import type { ConditionTypeMeta } from "./condition-registry.js";

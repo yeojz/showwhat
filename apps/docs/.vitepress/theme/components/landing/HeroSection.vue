@@ -12,7 +12,7 @@
           <a href="/configurator/" target="_blank" class="btn btn-ghost">Try the configurator</a>
         </div>
         <div class="hero-install">
-          <code>pnpm add @showwhat/core</code>
+          <code>npm install showwhat</code>
         </div>
       </div>
       <div class="hero-visual">

@@ -63,6 +63,13 @@ export default defineConfig({
       }),
       defineProject({
         test: {
+          name: "showwhat",
+          root: "packages/showwhat",
+          include: ["src/**/*.test.ts"],
+        },
+      }),
+      defineProject({
+        test: {
           name: "openfeature",
           root: "packages/openfeature",
           include: ["src/**/*.test.ts"],

@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@showwhat/configurator": "workspace:*",
-    "@showwhat/core": "workspace:*",
+    "showwhat": "workspace:*",
     "js-yaml": "^4.1.0",
     "lucide-react": "^0.577.0",
     "react": "^19.0.0",
