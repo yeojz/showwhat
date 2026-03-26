@@ -117,7 +117,7 @@ export class ShowwhatProvider implements Provider {
 
       return {
         value,
-        variant: String(resolution.meta.variation.index),
+        variant: resolution.meta.variation.id ?? String(resolution.meta.variation.index),
         reason: hasConditions
           ? StandardResolutionReasons.TARGETING_MATCH
           : StandardResolutionReasons.STATIC,

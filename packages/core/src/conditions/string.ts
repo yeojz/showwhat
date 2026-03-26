@@ -7,7 +7,9 @@ export async function evaluateString(
   ctx: Readonly<Context>,
 ): Promise<boolean> {
   if (!Object.hasOwn(ctx, condition.key)) return false;
-  const actual = String(ctx[condition.key]);
+  const raw = ctx[condition.key];
+  if (typeof raw !== "string") return false;
+  const actual = raw;
 
   switch (condition.op) {
     case "eq":

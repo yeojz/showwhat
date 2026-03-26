@@ -95,6 +95,35 @@ describe("string (nin op)", () => {
   });
 });
 
+describe("string type guard", () => {
+  it("returns false when context value is a number", async () => {
+    expect(await evaluate({ type: "string", key: "x", op: "eq", value: "42" }, { x: 42 })).toBe(
+      false,
+    );
+  });
+
+  it("returns false when context value is a boolean", async () => {
+    expect(await evaluate({ type: "string", key: "x", op: "eq", value: "true" }, { x: true })).toBe(
+      false,
+    );
+  });
+
+  it("returns false when context value is an array", async () => {
+    expect(
+      await evaluate({ type: "string", key: "x", op: "eq", value: "a,b" }, { x: ["a", "b"] }),
+    ).toBe(false);
+  });
+
+  it("returns false when context value is an object", async () => {
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "eq", value: "[object Object]" },
+        { x: { nested: "value" } },
+      ),
+    ).toBe(false);
+  });
+});
+
 describe("prototype pollution safety", () => {
   it("returns false when condition.key is __proto__", async () => {
     expect(

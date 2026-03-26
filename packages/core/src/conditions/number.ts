@@ -7,7 +7,9 @@ export async function evaluateNumber(
   ctx: Readonly<Context>,
 ): Promise<boolean> {
   if (!Object.hasOwn(ctx, condition.key)) return false;
-  const actual = Number(ctx[condition.key]);
+  const raw = ctx[condition.key];
+  if (typeof raw !== "number" && typeof raw !== "string") return false;
+  const actual = Number(raw);
   if (Number.isNaN(actual)) return false;
 
   switch (condition.op) {

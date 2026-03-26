@@ -271,6 +271,33 @@ describe("ShowwhatProvider", () => {
     });
   });
 
+  describe("variant identifier", () => {
+    it("uses variation id when present", async () => {
+      const provider = await createProvider({
+        "flag.v": {
+          variations: [
+            { id: "control", value: "a", conditions: [{ type: "env", value: "prod" }] },
+            { id: "treatment", value: "b" },
+          ],
+        },
+      });
+
+      const result = await provider.resolveStringEvaluation("flag.v", "x", { env: "prod" });
+      expect(result.variant).toBe("control");
+    });
+
+    it("falls back to index when variation id is absent", async () => {
+      const provider = await createProvider({
+        "flag.v": {
+          variations: [{ value: "a" }],
+        },
+      });
+
+      const result = await provider.resolveStringEvaluation("flag.v", "x", {});
+      expect(result.variant).toBe("0");
+    });
+  });
+
   describe("context mapping", () => {
     it("passes OpenFeature context to showwhat", async () => {
       const provider = await createProvider({

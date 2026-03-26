@@ -143,6 +143,26 @@ describe("number coercion", () => {
   });
 });
 
+describe("number type guard", () => {
+  it("returns false when context value is a boolean", async () => {
+    expect(await evaluate({ type: "number", key: "x", op: "eq", value: 1 }, { x: true })).toBe(
+      false,
+    );
+  });
+
+  it("returns false when context value is an array", async () => {
+    expect(await evaluate({ type: "number", key: "x", op: "eq", value: 42 }, { x: [42] })).toBe(
+      false,
+    );
+  });
+
+  it("returns false when context value is an object", async () => {
+    expect(await evaluate({ type: "number", key: "x", op: "eq", value: 0 }, { x: { n: 0 } })).toBe(
+      false,
+    );
+  });
+});
+
 describe("numberEvaluator", () => {
   it("delegates to evaluateNumber", async () => {
     expect(
