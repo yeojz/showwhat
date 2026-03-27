@@ -105,7 +105,7 @@ export class ShowwhatProvider implements Provider {
 
       const entry = results[flagKey];
 
-      if (entry.error) {
+      if (!entry.success) {
         const mapped = mapShowwhatError(entry.error);
         return {
           value: defaultValue,
