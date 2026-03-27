@@ -20,8 +20,8 @@ export const ResolutionSchema = z.object({
 
 type BaseResolution = z.infer<typeof ResolutionSchema>;
 
-export type Resolution<V = unknown> = Omit<BaseResolution, "value"> & {
-  value: V;
+export type Resolution = Omit<BaseResolution, "value"> & {
+  value: unknown;
   error: null;
 };
 

@@ -86,18 +86,18 @@ export async function resolveVariation<
   return null;
 }
 
-function toResolution<V = unknown>(
+function toResolution(
   key: string,
   result: { variation: Variation; variationIndex: number; annotations: Annotations },
   context: Readonly<Context>,
-): Resolution<V> {
+): Resolution {
   const conditionCount = Array.isArray(result.variation.conditions)
     ? result.variation.conditions.length
     : 0;
 
   return {
     key,
-    value: result.variation.value as V,
+    value: result.variation.value,
     error: null,
     meta: {
       context: { ...context },
@@ -112,15 +112,12 @@ function toResolution<V = unknown>(
   };
 }
 
-async function resolveKey<
-  V = unknown,
-  T extends Record<string, ContextValue> = Record<string, ContextValue>,
->(
+async function resolveKey<T extends Record<string, ContextValue> = Record<string, ContextValue>>(
   key: string,
   definitions: Definitions,
   context: Readonly<Context<T>>,
   options?: ResolverOptions,
-): Promise<Resolution<V>> {
+): Promise<Resolution> {
   const logger = getLogger(options);
   const definition = definitions[key];
 
@@ -152,7 +149,7 @@ async function resolveKey<
     value: result.variation.value,
   });
 
-  return toResolution<V>(key, result, context);
+  return toResolution(key, result, context);
 }
 
 /**
@@ -162,7 +159,6 @@ async function resolveKey<
  * affect others. Failed keys are returned as `ResolutionError` entries.
  */
 export async function resolve<
-  V = unknown,
   T extends Record<string, ContextValue> = Record<string, ContextValue>,
 >({
   definitions,
@@ -172,11 +168,11 @@ export async function resolve<
   definitions: Definitions;
   context: Readonly<Context<T>>;
   options?: ResolverOptions;
-}): Promise<Record<string, Resolution<V> | ResolutionError>> {
+}): Promise<Record<string, Resolution | ResolutionError>> {
   const keys = Object.keys(definitions);
   const entries = await Promise.all(
     keys.map((key) =>
-      resolveKey<V, T>(key, definitions, context, options).catch(
+      resolveKey<T>(key, definitions, context, options).catch(
         (reason): ResolutionError => ({
           key,
           error: reason instanceof ShowwhatError ? reason : new ShowwhatError(String(reason)),

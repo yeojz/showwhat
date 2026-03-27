@@ -17,7 +17,7 @@ export type ShowWhatOptions = ResolverOptions & {
   data: DefinitionReader;
 };
 
-export type Resolutions = Record<string, Resolution<unknown> | ResolutionError>;
+export type Resolutions = Record<string, Resolution | ResolutionError>;
 
 async function fetchDefinitions(data: DefinitionReader, keys?: string[]): Promise<Definitions> {
   if (!keys) {
