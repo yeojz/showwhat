@@ -1,10 +1,4 @@
-import {
-  ContextSchema,
-  builtinEvaluators,
-  DefinitionNotFoundError,
-  ValidationError,
-  resolve,
-} from "@showwhat/core";
+import { ContextSchema, builtinEvaluators, ValidationError, resolve } from "@showwhat/core";
 import type {
   BuiltinCondition,
   ConditionEvaluators,
@@ -25,29 +19,18 @@ export type ShowWhatOptions = ResolverOptions & {
 
 export type Resolutions = Record<string, Resolution<unknown> | ResolutionError>;
 
-async function fetchDefinitions(
-  data: DefinitionReader,
-  keys?: string[],
-): Promise<{ definitions: Definitions; notFound: ResolutionError[] }> {
+async function fetchDefinitions(data: DefinitionReader, keys?: string[]): Promise<Definitions> {
   if (!keys) {
-    return { definitions: await data.getAll(), notFound: [] };
+    return data.getAll();
   }
 
-  const definitions: Definitions = {};
-  const notFound: ResolutionError[] = [];
-
+  const definitions = {} as Record<string, Definitions[string] | null>;
   await Promise.all(
     keys.map(async (key) => {
-      const def = await data.get(key).catch(() => null);
-      if (def) {
-        definitions[key] = def;
-      } else {
-        notFound.push({ key, error: new DefinitionNotFoundError(key) });
-      }
+      definitions[key] = await data.get(key).catch(() => null);
     }),
   );
-
-  return { definitions, notFound };
+  return definitions as Definitions;
 }
 
 export async function showwhat<
@@ -69,10 +52,8 @@ export async function showwhat<
     );
   }
 
-  const { definitions, notFound } = await fetchDefinitions(options.data, keys);
-
-  const result = await resolve({
-    definitions,
+  return resolve({
+    definitions: await fetchDefinitions(options.data, keys),
     context: contextResult.data as Context<T>,
     options: {
       evaluators: options.evaluators ?? builtinEvaluators,
@@ -80,12 +61,6 @@ export async function showwhat<
       logger: options.logger,
     },
   });
-
-  for (const entry of notFound) {
-    result[entry.key] = entry;
-  }
-
-  return result;
 }
 
 const COMPOSITE_TYPES = new Set(["and", "or"]);
