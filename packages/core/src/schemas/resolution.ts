@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ContextSchema } from "./context.js";
 import { VariationValueSchema } from "./variation.js";
+import type { ShowwhatError } from "../errors.js";
 
 export const ResolutionSchema = z.object({
   key: z.string(),
@@ -22,4 +23,9 @@ type BaseResolution = z.infer<typeof ResolutionSchema>;
 export type Resolution<V = unknown> = Omit<BaseResolution, "value"> & {
   value: V;
   error: null;
+};
+
+export type ResolutionError = {
+  key: string;
+  error: ShowwhatError;
 };

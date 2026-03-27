@@ -89,13 +89,12 @@ describe("logger integration with resolver", () => {
       disabled: { active: false, variations: [{ value: "x" }] },
     };
 
-    await expect(
-      resolve({
-        definitions: inactiveDefs,
-        context: { env: "prod" },
-        options: { evaluators: builtinEvaluators, logger },
-      }),
-    ).rejects.toThrow();
+    const result = await resolve({
+      definitions: inactiveDefs,
+      context: { env: "prod" },
+      options: { evaluators: builtinEvaluators, logger },
+    });
+    expect(result["disabled"].error).toBeTruthy();
 
     const warnMessages = logger.calls.filter((c) => c.level === "warn").map((c) => c.message);
     expect(warnMessages).toContain("definition inactive");

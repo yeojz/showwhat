@@ -7,7 +7,6 @@ import {
   builtinEvaluators,
   DefinitionInactiveError,
   DefinitionNotFoundError,
-  ShowwhatError,
   ValidationError,
   VariationNotFoundError,
 } from "./index.js";
@@ -284,7 +283,7 @@ describe("showwhat", () => {
 });
 
 describe("showwhat - error surfaces", () => {
-  it("surfaces DefinitionReader.get() errors as ResolutionError", async () => {
+  it("throws when data.get() fails", async () => {
     const data = {
       async get() {
         throw new Error("connection failed");
@@ -293,38 +292,9 @@ describe("showwhat - error surfaces", () => {
         return {};
       },
     };
-    const result = await showwhat({
-      keys: ["any"],
-      context: { env: "prod" },
-      options: { data },
-    });
-    expect(result["any"].error).toBeTruthy();
-  });
-
-  it("wraps non-ShowwhatError rejections in ResolutionError", async () => {
-    const badFlags: Definitions = {
-      bad: {
-        variations: [{ value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] }],
-      },
-    };
-    const data = await MemoryData.fromObject({ definitions: badFlags });
-    const result = await showwhat({
-      keys: ["bad"],
-      context: { env: "prod" },
-      options: {
-        data,
-        evaluators: {
-          ...builtinEvaluators,
-          // Override env evaluator to throw a plain Error (not ShowwhatError)
-          env: async () => {
-            throw new Error("unexpected");
-          },
-        },
-      },
-    });
-    const entry = result["bad"];
-    expect(entry.error).toBeTruthy();
-    expect(entry.error).toBeInstanceOf(ShowwhatError);
+    await expect(
+      showwhat({ keys: ["any"], context: { env: "prod" }, options: { data } }),
+    ).rejects.toThrow("connection failed");
   });
 
   it("throws when getAll() fails", async () => {

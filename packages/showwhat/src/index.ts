@@ -2,7 +2,6 @@ import {
   ContextSchema,
   builtinEvaluators,
   DefinitionNotFoundError,
-  ShowwhatError,
   ValidationError,
   resolve,
 } from "@showwhat/core";
@@ -11,9 +10,10 @@ import type {
   ConditionEvaluators,
   Context,
   ContextValue,
-  Definition,
+  Definitions,
   DefinitionReader,
   Resolution,
+  ResolutionError,
   ResolverOptions,
 } from "@showwhat/core";
 
@@ -21,11 +21,6 @@ export * from "@showwhat/core";
 
 export type ShowWhatOptions = ResolverOptions & {
   data: DefinitionReader;
-};
-
-export type ResolutionError = {
-  key: string;
-  error: ShowwhatError;
 };
 
 export type Resolutions = Record<string, Resolution<unknown> | ResolutionError>;
@@ -56,60 +51,36 @@ export async function showwhat<
     logger: options.logger,
   };
 
-  let entries: Array<[string, Definition | null]>;
+  let definitions: Definitions;
+  const notFound: ResolutionError[] = [];
 
   if (keys) {
-    const settled = await Promise.allSettled(
-      keys.map(
-        async (key): Promise<[string, Definition | null]> => [key, await options.data.get(key)],
-      ),
+    definitions = {};
+    const fetched = await Promise.all(
+      keys.map(async (key) => [key, await options.data.get(key)] as const),
     );
-
-    entries = settled.map((result, i) => {
-      if (result.status === "fulfilled") {
-        return result.value;
+    for (const [key, def] of fetched) {
+      if (def) {
+        definitions[key] = def;
+      } else {
+        notFound.push({ key, error: new DefinitionNotFoundError(key) });
       }
-      return [keys[i], null] as [string, null];
-    });
-  } else {
-    const all = await options.data.getAll();
-    entries = Object.entries(all);
-  }
-
-  const resolutions: Resolutions = {};
-
-  const settled = await Promise.allSettled(
-    entries.map(async ([key, def]) => {
-      if (!def) {
-        throw new DefinitionNotFoundError(key);
-      }
-
-      const result = await resolve({
-        definitions: { [key]: def },
-        context: validatedContext,
-        options: resolverOptions,
-      });
-
-      return result[key];
-    }),
-  );
-
-  for (let i = 0; i < settled.length; i++) {
-    const [key] = entries[i];
-    const result = settled[i];
-
-    if (result.status === "fulfilled") {
-      resolutions[key] = result.value;
-    } else {
-      const error =
-        result.reason instanceof ShowwhatError
-          ? result.reason
-          : new ShowwhatError(String(result.reason));
-      resolutions[key] = { key, error };
     }
+  } else {
+    definitions = await options.data.getAll();
   }
 
-  return resolutions;
+  const result = await resolve({
+    definitions,
+    context: validatedContext,
+    options: resolverOptions,
+  });
+
+  for (const entry of notFound) {
+    result[entry.key] = entry;
+  }
+
+  return result;
 }
 
 const COMPOSITE_TYPES = new Set(["and", "or"]);

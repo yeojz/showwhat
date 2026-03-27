@@ -1,4 +1,11 @@
-import type { Definitions, Resolution, Variation, Context, ContextValue } from "./schemas/index.js";
+import type {
+  Definitions,
+  Resolution,
+  ResolutionError,
+  Variation,
+  Context,
+  ContextValue,
+} from "./schemas/index.js";
 import { evaluateCondition } from "./conditions/index.js";
 import type { Annotations, ConditionEvaluator, ConditionEvaluators } from "./conditions/index.js";
 import {
@@ -151,9 +158,8 @@ async function resolveKey<
 /**
  * Resolve all definitions against the given context.
  *
- * Uses `Promise.all` — if any single key fails (not found, inactive, no match),
- * the entire call rejects. Callers who need partial results should resolve
- * keys individually via `resolveVariation`.
+ * Each key is resolved independently — a failure for one key does not
+ * affect others. Failed keys are returned as `ResolutionError` entries.
  */
 export async function resolve<
   V = unknown,
@@ -166,13 +172,18 @@ export async function resolve<
   definitions: Definitions;
   context: Readonly<Context<T>>;
   options?: ResolverOptions;
-}): Promise<Record<string, Resolution<V>>> {
+}): Promise<Record<string, Resolution<V> | ResolutionError>> {
   const keys = Object.keys(definitions);
   const entries = await Promise.all(
-    keys.map(
-      async (key) => [key, await resolveKey<V, T>(key, definitions, context, options)] as const,
+    keys.map((key) =>
+      resolveKey<V, T>(key, definitions, context, options).catch(
+        (reason): ResolutionError => ({
+          key,
+          error: reason instanceof ShowwhatError ? reason : new ShowwhatError(String(reason)),
+        }),
+      ),
     ),
   );
 
-  return Object.fromEntries(entries);
+  return Object.fromEntries(keys.map((key, i) => [key, entries[i]]));
 }
