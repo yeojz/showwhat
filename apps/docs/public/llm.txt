@@ -1,0 +1,170 @@
+# showwhat
+
+> Schema and rule-based evaluation engine for feature flags and configuration management.
+
+showwhat is a vendor-neutral, infrastructure-free feature flag library. It resolves feature definitions against runtime contexts using YAML or JSON-based rules. First matching variation wins.
+
+- Documentation: https://showwhat.yeojz.dev
+- Repository: https://github.com/nicerapp/showwhat
+- License: MIT
+
+## Monorepo Layout
+
+```
+packages/core/          @showwhat/core        — rule engine, schemas, parsers, evaluators
+packages/showwhat/      showwhat              — main public API (re-exports core)
+packages/configurator/  @showwhat/configurator — React component library for visual editing
+packages/openfeature/   @showwhat/openfeature — OpenFeature Server SDK provider
+apps/webapp/            @repo/webapp          — Vite + React SPA for managing definitions
+apps/docs/              @repo/docs            — VitePress documentation site
+internal/               distribution tests    — Node, Deno, Bun compatibility tests
+```
+
+## Package Dependency Graph
+
+```
+showwhat
+  └── @showwhat/core (js-yaml, zod)
+
+@showwhat/configurator
+  ├── showwhat
+  ├── @dnd-kit, radix-ui, lucide-react, clsx, tailwind-merge
+  └── peer: react 19, react-dom 19
+
+@showwhat/openfeature
+  ├── showwhat
+  └── peer: @openfeature/server-sdk ^1.0.0
+
+@repo/webapp (internal)
+  ├── @showwhat/configurator
+  ├── showwhat
+  └── zustand, react 19, tailwind v4
+
+@repo/docs (internal)
+  └── vitepress (embeds built webapp at /configurator/)
+```
+
+## Tech Stack
+
+- TypeScript 5.4, ES2022 target, ESM only
+- pnpm 10.30 workspaces, Turbo 2.8 for orchestration
+- tsup for library builds, Vite 7 for apps, VitePress for docs
+- React 19, Tailwind CSS v4, shadcn/ui primitives, Zustand 5
+- Zod 4 for schema validation
+- Vitest 4 with @testing-library/react for tests
+- ESLint 10 + Prettier, lefthook for git hooks
+- Runs on Node 22+, Deno, and Bun
+
+## @showwhat/core
+
+Low-level engine. Key exports:
+
+- `resolve(definitions, context, evaluators)` — evaluate all definitions, return resolutions
+- `resolveVariation(definition, context, evaluators)` — evaluate a single definition
+- `builtinEvaluators` — condition types: env, string, number, bool, datetime, startAt, endAt, and, or
+- `registerEvaluators(custom)` — merge custom evaluators with builtins
+- `MemoryData` — in-memory data source implementing DefinitionReader/DefinitionWriter
+- `parseYaml(str)`, `parseObject(obj)` — parse definitions from YAML strings or plain objects
+- `parsePresetsYaml(str)`, `parsePresetsObject(obj)` — parse preset condition templates
+- `createPresetConditions(presets, params)` — instantiate reusable condition templates
+- Zod schemas: Definition, Variation, Condition, Context, Resolution
+- Typed errors: ShowwhatError, ValidationError, DefinitionNotFoundError, VariationNotFoundError, InvalidContextError, DataError, ParseError, SchemaValidationError
+
+Architecture: `schemas/` contains Zod types (no evaluator imports). `conditions/` contains evaluator implementations (imports from schemas). No default evaluators injected; consumers must pass evaluators explicitly.
+
+## showwhat (main package)
+
+High-level convenience API. Re-exports everything from @showwhat/core plus:
+
+- `showwhat({ key, context, options: { data } })` — single-key resolution with built-in context validation and builtin evaluators
+- Validates context against ContextSchema (Zod) automatically
+
+Use `showwhat` for simple single-key lookups. Use `@showwhat/core` directly for batch resolution or custom evaluator injection.
+
+## @showwhat/configurator
+
+React component library for visually building definitions. Key exports:
+
+- `Configurator` — main component, accepts a ConfiguratorStore
+- `DefinitionEditor`, `DefinitionList` — definition CRUD
+- `VariationCard`, `VariationList` — variation editing with drag-drop (@dnd-kit)
+- `ConditionBuilder` — visual AND/OR condition nesting
+- `ValueInput`, `DateTimeInput` — value editors
+- `ConfiguratorStore` interface — apps provide their own persistence backend
+- `useConfiguratorStore`, `useActionState`, `useConfiguratorSelector` — hooks
+- CSS exported at `@showwhat/configurator/styles.css` (must be imported by consumers)
+
+Design: controlled components (props in, callbacks out), no internal mutations. Store interface abstracts persistence so apps can back it with files, localStorage, or APIs.
+
+## @showwhat/openfeature
+
+OpenFeature Server SDK provider. Key exports:
+
+- `ShowwhatProvider` — implements OpenFeature provider interface
+- `toShowwhatContext()` — maps OpenFeature evaluation context to showwhat context
+- Supports boolean, string, number, object evaluation types
+- Custom evaluators via options, lifecycle management, error code mapping
+
+## Definition Structure
+
+A definition is a feature flag configuration:
+
+```yaml
+key: my-feature
+description: Optional description
+type: boolean          # boolean | string | number | object
+defaultVariation: off
+variations:
+  - key: on
+    value: true
+    conditions:        # first match wins
+      - type: env
+        operator: eq
+        value: production
+  - key: off
+    value: false
+```
+
+Supported condition types: env, string, number, bool, datetime, startAt, endAt, and (nested), or (nested). Custom evaluators can be registered.
+
+## Development Commands
+
+```bash
+pnpm install            # install dependencies
+pnpm build              # build all packages via Turbo
+pnpm dev                # watch mode for all
+pnpm test               # build + run all tests with coverage
+pnpm lint               # lint all packages
+pnpm typecheck          # typecheck all packages
+pnpm fix                # lint --fix + prettier
+pnpm dev:docs           # docs dev server
+pnpm dev:webapp         # webapp dev server
+pnpm build:webapp       # build webapp + dependencies
+pnpm build:docs         # build docs + dependencies
+```
+
+## Coding Conventions
+
+- `interface` for contracts/extension points, `type` for data shapes and props
+- No enums (use string unions), no `any` (use `unknown`)
+- ESM only, no CommonJS
+- Comments explain why, not what
+- Test files: `*.test.ts` / `*.test.tsx`
+- Entry points: `src/index.ts` with controlled exports
+- Tailwind classes via `clsx()` and `tailwind-merge`
+- Errors use typed hierarchy with context (key, message, type)
+
+## Key Files for Understanding the Codebase
+
+- `packages/core/src/index.ts` — core public API surface
+- `packages/core/src/schemas/` — all Zod type definitions
+- `packages/core/src/conditions/` — evaluator implementations
+- `packages/core/src/resolver.ts` — resolution algorithm
+- `packages/showwhat/src/index.ts` — main package entry
+- `packages/showwhat/src/showwhat.ts` — high-level API wrapper
+- `packages/configurator/src/index.ts` — component library exports
+- `packages/configurator/src/types.ts` — store interface contract
+- `packages/openfeature/src/provider.ts` — OpenFeature provider implementation
+- `apps/webapp/src/stores/` — Zustand stores for webapp state
+- `turbo.json` — build pipeline and task dependencies
+- `pnpm-workspace.yaml` — workspace package locations
