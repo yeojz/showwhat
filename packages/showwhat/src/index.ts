@@ -51,10 +51,11 @@ export async function showwhat<
     logger: options.logger,
   };
 
-  const definitions: Definitions = {};
+  let definitions: Definitions;
   const notFound: ResolutionError[] = [];
 
   if (keys) {
+    definitions = {};
     await Promise.all(
       keys.map(async (key) => {
         const def = await options.data.get(key).catch(() => null);
@@ -66,7 +67,7 @@ export async function showwhat<
       }),
     );
   } else {
-    Object.assign(definitions, await options.data.getAll());
+    definitions = await options.data.getAll();
   }
 
   const result = await resolve({
