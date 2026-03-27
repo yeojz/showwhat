@@ -29,7 +29,7 @@ const result = await showwhat({
 });
 
 const entry = result["checkout_v2"];
-if (entry.error) {
+if (!entry.success) {
   console.log(entry.error); // ShowwhatError
 } else {
   console.log(entry.value); // true
@@ -64,9 +64,9 @@ const allResults = await showwhat({
 
 | Field                           | Type                      | Description                                         |
 | ------------------------------- | ------------------------- | --------------------------------------------------- |
+| `success`                       | `true`                    | Always `true` on success (for union discrimination) |
 | `key`                           | `string`                  | The definition key that was resolved                |
 | `value`                         | `unknown`                 | The matched variation's value                       |
-| `error`                         | `null`                    | Always `null` on success (for union discrimination) |
 | `meta.context`                  | `Context`                 | The context used for resolution                     |
 | `meta.variation.index`          | `number`                  | Index of the matched variation                      |
 | `meta.variation.id`             | `string?`                 | Optional variation identifier                       |
@@ -78,10 +78,11 @@ The `annotations` record contains metadata populated by custom evaluators during
 
 **`ResolutionError` fields:**
 
-| Field   | Type            | Description                                                  |
-| ------- | --------------- | ------------------------------------------------------------ |
-| `key`   | `string`        | The definition key that failed                               |
-| `error` | `ShowwhatError` | The error that occurred (e.g. not found, inactive, no match) |
+| Field     | Type            | Description                                                  |
+| --------- | --------------- | ------------------------------------------------------------ |
+| `success` | `false`         | Always `false` on error (for union discrimination)           |
+| `key`     | `string`        | The definition key that failed                               |
+| `error`   | `ShowwhatError` | The error that occurred (e.g. not found, inactive, no match) |
 
 Per-key errors such as `DefinitionNotFoundError`, `DefinitionInactiveError`, and `VariationNotFoundError` are wrapped in `ResolutionError` and returned in the result record -- they are never thrown.
 
@@ -235,6 +236,7 @@ type Definitions = Record<string, Definition>;
 // Resolution — see showwhat() return type above
 
 type ResolutionError = {
+  success: false;
   key: string;
   error: ShowwhatError;
 };

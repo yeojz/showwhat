@@ -81,9 +81,9 @@ High-level convenience API. Re-exports everything from @showwhat/core plus:
   - `keys` omitted: fetches all via `data.getAll()`
   - Per-key errors wrapped in `ResolutionError`, never thrown
   - Only systemic failures (context validation) are thrown
-- `ResolutionError` — `{ key: string; error: ShowwhatError }` for failed keys
-- `Resolutions` — `Record<string, Resolution<unknown> | ResolutionError>`
-- `Resolution` has `error: null` for union discrimination — check `entry.error` to narrow
+- `ResolutionError` — `{ success: false; key: string; error: ShowwhatError }` for failed keys
+- `Resolutions` — `Record<string, Resolution | ResolutionError>`
+- `Resolution` has `success: true`, `ResolutionError` has `success: false` — check `entry.success` to narrow
 - Validates context against ContextSchema (Zod) automatically
 
 Use `showwhat` for resolving flags with built-in evaluators and error wrapping. Use `@showwhat/core` directly for low-level batch resolution or custom evaluator injection.

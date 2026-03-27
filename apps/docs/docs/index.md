@@ -84,14 +84,14 @@ const result = await showwhat({
 });
 
 const entry = result["checkout_v2"];
-if (entry.error) {
+if (!entry.success) {
   console.log(entry.error); // ShowwhatError
 } else {
   console.log(entry.value); // true
 }
 ```
 
-The `context` object tells showwhat about the current environment. The `data` option provides the definitions. The result is a `Resolutions` record keyed by definition name -- each entry is either a successful `Resolution` or a `ResolutionError`.
+The `context` object tells showwhat about the current environment. The `data` option provides the definitions. The result is a `Resolutions` record keyed by definition name, with each entry is either a successful `Resolution` (`success: true`) or a `ResolutionError` (`success: false`).
 
 ### Next steps
 

@@ -146,7 +146,7 @@ const result = await showwhat({
 });
 
 const entry = result["checkout_v2"];
-if (entry.error) {
+if (!entry.success) {
   console.log(entry.error); // ShowwhatError
 } else {
   console.log(entry.value); // true

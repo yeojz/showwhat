@@ -140,7 +140,7 @@ const myEvaluators = registerEvaluators({
 });
 ```
 
-The annotations object is shared across all evaluators for a given resolution and returned in `entry.meta.annotations` (after checking that `entry.error` is `null`).
+The annotations object is shared across all evaluators for a given resolution and returned in `entry.meta.annotations` (after checking that `entry.success` is `true`).
 
 ## Summary
 

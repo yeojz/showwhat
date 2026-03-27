@@ -18,7 +18,7 @@ const result = await showwhat({
 });
 
 const entry = result["missing"];
-if (entry.error) {
+if (!entry.success) {
   // Per-key error — not thrown, check the error property
   if (entry.error instanceof DefinitionNotFoundError) {
     console.log(entry.error.key); // "missing"
