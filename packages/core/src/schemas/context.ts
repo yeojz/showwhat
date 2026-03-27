@@ -12,4 +12,4 @@ export const ContextSchema = z.record(z.string(), ContextValueSchema);
 
 type ContextPrimitive = string | number | boolean;
 export type ContextValue = ContextPrimitive | ContextPrimitive[] | { [key: string]: ContextValue };
-export type Context = Record<string, ContextValue>;
+export type Context<T extends Record<string, ContextValue> = Record<string, ContextValue>> = T;

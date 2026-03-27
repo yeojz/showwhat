@@ -1,4 +1,4 @@
-import type { Definitions, Resolution, Variation, Context } from "./schemas/index.js";
+import type { Definitions, Resolution, Variation, Context, ContextValue } from "./schemas/index.js";
 import { evaluateCondition } from "./conditions/index.js";
 import type { Annotations, ConditionEvaluator, ConditionEvaluators } from "./conditions/index.js";
 import {
@@ -27,13 +27,15 @@ function getLogger(options?: ResolverOptions): Logger {
   return options?.logger ?? noopLogger;
 }
 
-export async function resolveVariation({
+export async function resolveVariation<
+  T extends Record<string, ContextValue> = Record<string, ContextValue>,
+>({
   variations,
   context,
   options,
 }: {
   variations: Variation[];
-  context: Readonly<Context>;
+  context: Readonly<Context<T>>;
   options?: ResolverOptions;
 }): Promise<{ variation: Variation; variationIndex: number; annotations: Annotations } | null> {
   const evaluators = getEvaluators(options);
@@ -77,18 +79,18 @@ export async function resolveVariation({
   return null;
 }
 
-function toResolution(
+function toResolution<V = unknown>(
   key: string,
   result: { variation: Variation; variationIndex: number; annotations: Annotations },
   context: Readonly<Context>,
-): Resolution {
+): Resolution<V> {
   const conditionCount = Array.isArray(result.variation.conditions)
     ? result.variation.conditions.length
     : 0;
 
   return {
     key,
-    value: result.variation.value,
+    value: result.variation.value as V,
     meta: {
       context: { ...context },
       variation: {
@@ -102,12 +104,15 @@ function toResolution(
   };
 }
 
-async function resolveKey(
+async function resolveKey<
+  V = unknown,
+  T extends Record<string, ContextValue> = Record<string, ContextValue>,
+>(
   key: string,
   definitions: Definitions,
-  context: Readonly<Context>,
+  context: Readonly<Context<T>>,
   options?: ResolverOptions,
-): Promise<Resolution> {
+): Promise<Resolution<V>> {
   const logger = getLogger(options);
   const definition = definitions[key];
 
@@ -139,7 +144,7 @@ async function resolveKey(
     value: result.variation.value,
   });
 
-  return toResolution(key, result, context);
+  return toResolution<V>(key, result, context);
 }
 
 /**
@@ -149,18 +154,23 @@ async function resolveKey(
  * the entire call rejects. Callers who need partial results should resolve
  * keys individually via `resolveVariation`.
  */
-export async function resolve({
+export async function resolve<
+  V = unknown,
+  T extends Record<string, ContextValue> = Record<string, ContextValue>,
+>({
   definitions,
   context,
   options,
 }: {
   definitions: Definitions;
-  context: Readonly<Context>;
+  context: Readonly<Context<T>>;
   options?: ResolverOptions;
-}): Promise<Record<string, Resolution>> {
+}): Promise<Record<string, Resolution<V>>> {
   const keys = Object.keys(definitions);
   const entries = await Promise.all(
-    keys.map(async (key) => [key, await resolveKey(key, definitions, context, options)] as const),
+    keys.map(
+      async (key) => [key, await resolveKey<V, T>(key, definitions, context, options)] as const,
+    ),
   );
 
   return Object.fromEntries(entries);
