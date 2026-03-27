@@ -91,6 +91,7 @@ function toResolution<V = unknown>(
   return {
     key,
     value: result.variation.value as V,
+    error: null,
     meta: {
       context: { ...context },
       variation: {

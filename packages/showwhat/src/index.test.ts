@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   showwhat,
   registerEvaluators,
@@ -7,7 +7,9 @@ import {
   builtinEvaluators,
   DefinitionInactiveError,
   DefinitionNotFoundError,
+  ShowwhatError,
   ValidationError,
+  VariationNotFoundError,
 } from "./index.js";
 import type { ConditionEvaluator, Definitions } from "./index.js";
 
@@ -27,64 +29,143 @@ const flags: Definitions = {
 };
 
 describe("showwhat", () => {
-  it("resolves a flag via the data source", async () => {
+  it("resolves multiple keys", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     const result = await showwhat({
-      key: "checkout_v2",
+      keys: ["checkout_v2", "max_upload_mb"],
       context: { env: "prod" },
       options: { data },
     });
-    expect(result.value).toBe(true);
-    expect(result.meta.variation.conditionCount).toBe(1);
+    expect(result["checkout_v2"].error).toBeNull();
+    expect((result["checkout_v2"] as { value: unknown }).value).toBe(true);
+    expect(result["max_upload_mb"].error).toBeNull();
+    expect((result["max_upload_mb"] as { value: unknown }).value).toBe(50);
+  });
+
+  it("resolves a single key in array", async () => {
+    const data = await MemoryData.fromObject({ definitions: flags });
+    const result = await showwhat({
+      keys: ["checkout_v2"],
+      context: { env: "prod" },
+      options: { data },
+    });
+    const entry = result["checkout_v2"];
+    expect(entry.error).toBeNull();
+    if (!entry.error) {
+      expect(entry.value).toBe(true);
+      expect(entry.meta.variation.conditionCount).toBe(1);
+    }
   });
 
   it("resolves catch-all when no condition matches", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     const result = await showwhat({
-      key: "checkout_v2",
+      keys: ["checkout_v2"],
       context: { env: "dev" },
       options: { data },
     });
-    expect(result.value).toBe(false);
-    expect(result.meta.variation.conditionCount).toBe(0);
+    const entry = result["checkout_v2"];
+    expect(entry.error).toBeNull();
+    if (!entry.error) {
+      expect(entry.value).toBe(false);
+      expect(entry.meta.variation.conditionCount).toBe(0);
+    }
   });
 
-  it("throws DefinitionNotFoundError for unknown key", async () => {
+  it("returns ResolutionError for unknown key", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
-    await expect(
-      showwhat({ key: "nonexistent", context: { env: "prod" }, options: { data } }),
-    ).rejects.toThrow(DefinitionNotFoundError);
+    const result = await showwhat({
+      keys: ["nonexistent"],
+      context: { env: "prod" },
+      options: { data },
+    });
+    const entry = result["nonexistent"];
+    expect(entry.error).toBeInstanceOf(DefinitionNotFoundError);
+  });
+
+  it("returns mixed successes and errors", async () => {
+    const mixedFlags: Definitions = {
+      ...flags,
+      disabled: { active: false, variations: [{ value: "nope" }] },
+    };
+    const data = await MemoryData.fromObject({ definitions: mixedFlags });
+    const result = await showwhat({
+      keys: ["checkout_v2", "disabled", "nonexistent"],
+      context: { env: "prod" },
+      options: { data },
+    });
+
+    expect(result["checkout_v2"].error).toBeNull();
+    expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
+    expect(result["nonexistent"].error).toBeInstanceOf(DefinitionNotFoundError);
   });
 
   it("throws ValidationError when context contains invalid values", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     await expect(
       showwhat({
-        key: "checkout_v2",
+        keys: ["checkout_v2"],
         context: { env: () => {} } as never,
         options: { data },
       }),
     ).rejects.toThrow(ValidationError);
   });
 
+  it("resolves all keys when keys is omitted", async () => {
+    const data = await MemoryData.fromObject({ definitions: flags });
+    const result = await showwhat({
+      context: { env: "prod" },
+      options: { data },
+    });
+    expect(Object.keys(result)).toHaveLength(2);
+    expect(result["checkout_v2"].error).toBeNull();
+    expect(result["max_upload_mb"].error).toBeNull();
+  });
+
+  it("calls getAll() when keys is omitted", async () => {
+    const getAllSpy = vi.fn(async () => flags);
+    const getSpy = vi.fn();
+    const data = { get: getSpy, getAll: getAllSpy };
+
+    await showwhat({ context: { env: "prod" }, options: { data } });
+
+    expect(getAllSpy).toHaveBeenCalledOnce();
+    expect(getSpy).not.toHaveBeenCalled();
+  });
+
+  it("calls get() per key when keys is provided", async () => {
+    const getAllSpy = vi.fn();
+    const getSpy = vi.fn(async (key: string) => flags[key] ?? null);
+    const data = { get: getSpy, getAll: getAllSpy };
+
+    await showwhat({
+      keys: ["checkout_v2", "max_upload_mb"],
+      context: { env: "prod" },
+      options: { data },
+    });
+
+    expect(getSpy).toHaveBeenCalledTimes(2);
+    expect(getAllSpy).not.toHaveBeenCalled();
+  });
+
   it("accepts nested objects in context", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     const result = await showwhat({
-      key: "checkout_v2",
+      keys: ["checkout_v2"],
       context: { env: "prod", meta: { nested: true } },
       options: { data },
     });
-    expect(result.value).toBe(true);
+    expect(result["checkout_v2"].error).toBeNull();
   });
 
   it("accepts primitive arrays in context", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     const result = await showwhat({
-      key: "checkout_v2",
+      keys: ["checkout_v2"],
       context: { env: "prod", tags: ["a", "b"] },
       options: { data },
     });
-    expect(result.value).toBe(true);
+    expect(result["checkout_v2"].error).toBeNull();
   });
 
   it("supports time-based conditions", async () => {
@@ -127,84 +208,83 @@ describe("showwhat", () => {
     };
     const data = await MemoryData.fromObject({ definitions: customFlags });
     const customEvaluators = registerEvaluators({ tier: tierEvaluator });
-    expect(
-      (
-        await showwhat({
-          key: "feature",
-          context: { tier: "pro" } as never,
-          options: { data, evaluators: customEvaluators },
-        })
-      ).value,
-    ).toBe("pro");
-    expect(
-      (
-        await showwhat({
-          key: "feature",
-          context: { tier: "free" } as never,
-          options: { data, evaluators: customEvaluators },
-        })
-      ).value,
-    ).toBe("free");
+
+    const result = await showwhat({
+      keys: ["feature"],
+      context: { tier: "pro" } as never,
+      options: { data, evaluators: customEvaluators },
+    });
+    expect((result["feature"] as { value: unknown }).value).toBe("pro");
   });
 
-  it("throws DefinitionInactiveError when active is false", async () => {
+  it("returns ResolutionError when active is false", async () => {
     const inactiveFlags: Definitions = {
-      disabled: {
-        active: false,
-        variations: [{ value: "nope" }],
-      },
+      disabled: { active: false, variations: [{ value: "nope" }] },
     };
     const data = await MemoryData.fromObject({ definitions: inactiveFlags });
-    await expect(
-      showwhat({ key: "disabled", context: { env: "prod" }, options: { data } }),
-    ).rejects.toThrow(DefinitionInactiveError);
+    const result = await showwhat({
+      keys: ["disabled"],
+      context: { env: "prod" },
+      options: { data },
+    });
+    expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
   });
 
   it("resolves normally when active is undefined", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     const result = await showwhat({
-      key: "checkout_v2",
+      keys: ["checkout_v2"],
       context: { env: "prod" },
       options: { data },
     });
-    expect(result.value).toBe(true);
+    expect(result["checkout_v2"].error).toBeNull();
   });
 
   it("resolves normally when active is true", async () => {
     const activeFlags: Definitions = {
-      enabled: {
-        active: true,
-        variations: [{ value: "yes" }],
-      },
+      enabled: { active: true, variations: [{ value: "yes" }] },
     };
     const data = await MemoryData.fromObject({ definitions: activeFlags });
     const result = await showwhat({
-      key: "enabled",
+      keys: ["enabled"],
       context: { env: "prod" },
       options: { data },
     });
-    expect(result.value).toBe("yes");
+    const entry = result["enabled"];
+    expect(entry.error).toBeNull();
+    if (!entry.error) {
+      expect(entry.value).toBe("yes");
+    }
   });
 
-  it("works with any DefinitionReader implementation", async () => {
-    let callCount = 0;
-    const data = {
-      async get(key: string) {
-        callCount++;
-        return flags[key] ?? null;
-      },
-      async getAll() {
-        return flags;
+  it("returns ResolutionError for VariationNotFoundError", async () => {
+    const noMatchFlags: Definitions = {
+      strict: {
+        variations: [{ value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] }],
       },
     };
-    await showwhat({ key: "checkout_v2", context: { env: "prod" }, options: { data } });
-    await showwhat({ key: "checkout_v2", context: { env: "prod" }, options: { data } });
-    expect(callCount).toBe(2);
+    const data = await MemoryData.fromObject({ definitions: noMatchFlags });
+    const result = await showwhat({
+      keys: ["strict"],
+      context: { env: "dev" },
+      options: { data },
+    });
+    expect(result["strict"].error).toBeInstanceOf(VariationNotFoundError);
+  });
+
+  it("returns empty record when keys is empty array", async () => {
+    const data = await MemoryData.fromObject({ definitions: flags });
+    const result = await showwhat({
+      keys: [],
+      context: { env: "prod" },
+      options: { data },
+    });
+    expect(Object.keys(result)).toHaveLength(0);
   });
 });
 
 describe("showwhat - error surfaces", () => {
-  it("surfaces DefinitionReader.get() errors", async () => {
+  it("surfaces DefinitionReader.get() errors as ResolutionError", async () => {
     const data = {
       async get() {
         throw new Error("connection failed");
@@ -213,9 +293,52 @@ describe("showwhat - error surfaces", () => {
         return {};
       },
     };
-    await expect(
-      showwhat({ key: "any", context: { env: "prod" }, options: { data } }),
-    ).rejects.toThrow("connection failed");
+    const result = await showwhat({
+      keys: ["any"],
+      context: { env: "prod" },
+      options: { data },
+    });
+    expect(result["any"].error).toBeTruthy();
+  });
+
+  it("wraps non-ShowwhatError rejections in ResolutionError", async () => {
+    const badFlags: Definitions = {
+      bad: {
+        variations: [{ value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] }],
+      },
+    };
+    const data = await MemoryData.fromObject({ definitions: badFlags });
+    const result = await showwhat({
+      keys: ["bad"],
+      context: { env: "prod" },
+      options: {
+        data,
+        evaluators: {
+          ...builtinEvaluators,
+          // Override env evaluator to throw a plain Error (not ShowwhatError)
+          env: async () => {
+            throw new Error("unexpected");
+          },
+        },
+      },
+    });
+    const entry = result["bad"];
+    expect(entry.error).toBeTruthy();
+    expect(entry.error).toBeInstanceOf(ShowwhatError);
+  });
+
+  it("throws when getAll() fails", async () => {
+    const data = {
+      async get() {
+        return null;
+      },
+      async getAll() {
+        throw new Error("connection failed");
+      },
+    };
+    await expect(showwhat({ context: { env: "prod" }, options: { data } })).rejects.toThrow(
+      "connection failed",
+    );
   });
 });
 
@@ -223,11 +346,15 @@ describe("showwhat - builtinEvaluators default", () => {
   it("uses builtinEvaluators when evaluators not provided in options", async () => {
     const data = await MemoryData.fromObject({ definitions: flags });
     const result = await showwhat({
-      key: "checkout_v2",
+      keys: ["checkout_v2"],
       context: { env: "prod" },
       options: { data },
     });
-    expect(result.value).toBe(true);
+    const entry = result["checkout_v2"];
+    expect(entry.error).toBeNull();
+    if (!entry.error) {
+      expect(entry.value).toBe(true);
+    }
   });
 });
 
