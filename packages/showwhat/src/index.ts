@@ -9,6 +9,7 @@ import type {
   BuiltinCondition,
   ConditionEvaluators,
   Context,
+  ContextValue,
   DefinitionReader,
   Resolution,
   ResolverOptions,
@@ -20,15 +21,18 @@ export type ShowWhatOptions = ResolverOptions & {
   data: DefinitionReader;
 };
 
-export async function showwhat({
+export async function showwhat<
+  V = unknown,
+  T extends Record<string, ContextValue> = Record<string, ContextValue>,
+>({
   key,
   context,
   options,
 }: {
   key: string;
-  context: Context;
+  context: Context<T>;
   options: ShowWhatOptions;
-}): Promise<Resolution> {
+}): Promise<Resolution<V>> {
   const contextResult = ContextSchema.safeParse(context);
   if (!contextResult.success) {
     throw new ValidationError(
@@ -37,14 +41,14 @@ export async function showwhat({
     );
   }
 
-  const validatedContext = contextResult.data;
+  const validatedContext = contextResult.data as Context<T>;
   const def = await options.data.get(key);
 
   if (!def) {
     throw new DefinitionNotFoundError(key);
   }
 
-  const result = await resolve({
+  const result = await resolve<V, T>({
     definitions: { [key]: def },
     context: validatedContext,
     options: {

@@ -16,4 +16,7 @@ export const ResolutionSchema = z.object({
     annotations: z.record(z.string(), z.unknown()),
   }),
 });
-export type Resolution = z.infer<typeof ResolutionSchema>;
+
+type BaseResolution = z.infer<typeof ResolutionSchema>;
+
+export type Resolution<V = unknown> = Omit<BaseResolution, "value"> & { value: V };
