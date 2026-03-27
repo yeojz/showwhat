@@ -21,11 +21,12 @@ export const ResolutionSchema = z.object({
 type BaseResolution = z.infer<typeof ResolutionSchema>;
 
 export type Resolution = Omit<BaseResolution, "value"> & {
+  success: true;
   value: unknown;
-  error: null;
 };
 
 export type ResolutionError = {
+  success: false;
   key: string;
   error: ShowwhatError;
 };
