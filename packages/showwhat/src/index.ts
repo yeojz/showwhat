@@ -25,6 +25,31 @@ export type ShowWhatOptions = ResolverOptions & {
 
 export type Resolutions = Record<string, Resolution<unknown> | ResolutionError>;
 
+async function fetchDefinitions(
+  data: DefinitionReader,
+  keys?: string[],
+): Promise<{ definitions: Definitions; notFound: ResolutionError[] }> {
+  if (!keys) {
+    return { definitions: await data.getAll(), notFound: [] };
+  }
+
+  const definitions: Definitions = {};
+  const notFound: ResolutionError[] = [];
+
+  await Promise.all(
+    keys.map(async (key) => {
+      const def = await data.get(key).catch(() => null);
+      if (def) {
+        definitions[key] = def;
+      } else {
+        notFound.push({ key, error: new DefinitionNotFoundError(key) });
+      }
+    }),
+  );
+
+  return { definitions, notFound };
+}
+
 export async function showwhat<
   T extends Record<string, ContextValue> = Record<string, ContextValue>,
 >({
@@ -44,36 +69,16 @@ export async function showwhat<
     );
   }
 
-  const validatedContext = contextResult.data as Context<T>;
-  const resolverOptions = {
-    evaluators: options.evaluators ?? builtinEvaluators,
-    fallback: options.fallback,
-    logger: options.logger,
-  };
-
-  let definitions: Definitions;
-  const notFound: ResolutionError[] = [];
-
-  if (keys) {
-    definitions = {};
-    await Promise.all(
-      keys.map(async (key) => {
-        const def = await options.data.get(key).catch(() => null);
-        if (def) {
-          definitions[key] = def;
-        } else {
-          notFound.push({ key, error: new DefinitionNotFoundError(key) });
-        }
-      }),
-    );
-  } else {
-    definitions = await options.data.getAll();
-  }
+  const { definitions, notFound } = await fetchDefinitions(options.data, keys);
 
   const result = await resolve({
     definitions,
-    context: validatedContext,
-    options: resolverOptions,
+    context: contextResult.data as Context<T>,
+    options: {
+      evaluators: options.evaluators ?? builtinEvaluators,
+      fallback: options.fallback,
+      logger: options.logger,
+    },
   });
 
   for (const entry of notFound) {
