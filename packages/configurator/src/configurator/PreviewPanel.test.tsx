@@ -19,6 +19,15 @@ vi.mock("showwhat", () => ({
         rejectPromise = rej;
       }),
   ),
+  builtinEvaluators: {
+    string: vi.fn(),
+    number: vi.fn(),
+    datetime: vi.fn(),
+    bool: vi.fn(),
+    env: vi.fn(),
+    startAt: vi.fn(),
+    endAt: vi.fn(),
+  },
   DefinitionInactiveError: class DefinitionInactiveError extends Error {
     constructor(msg?: string) {
       super(msg);
@@ -509,7 +518,8 @@ describe("PreviewPanel", () => {
 
     const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
     const lastCall = calls[calls.length - 1][0];
-    expect(lastCall.options).toBeUndefined();
+    expect(lastCall.options.evaluators).toBeDefined();
+    expect(lastCall.options.fallback).toBeUndefined();
   });
 
   // --- JsonEditorDialog: Format button ---
