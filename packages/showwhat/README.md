@@ -1,6 +1,6 @@
 # showwhat
 
-Feature flag resolution engine — the main entry point for **showwhat**, a lightweight, extensible feature flag library.
+An extensible schema and rule based evaluation engine for feature flags and configuration.
 
 ## Installation
 
@@ -43,8 +43,6 @@ console.log(result.value); // true
 - YAML and JSON parsing with schema validation
 - Pluggable data sources (`DefinitionReader` / `DefinitionWriter`)
 - Typed error hierarchy
-
-This package re-exports everything from `@showwhat/core`.
 
 ## Documentation
 

@@ -1,6 +1,6 @@
 # @showwhat/core
 
-Low-level condition engine and schemas for [`showwhat`](https://www.npmjs.com/package/showwhat) - a lightweight, extensible configuration and feature flag library.
+Low-level condition engine and schemas for [`showwhat`](https://www.npmjs.com/package/showwhat) - an extensible schema and rule based evaluation engine for feature flags and configuration.
 
 ## Installation
 

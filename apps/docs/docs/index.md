@@ -4,7 +4,7 @@ title: showwhat
 
 # showwhat
 
-A definition format and evaluation engine for feature flags and remote config.
+An extensible schema and rule based evaluation engine for feature flags and configuration.
 
 - **Specification-first** — definitions are YAML/JSON files that live in Git
 - **Zero infrastructure** — no server, database, or vendor to operate

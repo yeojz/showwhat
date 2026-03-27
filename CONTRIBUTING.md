@@ -118,6 +118,24 @@ chore: update dependencies
 - Bug fixes should include a regression test where practical.
 - All packages must pass `npx vitest run` and `npx tsc --noEmit` with no errors.
 
+## AI Usage Guidelines
+
+Code or other content generated in whole or in part using AI tools can be contributed to the project, provided that it satisfies the following conditions:
+
+### AI Tool Terms Compatibility
+
+- Ensure the AI tool's terms don't conflict with the project's open source license, IP policies, or Open Source Definition
+
+### Third-Party Content in AI Output
+
+- Verify permission to use any third-party copyrighted materials (e.g., via compatible open source license or public domain)
+- Provide attribution and license information for any third-party content included
+
+### Responsible AI Usage
+
+- You are responsible for reviewing, testing, and verifying any AI-assisted changes.
+- If AI tools generated significant parts of your contribution, mention this in your PR so reviewers can provide appropriate guidance.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.

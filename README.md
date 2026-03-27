@@ -5,9 +5,9 @@
 
 # showwhat
 
-A definition format and evaluation engine for feature flags and configuration.
+An extensible schema and rule based evaluation engine for feature flags and configuration.
 
-Define feature configs as **variations with conditions** in YAML or JSON. At runtime, `showwhat` evaluates the conditions against a context object and resolves the first matching variation's value — booleans, strings, numbers, or full objects. No platform, no infrastructure, no vendor lock-in.
+Define feature configs as **variations with conditions** in a YAML or JSON. At runtime, `showwhat` evaluates the conditions against a context object and resolves the first matching variation's value — booleans, strings, numbers, or full objects. No platform, no infrastructure, no vendor lock-in.
 
 **[Documentation](https://showwhat.yeojz.dev)** · **[Quick Start](https://showwhat.yeojz.dev/docs/)**
 
@@ -81,3 +81,11 @@ See the [Conditions guide](https://showwhat.yeojz.dev/docs/conditions) for full 
 ## Security
 
 showwhat assumes definition authors are trusted. See the [Security guide](https://showwhat.yeojz.dev/docs/security) for considerations when accepting definitions from untrusted sources.
+
+## AI Usage Disclosure
+
+Parts of the codebase, tests, and documentation have been refined with AI assistance, with all outputs reviewed by humans. See [CONTRIBUTING.md](./CONTRIBUTING.md#ai-usage-guidelines) for guidelines.
+
+## License
+
+[MIT](./LICENSE)
