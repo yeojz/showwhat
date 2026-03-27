@@ -53,7 +53,7 @@ Pass your evaluators via the `evaluators` option:
 import { showwhat } from "showwhat";
 
 const result = await showwhat({
-  key: "new_checkout",
+  keys: ["new_checkout"],
   context: { env: "prod", userId: "user-42" },
   options: { data, evaluators: myEvaluators },
 });
@@ -109,7 +109,7 @@ If you need to handle unknown condition types gracefully — for example, in a p
 
 ```ts
 const result = await showwhat({
-  key: "my_flag",
+  keys: ["my_flag"],
   context: { env: "prod" },
   options: {
     data,
@@ -120,7 +120,7 @@ const result = await showwhat({
 });
 ```
 
-Without a fallback, unknown condition types throw a `ShowwhatError`.
+Without a fallback, unknown condition types return a `ResolutionError` for the affected key.
 
 ## Annotations
 
@@ -140,7 +140,7 @@ const myEvaluators = registerEvaluators({
 });
 ```
 
-The annotations object is shared across all evaluators for a given resolution and returned in `resolution.meta.annotations`.
+The annotations object is shared across all evaluators for a given resolution and returned in `entry.meta.annotations` (after checking that `entry.error` is `null`).
 
 ## Summary
 

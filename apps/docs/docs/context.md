@@ -19,7 +19,7 @@ The context accepts arbitrary properties with `string`, `number`, or `boolean` v
 
 ```ts
 const result = await showwhat({
-  key: "my_flag",
+  keys: ["my_flag"],
   context: {
     env: "prod",
     at: new Date().toISOString(),
@@ -30,6 +30,10 @@ const result = await showwhat({
   },
   options: { data },
 });
+const flag = result["my_flag"];
+if (!flag.error) {
+  console.log(flag.value);
+}
 ```
 
 ```yaml

@@ -82,13 +82,17 @@ const presets = {
 const presetConditions = createPresetConditions(presets);
 
 const result = await showwhat({
-  key: "banner",
+  keys: ["banner"],
   context: { tier: "pro", user_age: 25 },
   options: {
     data,
     evaluators: registerEvaluators(presetConditions),
   },
 });
+const banner = result["banner"];
+if (!banner.error) {
+  console.log(banner.value);
+}
 ```
 
 Definitions can then use preset types directly. The `key` is already bound by the preset, so you only specify `op` and `value`:

@@ -123,7 +123,7 @@ definitions:
 
   # ── Inactive flag ──────────────────────────
   legacy_auth:
-    active: false # resolving this throws DefinitionInactiveError
+    active: false # resolving this returns a ResolutionError
     variations:
       - value: true
 ```
@@ -140,10 +140,15 @@ const yaml = await readFile("flags.yaml", "utf-8");
 const data = await MemoryData.fromYaml(yaml);
 
 const result = await showwhat({
-  key: "checkout_v2",
+  keys: ["checkout_v2"],
   context: { env: "prod" },
   options: { data },
 });
 
-console.log(result.value); // true
+const entry = result["checkout_v2"];
+if (entry.error) {
+  console.log(entry.error); // ShowwhatError
+} else {
+  console.log(entry.value); // true
+}
 ```

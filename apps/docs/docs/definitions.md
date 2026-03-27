@@ -45,11 +45,11 @@ definitions:
 
 :::
 
-| Field         | Required | Description                                                                                                                      |
-| ------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `variations`  | Yes      | Ordered list of variations to evaluate                                                                                           |
-| `active`      | No       | Set to `false` to disable the definition. Resolving an inactive definition throws `DefinitionInactiveError`. Defaults to `true`. |
-| `description` | No       | Human-readable description                                                                                                       |
+| Field         | Required | Description                                                                                                                                                                                          |
+| ------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variations`  | Yes      | Ordered list of variations to evaluate                                                                                                                                                               |
+| `active`      | No       | Set to `false` to disable the definition. Resolving an inactive definition returns a `ResolutionError` (via `showwhat()`) or throws `DefinitionInactiveError` (via `resolve()`). Defaults to `true`. |
+| `description` | No       | Human-readable description                                                                                                                                                                           |
 
 ## Variations
 
@@ -84,7 +84,7 @@ This means definitions aren't limited to feature flags (boolean on/off). A singl
 
 ## Resolution
 
-Variations are evaluated **top-to-bottom**. The first variation whose conditions all match wins. If no variation matches, `showwhat()` throws a `VariationNotFoundError`.
+Variations are evaluated **top-to-bottom**. The first variation whose conditions all match wins. If no variation matches, `showwhat()` returns a `ResolutionError` for that key instead of a `Resolution`.
 
 Place your most specific variations first and a catch-all default (no conditions) last:
 

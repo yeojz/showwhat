@@ -200,10 +200,14 @@ Remember to pass `at` in the context. If `context.at` is not provided, time-base
 
 ```ts
 const result = await showwhat({
-  key: "maintenance_banner",
+  keys: ["maintenance_banner"],
   context: { env: "prod", at: new Date().toISOString() },
   options: { data },
 });
+const banner = result["maintenance_banner"];
+if (!banner.error) {
+  console.log(banner.value);
+}
 ```
 
 :::
