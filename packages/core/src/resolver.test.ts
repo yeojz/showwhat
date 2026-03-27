@@ -24,7 +24,7 @@ async function resolveOne(
   const result = (
     await resolve({ definitions: { [key]: definitions[key] }, context, options: opts })
   )[key];
-  if (result.error) {
+  if (!result.success) {
     throw result.error;
   }
   return result;
@@ -427,7 +427,9 @@ describe("no matching variation", () => {
       context: { env: "dev" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(result["strict"].error).toBeInstanceOf(VariationNotFoundError);
+    expect(result["strict"].success).toBe(false);
+    if (!result["strict"].success)
+      expect(result["strict"].error).toBeInstanceOf(VariationNotFoundError);
   });
 });
 
@@ -444,7 +446,9 @@ describe("inactive definition", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
+    expect(result["disabled"].success).toBe(false);
+    if (!result["disabled"].success)
+      expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
   });
 
   it("resolves normally when active is undefined", async () => {
@@ -458,7 +462,7 @@ describe("inactive definition", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(result["noActive"].error).toBeNull();
+    expect(result["noActive"].success).toBe(true);
     expect((result["noActive"] as Resolution).value).toBe("works");
   });
 
@@ -474,7 +478,7 @@ describe("inactive definition", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(result["enabled"].error).toBeNull();
+    expect(result["enabled"].success).toBe(true);
     expect((result["enabled"] as Resolution).value).toBe("works");
   });
 });
@@ -487,7 +491,9 @@ describe("resolve errors", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(result["broken"].error).toBeInstanceOf(DefinitionNotFoundError);
+    expect(result["broken"].success).toBe(false);
+    if (!result["broken"].success)
+      expect(result["broken"].error).toBeInstanceOf(DefinitionNotFoundError);
   });
 });
 
@@ -498,7 +504,7 @@ describe("resolve", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(all["checkout_v2"].error).toBeNull();
+    expect(all["checkout_v2"].success).toBe(true);
     expect((all["checkout_v2"] as Resolution).value).toBe(true);
     expect((all["max_upload_mb"] as Resolution).value).toBe(50);
     expect((all["beta_feature"] as Resolution).value).toBe(true);
@@ -524,9 +530,11 @@ describe("resolve", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators },
     });
-    expect(result["good"].error).toBeNull();
+    expect(result["good"].success).toBe(true);
     expect((result["good"] as Resolution).value).toBe("ok");
-    expect(result["inactive"].error).toBeInstanceOf(DefinitionInactiveError);
+    expect(result["inactive"].success).toBe(false);
+    if (!result["inactive"].success)
+      expect(result["inactive"].error).toBeInstanceOf(DefinitionInactiveError);
   });
 });
 
@@ -809,7 +817,7 @@ describe("strict evaluators", () => {
   it("returns ResolutionError for every key when no evaluators provided", async () => {
     const result = await resolve({ definitions: flags, context: { env: "prod" } });
     for (const entry of Object.values(result)) {
-      expect(entry.error).toBeTruthy();
+      expect(entry.success).toBe(false);
     }
   });
 
@@ -831,7 +839,7 @@ describe("strict evaluators", () => {
         },
       },
     });
-    expect(result["bad"].error).toBeTruthy();
+    expect(result["bad"].success).toBe(false);
   });
 
   it("throws ShowwhatError for resolveVariation without evaluators", async () => {

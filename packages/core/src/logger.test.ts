@@ -94,7 +94,7 @@ describe("logger integration with resolver", () => {
       context: { env: "prod" },
       options: { evaluators: builtinEvaluators, logger },
     });
-    expect(result["disabled"].error).toBeTruthy();
+    expect(result["disabled"].success).toBe(false);
 
     const warnMessages = logger.calls.filter((c) => c.level === "warn").map((c) => c.message);
     expect(warnMessages).toContain("definition inactive");
