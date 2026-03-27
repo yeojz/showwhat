@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area.js";
 import { Separator } from "@/components/ui/separator.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { ChevronRight, Eye, Loader2, Maximize2, Play } from "lucide-react";
-import { resolve } from "showwhat";
+import { resolve, builtinEvaluators } from "showwhat";
 import type { ConditionEvaluator } from "showwhat";
 import { DefinitionInactiveError, DefinitionNotFoundError, VariationNotFoundError } from "showwhat";
 import type { Context } from "showwhat";
@@ -258,7 +258,10 @@ export function PreviewPanel() {
       const result = await resolve({
         definitions: { [selectedKey]: definitions[selectedKey] },
         context,
-        options: fallback ? { fallback } : undefined,
+        options: {
+          evaluators: builtinEvaluators,
+          ...(fallback ? { fallback } : undefined),
+        },
       });
 
       if (controller.signal.aborted) return;

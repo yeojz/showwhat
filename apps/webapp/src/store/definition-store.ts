@@ -68,12 +68,17 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
         revision: 0,
         validationErrors: {},
 
-        isKeyDirty(key) {
+        isKeyDirty(key: string) {
           return get().dirtyKeys.includes(key);
         },
 
-        importDefinitions(defs, fileName, format, inlinePresets) {
-          set((state) => ({
+        importDefinitions(
+          defs: Definitions,
+          fileName: string,
+          format: "yaml" | "json",
+          inlinePresets?: Presets,
+        ) {
+          set((state: FileDefinitionState) => ({
             definitions: structuredClone(defs),
             savedDefinitions: structuredClone(defs),
             inlinePresets: inlinePresets ?? {},
@@ -86,21 +91,21 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
           }));
         },
 
-        async selectDefinition(key) {
+        async selectDefinition(key: string | null) {
           set({ selectedKey: key });
         },
 
-        async addDefinition(key) {
+        async addDefinition(key: string) {
           const newDef: Definition = { variations: [{ value: "" }] };
-          set((state) => ({
+          set((state: FileDefinitionState) => ({
             definitions: { ...state.definitions, [key]: newDef },
             dirtyKeys: state.dirtyKeys.includes(key) ? state.dirtyKeys : [...state.dirtyKeys, key],
             selectedKey: key,
           }));
         },
 
-        async removeDefinition(key) {
-          set((state) => {
+        async removeDefinition(key: string) {
+          set((state: FileDefinitionState) => {
             const restDefs = omitKey(state.definitions, key);
             const restSaved = omitKey(state.savedDefinitions, key);
             const restErrors = omitKey(state.validationErrors, key);
@@ -108,21 +113,21 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
             return {
               definitions: restDefs,
               savedDefinitions: restSaved,
-              dirtyKeys: state.dirtyKeys.filter((k) => k !== key),
+              dirtyKeys: state.dirtyKeys.filter((k: string) => k !== key),
               validationErrors: restErrors,
               selectedKey: getNextSelectedKey(state.selectedKey, key, keys),
             };
           });
         },
 
-        async renameDefinition(oldKey, newKey) {
+        async renameDefinition(oldKey: string, newKey: string) {
           if (oldKey === newKey) return;
           const state = get();
           if (newKey in state.definitions) {
             throw new Error("A definition with that key already exists");
           }
 
-          set((state) => {
+          set((state: FileDefinitionState) => {
             function renameInMap(map: Definitions): Definitions {
               const entries = Object.entries(map).map(([k, v]) =>
                 k === oldKey ? [newKey, v] : [k, v],
@@ -130,7 +135,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
               return Object.fromEntries(entries) as Definitions;
             }
 
-            const dirtyKeys = state.dirtyKeys.map((k) => (k === oldKey ? newKey : k));
+            const dirtyKeys = state.dirtyKeys.map((k: string) => (k === oldKey ? newKey : k));
             const validationErrors = { ...state.validationErrors };
             if (oldKey in validationErrors) {
               validationErrors[newKey] = validationErrors[oldKey];
@@ -147,38 +152,38 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
           });
         },
 
-        async updateDefinition(key, def) {
-          set((state) => ({
+        async updateDefinition(key: string, def: Definition) {
+          set((state: FileDefinitionState) => ({
             definitions: { ...state.definitions, [key]: def },
             dirtyKeys: state.dirtyKeys.includes(key) ? state.dirtyKeys : [...state.dirtyKeys, key],
           }));
         },
 
-        async saveDefinition(key) {
+        async saveDefinition(key: string) {
           const state = get();
           const def = state.definitions[key];
           if (!def) return;
 
           const errors = validateDefinition(key, def);
           if (errors.length > 0) {
-            set((state) => ({
+            set((state: FileDefinitionState) => ({
               validationErrors: { ...state.validationErrors, [key]: errors },
             }));
             return;
           }
 
-          set((state) => {
+          set((state: FileDefinitionState) => {
             const restErrors = omitKey(state.validationErrors, key);
             return {
               savedDefinitions: { ...state.savedDefinitions, [key]: structuredClone(def) },
-              dirtyKeys: state.dirtyKeys.filter((k) => k !== key),
+              dirtyKeys: state.dirtyKeys.filter((k: string) => k !== key),
               validationErrors: restErrors,
             };
           });
         },
 
-        async discardDefinition(key) {
-          set((state) => {
+        async discardDefinition(key: string) {
+          set((state: FileDefinitionState) => {
             const saved = state.savedDefinitions[key];
             const restErrors = omitKey(state.validationErrors, key);
             if (!saved) {
@@ -187,7 +192,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
               const keys = Object.keys(restDefs);
               return {
                 definitions: restDefs,
-                dirtyKeys: state.dirtyKeys.filter((k) => k !== key),
+                dirtyKeys: state.dirtyKeys.filter((k: string) => k !== key),
                 validationErrors: restErrors,
                 selectedKey: getNextSelectedKey(state.selectedKey, key, keys),
                 revision: state.revision + 1,
@@ -195,7 +200,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
             }
             return {
               definitions: { ...state.definitions, [key]: structuredClone(saved) },
-              dirtyKeys: state.dirtyKeys.filter((k) => k !== key),
+              dirtyKeys: state.dirtyKeys.filter((k: string) => k !== key),
               validationErrors: restErrors,
               revision: state.revision + 1,
             };
@@ -203,7 +208,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
         },
 
         revertAll() {
-          set((state) => {
+          set((state: FileDefinitionState) => {
             const restoredDefs = structuredClone(state.savedDefinitions);
             const keys = Object.keys(restoredDefs);
             return {
@@ -220,7 +225,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
         },
 
         clearAll() {
-          set((state) => ({
+          set((state: FileDefinitionState) => ({
             definitions: {},
             savedDefinitions: {},
             inlinePresets: {},
