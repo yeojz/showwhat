@@ -35,9 +35,9 @@ describe("showwhat", () => {
       context: { env: "prod" },
       options: { data },
     });
-    expect(result["checkout_v2"].error).toBeNull();
+    expect(result["checkout_v2"].success).toBe(true);
     expect((result["checkout_v2"] as { value: unknown }).value).toBe(true);
-    expect(result["max_upload_mb"].error).toBeNull();
+    expect(result["max_upload_mb"].success).toBe(true);
     expect((result["max_upload_mb"] as { value: unknown }).value).toBe(50);
   });
 
@@ -49,8 +49,8 @@ describe("showwhat", () => {
       options: { data },
     });
     const entry = result["checkout_v2"];
-    expect(entry.error).toBeNull();
-    if (!entry.error) {
+    expect(entry.success).toBe(true);
+    if (entry.success) {
       expect(entry.value).toBe(true);
       expect(entry.meta.variation.conditionCount).toBe(1);
     }
@@ -64,8 +64,8 @@ describe("showwhat", () => {
       options: { data },
     });
     const entry = result["checkout_v2"];
-    expect(entry.error).toBeNull();
-    if (!entry.error) {
+    expect(entry.success).toBe(true);
+    if (entry.success) {
       expect(entry.value).toBe(false);
       expect(entry.meta.variation.conditionCount).toBe(0);
     }
@@ -79,7 +79,8 @@ describe("showwhat", () => {
       options: { data },
     });
     const entry = result["nonexistent"];
-    expect(entry.error).toBeInstanceOf(DefinitionNotFoundError);
+    expect(entry.success).toBe(false);
+    if (!entry.success) expect(entry.error).toBeInstanceOf(DefinitionNotFoundError);
   });
 
   it("returns mixed successes and errors", async () => {
@@ -94,9 +95,13 @@ describe("showwhat", () => {
       options: { data },
     });
 
-    expect(result["checkout_v2"].error).toBeNull();
-    expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
-    expect(result["nonexistent"].error).toBeInstanceOf(DefinitionNotFoundError);
+    expect(result["checkout_v2"].success).toBe(true);
+    expect(result["disabled"].success).toBe(false);
+    if (!result["disabled"].success)
+      expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
+    expect(result["nonexistent"].success).toBe(false);
+    if (!result["nonexistent"].success)
+      expect(result["nonexistent"].error).toBeInstanceOf(DefinitionNotFoundError);
   });
 
   it("throws ValidationError when context contains invalid values", async () => {
@@ -117,8 +122,8 @@ describe("showwhat", () => {
       options: { data },
     });
     expect(Object.keys(result)).toHaveLength(2);
-    expect(result["checkout_v2"].error).toBeNull();
-    expect(result["max_upload_mb"].error).toBeNull();
+    expect(result["checkout_v2"].success).toBe(true);
+    expect(result["max_upload_mb"].success).toBe(true);
   });
 
   it("calls getAll() when keys is omitted", async () => {
@@ -154,7 +159,7 @@ describe("showwhat", () => {
       context: { env: "prod", meta: { nested: true } },
       options: { data },
     });
-    expect(result["checkout_v2"].error).toBeNull();
+    expect(result["checkout_v2"].success).toBe(true);
   });
 
   it("accepts primitive arrays in context", async () => {
@@ -164,7 +169,7 @@ describe("showwhat", () => {
       context: { env: "prod", tags: ["a", "b"] },
       options: { data },
     });
-    expect(result["checkout_v2"].error).toBeNull();
+    expect(result["checkout_v2"].success).toBe(true);
   });
 
   it("supports time-based conditions", async () => {
@@ -226,7 +231,9 @@ describe("showwhat", () => {
       context: { env: "prod" },
       options: { data },
     });
-    expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
+    expect(result["disabled"].success).toBe(false);
+    if (!result["disabled"].success)
+      expect(result["disabled"].error).toBeInstanceOf(DefinitionInactiveError);
   });
 
   it("resolves normally when active is undefined", async () => {
@@ -236,7 +243,7 @@ describe("showwhat", () => {
       context: { env: "prod" },
       options: { data },
     });
-    expect(result["checkout_v2"].error).toBeNull();
+    expect(result["checkout_v2"].success).toBe(true);
   });
 
   it("resolves normally when active is true", async () => {
@@ -250,8 +257,8 @@ describe("showwhat", () => {
       options: { data },
     });
     const entry = result["enabled"];
-    expect(entry.error).toBeNull();
-    if (!entry.error) {
+    expect(entry.success).toBe(true);
+    if (entry.success) {
       expect(entry.value).toBe("yes");
     }
   });
@@ -268,7 +275,9 @@ describe("showwhat", () => {
       context: { env: "dev" },
       options: { data },
     });
-    expect(result["strict"].error).toBeInstanceOf(VariationNotFoundError);
+    expect(result["strict"].success).toBe(false);
+    if (!result["strict"].success)
+      expect(result["strict"].error).toBeInstanceOf(VariationNotFoundError);
   });
 
   it("returns empty record when keys is empty array", async () => {
@@ -297,7 +306,8 @@ describe("showwhat - error surfaces", () => {
       context: { env: "prod" },
       options: { data },
     });
-    expect(result["any"].error).toBeInstanceOf(DefinitionNotFoundError);
+    expect(result["any"].success).toBe(false);
+    if (!result["any"].success) expect(result["any"].error).toBeInstanceOf(DefinitionNotFoundError);
   });
 
   it("throws when getAll() fails", async () => {
@@ -324,8 +334,8 @@ describe("showwhat - builtinEvaluators default", () => {
       options: { data },
     });
     const entry = result["checkout_v2"];
-    expect(entry.error).toBeNull();
-    if (!entry.error) {
+    expect(entry.success).toBe(true);
+    if (entry.success) {
       expect(entry.value).toBe(true);
     }
   });
