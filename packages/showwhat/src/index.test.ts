@@ -283,7 +283,7 @@ describe("showwhat", () => {
 });
 
 describe("showwhat - error surfaces", () => {
-  it("throws when data.get() fails", async () => {
+  it("returns ResolutionError when data.get() fails", async () => {
     const data = {
       async get() {
         throw new Error("connection failed");
@@ -292,9 +292,12 @@ describe("showwhat - error surfaces", () => {
         return {};
       },
     };
-    await expect(
-      showwhat({ keys: ["any"], context: { env: "prod" }, options: { data } }),
-    ).rejects.toThrow("connection failed");
+    const result = await showwhat({
+      keys: ["any"],
+      context: { env: "prod" },
+      options: { data },
+    });
+    expect(result["any"].error).toBeInstanceOf(DefinitionNotFoundError);
   });
 
   it("throws when getAll() fails", async () => {

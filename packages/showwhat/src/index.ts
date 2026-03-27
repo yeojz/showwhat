@@ -51,23 +51,22 @@ export async function showwhat<
     logger: options.logger,
   };
 
-  let definitions: Definitions;
+  const definitions: Definitions = {};
   const notFound: ResolutionError[] = [];
 
   if (keys) {
-    definitions = {};
-    const fetched = await Promise.all(
-      keys.map(async (key) => [key, await options.data.get(key)] as const),
+    await Promise.all(
+      keys.map(async (key) => {
+        const def = await options.data.get(key).catch(() => null);
+        if (def) {
+          definitions[key] = def;
+        } else {
+          notFound.push({ key, error: new DefinitionNotFoundError(key) });
+        }
+      }),
     );
-    for (const [key, def] of fetched) {
-      if (def) {
-        definitions[key] = def;
-      } else {
-        notFound.push({ key, error: new DefinitionNotFoundError(key) });
-      }
-    }
   } else {
-    definitions = await options.data.getAll();
+    Object.assign(definitions, await options.data.getAll());
   }
 
   const result = await resolve({
