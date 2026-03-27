@@ -96,9 +96,9 @@ function toResolution(
     : 0;
 
   return {
+    success: true,
     key,
     value: result.variation.value,
-    error: null,
     meta: {
       context: { ...context },
       variation: {
@@ -174,6 +174,7 @@ export async function resolve<
     keys.map((key) =>
       resolveKey<T>(key, definitions, context, options).catch(
         (reason): ResolutionError => ({
+          success: false,
           key,
           error: reason instanceof ShowwhatError ? reason : new ShowwhatError(String(reason)),
         }),
