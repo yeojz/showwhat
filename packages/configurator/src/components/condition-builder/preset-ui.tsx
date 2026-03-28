@@ -47,7 +47,7 @@ export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[]
       type: name,
       label: capitalize(name),
       description,
-      defaults: { ...baseDefaults, type: name },
+      defaults: { ...baseDefaults, ...preset.defaults, type: name },
     };
   });
 }

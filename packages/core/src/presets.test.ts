@@ -7,9 +7,9 @@ import type { Context } from "./schemas/context.js";
 describe("PresetsSchema", () => {
   it("validates correct input", () => {
     const input = {
-      tier: { type: "string", key: "tier" },
-      age: { type: "number", key: "dob_num" },
-      segment: { type: "segment_match" },
+      tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
+      age: { type: "number", key: "dob_num", defaults: { op: "gt", value: 18 } },
+      segment: { type: "segment_match", defaults: { region: "us" } },
     };
     const result = PresetsSchema.safeParse(input);
     expect(result.success).toBe(true);
@@ -51,14 +51,14 @@ describe("createPresetConditions", () => {
 
   it("skips custom type presets (no evaluator generated)", () => {
     const result = createPresetConditions({
-      segment: { type: "segment_match" },
+      segment: { type: "segment_match", defaults: { region: "us" } },
     });
     expect(Object.keys(result)).toHaveLength(0);
   });
 
   it("generates evaluator for string preset", async () => {
     const presetConditions = createPresetConditions({
-      tier: { type: "string", key: "tier" },
+      tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
     });
     expect(presetConditions).toHaveProperty("tier");
 

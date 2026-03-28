@@ -18,10 +18,16 @@ presets:
   tier:
     type: string
     key: tier
+    defaults:
+      op: eq
+      value: free
 
   age:
     type: number
     key: user_age
+    defaults:
+      op: gte
+      value: 18
 
   premium:
     type: bool
@@ -33,11 +39,13 @@ presets:
   "presets": {
     "tier": {
       "type": "string",
-      "key": "tier"
+      "key": "tier",
+      "defaults": { "op": "eq", "value": "free" }
     },
     "age": {
       "type": "number",
-      "key": "user_age"
+      "key": "user_age",
+      "defaults": { "op": "gte", "value": 18 }
     },
     "premium": {
       "type": "bool",
@@ -49,10 +57,11 @@ presets:
 
 :::
 
-| Field  | Required | Description                                                               |
-| ------ | -------- | ------------------------------------------------------------------------- |
-| `type` | Yes      | The underlying condition type (`string`, `number`, `bool`, or `datetime`) |
-| `key`  | Yes\*    | The context property to match against. Required for built-in types.       |
+| Field      | Required | Description                                                                 |
+| ---------- | -------- | --------------------------------------------------------------------------- |
+| `type`     | Yes      | The underlying condition type (`string`, `number`, `bool`, or `datetime`)   |
+| `key`      | Yes\*    | The context property to match against. Required for built-in types.         |
+| `defaults` | No       | Default field values used when adding this condition in the Configurator UI |
 
 ::: tip
 Preset names cannot collide with built-in or reserved condition types (`string`, `number`, `bool`, `datetime`, `env`, `startAt`, `endAt`, `and`, `or`).
@@ -66,7 +75,7 @@ Use `createPresetConditions` to generate evaluators from your preset map, then m
 import { showwhat, registerEvaluators, createPresetConditions } from "showwhat";
 
 const presets = {
-  tier: { type: "string", key: "tier" },
+  tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
   age: { type: "number", key: "user_age" },
 };
 
@@ -121,12 +130,12 @@ With extensions provided, presets appear in the "Add condition" menu with friend
 
 ### Types
 
-| Type                  | Import from              | Description                                    |
-| --------------------- | ------------------------ | ---------------------------------------------- |
-| `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`             |
-| `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string }`               |
-| `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"` |
-| `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`     |
+| Type                  | Import from              | Description                                                          |
+| --------------------- | ------------------------ | -------------------------------------------------------------------- |
+| `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`                                   |
+| `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string; defaults?: Record<string, unknown> }` |
+| `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"`                       |
+| `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                           |
 
 ### Functions
 
