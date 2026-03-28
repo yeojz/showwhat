@@ -24,6 +24,7 @@ import type {
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,
+  Dependencies,
   EvaluateConditionArgs,
 } from "./conditions/index.js";
 import { parseYaml, parseObject, parsePresetsObject, parsePresetsYaml } from "./parsers.js";
@@ -39,6 +40,7 @@ export type {
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,
+  Dependencies,
   EvaluateConditionArgs,
 };
 
