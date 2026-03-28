@@ -1,24 +1,12 @@
 import type { Context } from "../schemas/context.js";
 import type { StringCondition } from "../schemas/condition.js";
-import type { ConditionEvaluator } from "./types.js";
-
-const regexCache = new Map<string, RegExp>();
-
-function getCachedRegex(pattern: string): RegExp | null {
-  let re = regexCache.get(pattern);
-  if (re) return re;
-  try {
-    re = new RegExp(pattern);
-    regexCache.set(pattern, re);
-    return re;
-  } catch {
-    return null;
-  }
-}
+import type { ConditionEvaluator, RegexFactory } from "./types.js";
+import { defaultCreateRegex } from "./types.js";
 
 export async function evaluateString(
   condition: StringCondition,
   ctx: Readonly<Context>,
+  createRegex: RegexFactory = defaultCreateRegex,
 ): Promise<boolean> {
   if (!Object.hasOwn(ctx, condition.key)) return false;
   const raw = ctx[condition.key];
@@ -35,11 +23,14 @@ export async function evaluateString(
     case "nin":
       return !(condition.value as string[]).includes(actual);
     case "regex": {
-      const re = getCachedRegex(condition.value as string);
-      return re !== null && re.test(actual);
+      try {
+        return createRegex(condition.value as string).test(actual);
+      } catch {
+        return false;
+      }
     }
   }
 }
 
-export const stringEvaluator: ConditionEvaluator = ({ condition, context }) =>
-  evaluateString(condition as StringCondition, context);
+export const stringEvaluator: ConditionEvaluator = ({ condition, context, createRegex }) =>
+  evaluateString(condition as StringCondition, context, createRegex);

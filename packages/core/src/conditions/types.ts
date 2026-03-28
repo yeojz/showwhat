@@ -3,12 +3,17 @@ import type { Context } from "../schemas/context.js";
 export type Annotations<T extends Record<string, unknown> = Record<string, unknown>> = T;
 export type Dependencies<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
+export type RegexFactory = (pattern: string) => { test: (input: string) => boolean };
+
+export const defaultCreateRegex: RegexFactory = (pattern) => new RegExp(pattern);
+
 export type ConditionEvaluatorArgs = {
   condition: unknown;
   context: Readonly<Context>;
   annotations: Annotations;
   deps: Readonly<Dependencies>;
   depth: string;
+  createRegex: RegexFactory;
 };
 
 export type ConditionEvaluator = (args: ConditionEvaluatorArgs) => Promise<boolean>;

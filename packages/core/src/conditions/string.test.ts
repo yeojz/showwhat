@@ -124,6 +124,54 @@ describe("string type guard", () => {
   });
 });
 
+describe("string (regex op with custom createRegex)", () => {
+  it("uses custom createRegex when provided", async () => {
+    const createRegex = (pattern: string) => ({
+      test: (input: string) => input.startsWith(pattern),
+    });
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "hello" },
+        { x: "hello-world" },
+        createRegex,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false when custom createRegex does not match", async () => {
+    const createRegex = () => ({ test: () => false });
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "^hello" },
+        { x: "hello-world" },
+        createRegex,
+      ),
+    ).toBe(false);
+  });
+
+  it("returns false when custom createRegex throws", async () => {
+    const createRegex = () => {
+      throw new Error("unsupported pattern");
+    };
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: ".*" },
+        { x: "anything" },
+        createRegex,
+      ),
+    ).toBe(false);
+  });
+
+  it("falls back to native RegExp when createRegex is not provided", async () => {
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "^hello-" },
+        { x: "hello-world" },
+      ),
+    ).toBe(true);
+  });
+});
+
 describe("prototype pollution safety", () => {
   it("returns false when condition.key is __proto__", async () => {
     expect(

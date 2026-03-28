@@ -12,6 +12,7 @@ import type {
   ConditionEvaluator,
   ConditionEvaluators,
   Dependencies,
+  RegexFactory,
 } from "./conditions/index.js";
 import {
   DefinitionInactiveError,
@@ -26,6 +27,7 @@ export type ResolverOptions = {
   evaluators?: ConditionEvaluators;
   fallback?: ConditionEvaluator;
   logger?: Logger;
+  createRegex?: RegexFactory;
 };
 
 function getEvaluators(options?: ResolverOptions): ConditionEvaluators {
@@ -74,6 +76,7 @@ export async function resolveVariation<
       deps: deps ?? {},
       logger,
       fallback: options?.fallback,
+      createRegex: options?.createRegex,
     });
 
     if (!rulesMatch) {

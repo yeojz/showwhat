@@ -6,7 +6,9 @@ import type {
   ConditionEvaluator,
   ConditionEvaluators,
   Dependencies,
+  RegexFactory,
 } from "./types.js";
+import { defaultCreateRegex } from "./types.js";
 import type { Logger } from "../logger.js";
 import { noopLogger } from "../logger.js";
 import { ShowwhatError } from "../errors.js";
@@ -20,6 +22,7 @@ export type EvaluateConditionArgs = {
   depth?: string;
   logger?: Logger;
   fallback?: ConditionEvaluator;
+  createRegex?: RegexFactory;
 };
 
 export async function evaluateCondition({
@@ -31,6 +34,7 @@ export async function evaluateCondition({
   depth = "",
   logger = noopLogger,
   fallback,
+  createRegex = defaultCreateRegex,
 }: EvaluateConditionArgs): Promise<boolean> {
   if (isAndCondition(condition)) {
     for (let i = 0; i < condition.conditions.length; i++) {
@@ -44,6 +48,7 @@ export async function evaluateCondition({
         depth: childDepth,
         logger,
         fallback,
+        createRegex,
       });
 
       if (!result) {
@@ -69,6 +74,7 @@ export async function evaluateCondition({
         depth: childDepth,
         logger,
         fallback,
+        createRegex,
       });
 
       if (result) {
@@ -86,7 +92,7 @@ export async function evaluateCondition({
 
   if (!evaluator) {
     if (fallback) {
-      const result = await fallback({ condition, context, annotations, deps, depth });
+      const result = await fallback({ condition, context, annotations, deps, depth, createRegex });
       logger.debug("condition evaluated (fallback)", {
         type: condition.type,
         depth,
@@ -98,7 +104,7 @@ export async function evaluateCondition({
     throw new ShowwhatError(`Unknown condition type "${condition.type}".`);
   }
 
-  const result = await evaluator({ condition, context, annotations, deps, depth });
+  const result = await evaluator({ condition, context, annotations, deps, depth, createRegex });
   logger.debug("condition evaluated", {
     type: condition.type,
     depth,

@@ -60,6 +60,44 @@ conditions:
 Use `eq`/`neq` for single-value comparison, `in`/`nin` for matching against a list, and `regex` for pattern matching. If you need to match multiple patterns with regex, use alternation: `"^us-|^eu-"`.
 :::
 
+#### Custom regex engine
+
+By default, the `regex` op uses the native JavaScript `RegExp` engine. Native `RegExp` is susceptible to catastrophic backtracking (ReDoS) on pathological patterns — this is safe when definitions are authored by trusted admins, but may be a concern if patterns come from less trusted sources.
+
+You can supply a custom regex factory via `options.createRegex` to replace the runtime regex engine. This is a resolver-level option, so it applies to all condition evaluators (builtin and custom) that perform regex matching.
+
+```ts
+import type { RegexFactory } from "@showwhat/core";
+import RE2 from "re2";
+
+const createRegex: RegexFactory = (pattern) => new RE2(pattern);
+
+const result = await showwhat({
+  keys: ["my_feature"],
+  context: { region: "us-east-1" },
+  options: { data, createRegex },
+});
+```
+
+The factory receives a pattern string and must return an object with a `test(input: string) => boolean` method. If it throws, the condition evaluates to `false`.
+
+Custom evaluators receive `createRegex` in their args and should use it instead of `new RegExp(...)` directly:
+
+```ts
+const myEvaluator: ConditionEvaluator = ({ condition, context, createRegex }) => {
+  const pattern = (condition as MyCondition).pattern;
+  try {
+    return createRegex(pattern).test(String(context.value));
+  } catch {
+    return false;
+  }
+};
+```
+
+::: tip
+If you don't need ReDoS protection, you don't need to set `createRegex` — the default native `RegExp` works out of the box.
+:::
+
 ### `number`
 
 Matches a numeric value from the context. Works with integers and decimals.
