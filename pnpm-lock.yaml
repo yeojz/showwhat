@@ -116,6 +116,37 @@ importers:
         specifier: ^4.0.0
         version: 4.0.18(@types/node@25.4.0)(jiti@2.6.1)(jsdom@28.1.0)(lightningcss@1.31.1)
 
+  internal/distribution-tests-bun:
+    dependencies:
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.1
+      zod:
+        specifier: ^4.0.0
+        version: 4.3.6
+
+  internal/distribution-tests-deno:
+    dependencies:
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.1
+      zod:
+        specifier: ^4.0.0
+        version: 4.3.6
+
+  internal/distribution-tests-node:
+    dependencies:
+      js-yaml:
+        specifier: ^4.1.0
+        version: 4.1.1
+      zod:
+        specifier: ^4.0.0
+        version: 4.3.6
+    devDependencies:
+      vitest:
+        specifier: ^4.0.0
+        version: 4.0.18(@types/node@25.4.0)(jiti@2.6.1)(jsdom@28.1.0)(lightningcss@1.31.1)
+
   packages/configurator:
     dependencies:
       '@dnd-kit/core':
