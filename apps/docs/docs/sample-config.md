@@ -14,9 +14,6 @@ presets:
   tier:
     type: string
     key: tier
-    defaults:
-      op: eq
-      value: free
 
   premium:
     type: bool

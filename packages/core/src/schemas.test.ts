@@ -437,7 +437,6 @@ describe("ResolutionSchema", () => {
         key: "checkout_v2",
         value: true,
         meta: {
-          context: { env: "prod" },
           variation: {
             index: 0,
             conditionCount: 1,
@@ -454,7 +453,6 @@ describe("ResolutionSchema", () => {
         key: "checkout_v2",
         value: true,
         meta: {
-          context: { env: "prod" },
           variation: {
             index: 0,
             id: "var-1",
@@ -473,7 +471,6 @@ describe("ResolutionSchema", () => {
         key: "checkout_v2",
         value: false,
         meta: {
-          context: { env: "dev" },
           variation: {
             index: 1,
           },

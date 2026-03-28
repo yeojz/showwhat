@@ -178,7 +178,7 @@ export const ConditionSchema: z.ZodType<Condition> = z
     }),
   ])
   .superRefine((val, ctx) => {
-    // Defense-in-depth: catches edge cases like catastrophic backtracking patterns that pass schema format validation
+    // Validates that regex patterns compile. Does NOT detect catastrophic backtracking — admin-authored patterns are trusted.
     if (val.type === CONDITION_TYPES.string) {
       const sc = val as StringCondition;
       if (sc.op === "regex") {

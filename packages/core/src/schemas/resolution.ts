@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ContextSchema } from "./context.js";
 import { VariationValueSchema } from "./variation.js";
 import type { ShowwhatError } from "../errors.js";
 
@@ -7,7 +6,6 @@ export const ResolutionSchema = z.object({
   key: z.string(),
   value: VariationValueSchema,
   meta: z.object({
-    context: ContextSchema,
     variation: z.object({
       index: z.number().int().nonnegative(),
       id: z.string().optional(),

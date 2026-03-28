@@ -5,6 +5,7 @@ import {
   MemoryData,
   resolveVariation,
   builtinEvaluators,
+  DataError,
   DefinitionInactiveError,
   DefinitionNotFoundError,
   ValidationError,
@@ -292,7 +293,7 @@ describe("showwhat", () => {
 });
 
 describe("showwhat - error surfaces", () => {
-  it("returns ResolutionError when data.get() fails", async () => {
+  it("throws DataError when data.get() fails", async () => {
     const data = {
       async get() {
         throw new Error("connection failed");
@@ -301,26 +302,49 @@ describe("showwhat - error surfaces", () => {
         return {};
       },
     };
-    const result = await showwhat({
-      keys: ["any"],
-      context: { env: "prod" },
-      options: { data },
-    });
-    expect(result["any"].success).toBe(false);
-    if (!result["any"].success) expect(result["any"].error).toBeInstanceOf(DefinitionNotFoundError);
+    await expect(
+      showwhat({
+        keys: ["any"],
+        context: { env: "prod" },
+        options: { data },
+      }),
+    ).rejects.toThrow(DataError);
   });
 
-  it("throws when getAll() fails", async () => {
+  it("preserves the original error as cause in DataError", async () => {
+    const original = new Error("connection failed");
+    const data = {
+      async get() {
+        throw original;
+      },
+      async getAll() {
+        return {};
+      },
+    };
+    await expect(
+      showwhat({
+        keys: ["any"],
+        context: { env: "prod" },
+        options: { data },
+      }),
+    ).rejects.toSatisfy((err: DataError) => err.cause === original);
+  });
+
+  it("throws DataError when getAll() fails", async () => {
+    const original = new Error("connection failed");
     const data = {
       async get() {
         return null;
       },
       async getAll() {
-        throw new Error("connection failed");
+        throw original;
       },
     };
     await expect(showwhat({ context: { env: "prod" }, options: { data } })).rejects.toThrow(
-      "connection failed",
+      DataError,
+    );
+    await expect(showwhat({ context: { env: "prod" }, options: { data } })).rejects.toSatisfy(
+      (err: DataError) => err.cause === original,
     );
   });
 });

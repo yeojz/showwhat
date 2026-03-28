@@ -68,7 +68,6 @@ const allResults = await showwhat({
 | `success`                       | `true`                    | Always `true` on success (for union discrimination) |
 | `key`                           | `string`                  | The definition key that was resolved                |
 | `value`                         | `unknown`                 | The matched variation's value                       |
-| `meta.context`                  | `Context`                 | The context used for resolution                     |
 | `meta.variation.index`          | `number`                  | Index of the matched variation                      |
 | `meta.variation.id`             | `string?`                 | Optional variation identifier                       |
 | `meta.variation.description`    | `string?`                 | Optional variation description                      |

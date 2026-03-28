@@ -27,12 +27,12 @@ const data = await MemoryData.fromObject({
   },
 });
 
-const result = await showwhat({
-  key: "checkout_v2",
+const results = await showwhat({
+  keys: ["checkout_v2"],
   context: { env: "prod" },
   options: { data },
 });
-console.log(result.value); // true
+console.log(results.checkout_v2.value); // true
 ```
 
 ## Features

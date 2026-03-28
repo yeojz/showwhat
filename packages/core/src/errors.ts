@@ -1,8 +1,8 @@
 import type { ZodError } from "zod";
 
 export class ShowwhatError extends Error {
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
     this.name = "ShowwhatError";
   }
 }
@@ -73,11 +73,8 @@ export class InvalidContextError extends ShowwhatError {
 }
 
 export class DataError extends ShowwhatError {
-  constructor(
-    message: string,
-    public readonly cause?: unknown,
-  ) {
-    super(message);
+  constructor(message: string, cause?: unknown) {
+    super(message, cause !== undefined ? { cause } : undefined);
     this.name = "DataError";
   }
 }

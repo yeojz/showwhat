@@ -13,26 +13,21 @@ const SAMPLE_PRESETS: Presets = {
   tier: {
     type: "string",
     key: "tier",
-    defaults: { op: "eq", value: "free" },
   },
   age: {
     type: "number",
     key: "user_age",
-    defaults: { op: "gt", value: 18 },
   },
   admin: {
     type: "bool",
     key: "is_admin",
-    defaults: { value: true },
   },
   cutoff: {
     type: "datetime",
     key: "event_time",
-    defaults: { op: "gte", value: "2025-01-01T00:00:00Z" },
   },
   segment: {
     type: "segment_match",
-    defaults: { region: "us", plan: "free" },
   },
 };
 
@@ -54,14 +49,14 @@ describe("createPresetConditionMeta", () => {
     expect(segmentMeta!.description).toContain("segment_match");
   });
 
-  it("merges preset defaults into meta defaults", () => {
+  it("bakes key and type defaults into meta defaults", () => {
     const metas = createPresetConditionMeta(SAMPLE_PRESETS);
     const tierMeta = metas.find((m) => m.type === "tier");
     expect(tierMeta!.defaults).toMatchObject({
       type: "tier",
       key: "tier",
       op: "eq",
-      value: "free",
+      value: "",
     });
   });
 
@@ -81,13 +76,13 @@ describe("createPresetConditionMeta edge cases", () => {
     expect(tierMeta!.defaults).toMatchObject({ type: "tier", key: "tier" });
   });
 
-  it("preset defaults override type defaults", () => {
+  it("uses type defaults when no preset defaults exist", () => {
     const metas = createPresetConditionMeta({
-      tier: { type: "string", key: "tier", defaults: { op: "neq", value: "enterprise" } },
+      tier: { type: "string", key: "tier" },
     });
     const tierMeta = metas.find((m) => m.type === "tier");
-    expect(tierMeta!.defaults.op).toBe("neq");
-    expect(tierMeta!.defaults.value).toBe("enterprise");
+    expect(tierMeta!.defaults.op).toBe("eq");
+    expect(tierMeta!.defaults.value).toBe("");
   });
 });
 

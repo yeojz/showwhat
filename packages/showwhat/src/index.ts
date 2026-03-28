@@ -1,4 +1,10 @@
-import { ContextSchema, builtinEvaluators, ValidationError, resolve } from "@showwhat/core";
+import {
+  ContextSchema,
+  builtinEvaluators,
+  ValidationError,
+  DataError,
+  resolve,
+} from "@showwhat/core";
 import type {
   BuiltinCondition,
   ConditionEvaluators,
@@ -22,13 +28,21 @@ export type Resolutions = Record<string, Resolution | ResolutionError>;
 
 async function fetchDefinitions(data: DefinitionReader, keys?: string[]): Promise<Definitions> {
   if (!keys) {
-    return data.getAll();
+    try {
+      return await data.getAll();
+    } catch (err) {
+      throw new DataError("Failed to fetch definitions", err);
+    }
   }
 
   const definitions = {} as Record<string, Definitions[string] | null>;
   await Promise.all(
     keys.map(async (key) => {
-      definitions[key] = await data.get(key).catch(() => null);
+      try {
+        definitions[key] = await data.get(key);
+      } catch (err) {
+        throw new DataError(`Failed to fetch definition "${key}"`, err);
+      }
     }),
   );
   return definitions as Definitions;

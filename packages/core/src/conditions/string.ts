@@ -2,6 +2,20 @@ import type { Context } from "../schemas/context.js";
 import type { StringCondition } from "../schemas/condition.js";
 import type { ConditionEvaluator } from "./types.js";
 
+const regexCache = new Map<string, RegExp>();
+
+function getCachedRegex(pattern: string): RegExp | null {
+  let re = regexCache.get(pattern);
+  if (re) return re;
+  try {
+    re = new RegExp(pattern);
+    regexCache.set(pattern, re);
+    return re;
+  } catch {
+    return null;
+  }
+}
+
 export async function evaluateString(
   condition: StringCondition,
   ctx: Readonly<Context>,
@@ -20,12 +34,10 @@ export async function evaluateString(
       return (condition.value as string[]).includes(actual);
     case "nin":
       return !(condition.value as string[]).includes(actual);
-    case "regex":
-      try {
-        return new RegExp(condition.value as string).test(actual);
-      } catch {
-        return false;
-      }
+    case "regex": {
+      const re = getCachedRegex(condition.value as string);
+      return re !== null && re.test(actual);
+    }
   }
 }
 
