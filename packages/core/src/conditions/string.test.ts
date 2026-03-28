@@ -50,6 +50,19 @@ describe("string (regex op)", () => {
     ).rejects.toThrow(ConditionError);
   });
 
+  it("ConditionError includes cause from the underlying error", async () => {
+    try {
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "[invalid" },
+        { x: "anything" },
+      );
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConditionError);
+      expect((e as ConditionError).conditionType).toBe("string");
+      expect((e as ConditionError).cause).toBeInstanceOf(SyntaxError);
+    }
+  });
+
   it("returns false when no pattern matches", async () => {
     expect(
       await evaluate({ type: "string", key: "x", op: "regex", value: "^foo" }, { x: "bar-thing" }),
@@ -199,5 +212,21 @@ describe("prototype pollution safety", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any),
     ).toBe(false);
+  });
+});
+
+describe("ConditionError", () => {
+  it("preserves cause when provided", () => {
+    const cause = new Error("original");
+    const err = new ConditionError("string", "bad pattern", cause);
+    expect(err.cause).toBe(cause);
+    expect(err.conditionType).toBe("string");
+    expect(err.name).toBe("ConditionError");
+  });
+
+  it("has no cause when constructed without one", () => {
+    const err = new ConditionError("string", "bad pattern");
+    expect(err.cause).toBeUndefined();
+    expect(err.message).toBe("bad pattern");
   });
 });
