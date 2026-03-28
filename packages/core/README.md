@@ -37,7 +37,7 @@ console.log(result.checkout_v2.value); // true
 
 - Built-in condition types: `string`, `number`, `datetime`, `bool`, `env`, `startAt`, `endAt`
 - Composite conditions with `and`/`or` logic
-- Custom condition types via `registerEvaluators()`
+- Custom condition types via evaluator composition
 - YAML and JSON parsing with schema validation
 - Pluggable data sources (`DefinitionReader` / `DefinitionWriter`)
 - Typed error hierarchy

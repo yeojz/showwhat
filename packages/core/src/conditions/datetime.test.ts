@@ -87,19 +87,15 @@ describe("datetime (lte op)", () => {
   });
 });
 
-describe("datetime default to now when key is 'at'", () => {
-  it("returns true when 'at' key is absent and condition value is in the past (gte)", async () => {
-    expect(await evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, {})).toBe(true);
+describe("datetime missing 'at' key", () => {
+  it("returns false when 'at' key is absent (gte)", async () => {
+    expect(await evaluate({ type: "datetime", key: "at", op: "gte", value: PAST }, {})).toBe(false);
   });
 
-  it("returns false when 'at' key is absent and condition value is in the future (gte)", async () => {
-    expect(await evaluate({ type: "datetime", key: "at", op: "gte", value: FUTURE }, {})).toBe(
+  it("returns false when 'at' key is absent (lt)", async () => {
+    expect(await evaluate({ type: "datetime", key: "at", op: "lt", value: FUTURE }, {})).toBe(
       false,
     );
-  });
-
-  it("returns false when 'at' key is absent and condition value is in the future (lt)", async () => {
-    expect(await evaluate({ type: "datetime", key: "at", op: "lt", value: PAST }, {})).toBe(false);
   });
 });
 

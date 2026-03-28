@@ -7,18 +7,10 @@ export async function evaluateDatetime(
   condition: DatetimeCondition,
   ctx: Readonly<Context>,
 ): Promise<boolean> {
-  let actual: Date;
-
-  if (Object.hasOwn(ctx, condition.key)) {
-    const raw = ctx[condition.key];
-    if (typeof raw !== "string") return false;
-    actual = parseDate(condition.key, raw);
-  } else if (condition.key === "at") {
-    // Default to "now" when the "at" key is absent (preserves existing behavior)
-    actual = new Date();
-  } else {
-    return false;
-  }
+  if (!Object.hasOwn(ctx, condition.key)) return false;
+  const raw = ctx[condition.key];
+  if (typeof raw !== "string") return false;
+  const actual = parseDate(condition.key, raw);
 
   const expected = new Date(condition.value);
 

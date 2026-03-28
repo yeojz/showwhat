@@ -12,6 +12,7 @@ import type {
   ConditionEvaluator,
   ConditionEvaluators,
   Dependencies,
+  RegexFactory,
 } from "./conditions/index.js";
 import {
   DefinitionInactiveError,
@@ -26,6 +27,7 @@ export type ResolverOptions = {
   evaluators?: ConditionEvaluators;
   fallback?: ConditionEvaluator;
   logger?: Logger;
+  createRegex?: RegexFactory;
 };
 
 function getEvaluators(options?: ResolverOptions): ConditionEvaluators {
@@ -74,6 +76,7 @@ export async function resolveVariation<
       deps: deps ?? {},
       logger,
       fallback: options?.fallback,
+      createRegex: options?.createRegex,
     });
 
     if (!rulesMatch) {
@@ -98,7 +101,6 @@ export async function resolveVariation<
 function toResolution(
   key: string,
   result: { variation: Variation; variationIndex: number; annotations: Annotations },
-  context: Readonly<Context>,
 ): Resolution {
   const conditionCount = Array.isArray(result.variation.conditions)
     ? result.variation.conditions.length
@@ -109,7 +111,6 @@ function toResolution(
     key,
     value: result.variation.value,
     meta: {
-      context: { ...context },
       variation: {
         index: result.variationIndex,
         id: result.variation.id,
@@ -164,7 +165,7 @@ async function resolveKey<T extends Record<string, ContextValue> = Record<string
     value: result.variation.value,
   });
 
-  return toResolution(key, result, context);
+  return toResolution(key, result);
 }
 
 /**
@@ -194,7 +195,10 @@ export async function resolve<
         (reason): ResolutionError => ({
           success: false,
           key,
-          error: reason instanceof ShowwhatError ? reason : new ShowwhatError(String(reason)),
+          error:
+            reason instanceof ShowwhatError
+              ? reason
+              : new ShowwhatError(String(reason), { cause: reason }),
         }),
       ),
     ),

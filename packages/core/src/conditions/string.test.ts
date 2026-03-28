@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evaluateString as evaluate } from "./string.js";
+import { ConditionError } from "../errors.js";
 
 describe("string (eq op)", () => {
   it("returns true when context key matches a single string value", async () => {
@@ -43,13 +44,23 @@ describe("string (regex op)", () => {
     ).toBe(true);
   });
 
-  it("returns false for invalid regex (defense-in-depth)", async () => {
-    expect(
+  it("throws ConditionError for invalid regex pattern", async () => {
+    await expect(
+      evaluate({ type: "string", key: "x", op: "regex", value: "[invalid" }, { x: "anything" }),
+    ).rejects.toThrow(ConditionError);
+  });
+
+  it("ConditionError includes cause from the underlying error", async () => {
+    try {
       await evaluate(
         { type: "string", key: "x", op: "regex", value: "[invalid" },
         { x: "anything" },
-      ),
-    ).toBe(false);
+      );
+    } catch (e) {
+      expect(e).toBeInstanceOf(ConditionError);
+      expect((e as ConditionError).conditionType).toBe("string");
+      expect((e as ConditionError).cause).toBeInstanceOf(SyntaxError);
+    }
   });
 
   it("returns false when no pattern matches", async () => {
@@ -124,6 +135,54 @@ describe("string type guard", () => {
   });
 });
 
+describe("string (regex op with custom createRegex)", () => {
+  it("uses custom createRegex when provided", async () => {
+    const createRegex = (pattern: string) => ({
+      test: (input: string) => input.startsWith(pattern),
+    });
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "hello" },
+        { x: "hello-world" },
+        createRegex,
+      ),
+    ).toBe(true);
+  });
+
+  it("returns false when custom createRegex does not match", async () => {
+    const createRegex = () => ({ test: () => false });
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "^hello" },
+        { x: "hello-world" },
+        createRegex,
+      ),
+    ).toBe(false);
+  });
+
+  it("throws ConditionError when custom createRegex throws", async () => {
+    const createRegex = () => {
+      throw new Error("unsupported pattern");
+    };
+    await expect(
+      evaluate(
+        { type: "string", key: "x", op: "regex", value: ".*" },
+        { x: "anything" },
+        createRegex,
+      ),
+    ).rejects.toThrow(ConditionError);
+  });
+
+  it("falls back to native RegExp when createRegex is not provided", async () => {
+    expect(
+      await evaluate(
+        { type: "string", key: "x", op: "regex", value: "^hello-" },
+        { x: "hello-world" },
+      ),
+    ).toBe(true);
+  });
+});
+
 describe("prototype pollution safety", () => {
   it("returns false when condition.key is __proto__", async () => {
     expect(
@@ -153,5 +212,21 @@ describe("prototype pollution safety", () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any),
     ).toBe(false);
+  });
+});
+
+describe("ConditionError", () => {
+  it("preserves cause when provided", () => {
+    const cause = new Error("original");
+    const err = new ConditionError("string", "bad pattern", cause);
+    expect(err.cause).toBe(cause);
+    expect(err.conditionType).toBe("string");
+    expect(err.name).toBe("ConditionError");
+  });
+
+  it("has no cause when constructed without one", () => {
+    const err = new ConditionError("string", "bad pattern");
+    expect(err.cause).toBeUndefined();
+    expect(err.message).toBe("bad pattern");
   });
 });

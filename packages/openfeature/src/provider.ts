@@ -5,43 +5,35 @@ import type {
   ResolutionDetails,
 } from "@openfeature/server-sdk";
 import { ErrorCode, StandardResolutionReasons } from "@openfeature/server-sdk";
-import type { ConditionEvaluators, DefinitionReader, Dependencies, Logger } from "showwhat";
+import type { DefinitionReader, Dependencies, ShowWhatOptions } from "showwhat";
 import { showwhat } from "showwhat";
 import { toShowwhatContext } from "./context.js";
 import { mapShowwhatError } from "./errors.js";
 
-export type ShowwhatProviderOptions = {
+export type ShowwhatProviderOptions = Omit<ShowWhatOptions, "data"> & {
   data: DefinitionReader;
-  evaluators?: ConditionEvaluators;
   deps?: Dependencies;
-  logger?: Logger;
 };
 
 export class ShowwhatProvider implements Provider {
   readonly metadata = { name: "showwhat" } as const;
   readonly runsOn = "server" as const;
 
-  #data: DefinitionReader;
-  #evaluators: ConditionEvaluators | undefined;
-  #deps: Dependencies | undefined;
-  #logger: Logger | undefined;
+  #options: ShowwhatProviderOptions;
 
   constructor(options: ShowwhatProviderOptions) {
-    this.#data = options.data;
-    this.#evaluators = options.evaluators;
-    this.#deps = options.deps;
-    this.#logger = options.logger;
+    this.#options = options;
   }
 
   async initialize(): Promise<void> {
-    if (this.#data.load) {
-      await this.#data.load();
+    if (this.#options.data.load) {
+      await this.#options.data.load();
     }
   }
 
   async onClose(): Promise<void> {
-    if (this.#data.close) {
-      await this.#data.close();
+    if (this.#options.data.close) {
+      await this.#options.data.close();
     }
   }
 
@@ -93,18 +85,14 @@ export class ShowwhatProvider implements Provider {
     evalCtx: EvaluationContext,
     typeGuard: (value: unknown) => value is T,
   ): Promise<ResolutionDetails<T>> {
-    const ctx = toShowwhatContext(evalCtx, this.#logger);
+    const ctx = toShowwhatContext(evalCtx, this.#options.logger);
 
     try {
       const results = await showwhat({
         keys: [flagKey],
         context: ctx,
-        deps: this.#deps,
-        options: {
-          data: this.#data,
-          evaluators: this.#evaluators,
-          logger: this.#logger,
-        },
+        deps: this.#options.deps,
+        options: this.#options,
       });
 
       const entry = results[flagKey];

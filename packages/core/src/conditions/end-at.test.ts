@@ -45,13 +45,9 @@ describe("endAt (via evaluate)", () => {
     ).toBe(false);
   });
 
-  // No 'at' in context — falls back to current time (Date.now)
-  it("returns true when context has no 'at' key and condition value is in the future", async () => {
-    expect(await evaluate({ type: "endAt", value: FUTURE }, {})).toBe(true);
-  });
-
-  it("returns false when context has no 'at' key and condition value is in the past", async () => {
-    expect(await evaluate({ type: "endAt", value: PAST }, {})).toBe(false);
+  // No 'at' in context — returns false (caller must provide 'at')
+  it("returns false when context has no 'at' key", async () => {
+    expect(await evaluate({ type: "endAt", value: FUTURE }, {})).toBe(false);
   });
 
   // Invalid 'at' value throws InvalidContextError

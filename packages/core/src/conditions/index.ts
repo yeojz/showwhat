@@ -14,7 +14,9 @@ export type {
   ConditionEvaluatorArgs,
   ConditionEvaluators,
   Dependencies,
+  RegexFactory,
 } from "./types.js";
+export { defaultCreateRegex } from "./types.js";
 export { evaluateCondition } from "./composite.js";
 export type { EvaluateConditionArgs } from "./composite.js";
 

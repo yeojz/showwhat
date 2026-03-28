@@ -792,8 +792,8 @@ describe("ctx.at evaluation time", () => {
     expect(result!.variation.value).toBe("Deployment at 2am UTC");
   });
 
-  it("defaults to current time when ctx.at is absent", async () => {
-    // maintenance window is in the past relative to now, so should fall to "Normal ops"
+  it("skips time-bounded variation when ctx.at is absent", async () => {
+    // Without ctx.at, startAt/endAt conditions return false, so the time-bounded variation is skipped
     const result = await resolveVariation({
       variations: flags["maintenance_banner"].variations,
       context: { env: "prod" },
@@ -939,6 +939,47 @@ describe("strict evaluators", () => {
       },
     });
     expect(result["bad"].success).toBe(false);
+  });
+
+  it("preserves the original error as cause when wrapping non-ShowwhatError", async () => {
+    const original = new TypeError("cannot read property of undefined");
+    const defs: Definitions = {
+      bad: {
+        variations: [{ value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] }],
+      },
+    };
+    const result = await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      options: {
+        evaluators: {
+          ...builtinEvaluators,
+          env: async () => {
+            throw original;
+          },
+        },
+      },
+    });
+    expect(result["bad"].success).toBe(false);
+    if (!result["bad"].success) {
+      expect(result["bad"].error.cause).toBe(original);
+    }
+  });
+
+  it("does not double-wrap ShowwhatError with cause", async () => {
+    const defs: Definitions = {
+      bad: {
+        variations: [{ value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] }],
+      },
+    };
+    const result = await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+    });
+    expect(result["bad"].success).toBe(false);
+    if (!result["bad"].success) {
+      expect(result["bad"].error.cause).toBeUndefined();
+    }
   });
 
   it("throws ShowwhatError for resolveVariation without evaluators", async () => {

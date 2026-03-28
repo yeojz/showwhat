@@ -1,10 +1,13 @@
 import type { Context } from "../schemas/context.js";
 import type { StringCondition } from "../schemas/condition.js";
-import type { ConditionEvaluator } from "./types.js";
+import type { ConditionEvaluator, RegexFactory } from "./types.js";
+import { defaultCreateRegex } from "./types.js";
+import { ConditionError } from "../errors.js";
 
 export async function evaluateString(
   condition: StringCondition,
   ctx: Readonly<Context>,
+  createRegex: RegexFactory = defaultCreateRegex,
 ): Promise<boolean> {
   if (!Object.hasOwn(ctx, condition.key)) return false;
   const raw = ctx[condition.key];
@@ -20,14 +23,22 @@ export async function evaluateString(
       return (condition.value as string[]).includes(actual);
     case "nin":
       return !(condition.value as string[]).includes(actual);
-    case "regex":
+    case "regex": {
+      const pattern = condition.value as string;
+      let regex: { test: (input: string) => boolean };
       try {
-        return new RegExp(condition.value as string).test(actual);
-      } catch {
-        return false;
+        regex = createRegex(pattern);
+      } catch (e) {
+        throw new ConditionError(
+          "string",
+          `Invalid regex pattern "${pattern}": ${(e as Error).message}`,
+          e,
+        );
       }
+      return regex.test(actual);
+    }
   }
 }
 
-export const stringEvaluator: ConditionEvaluator = ({ condition, context }) =>
-  evaluateString(condition as StringCondition, context);
+export const stringEvaluator: ConditionEvaluator = ({ condition, context, createRegex }) =>
+  evaluateString(condition as StringCondition, context, createRegex);

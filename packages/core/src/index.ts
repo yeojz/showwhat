@@ -8,6 +8,7 @@ import {
   VariationNotFoundError,
   InvalidContextError,
   DataError,
+  ConditionError,
 } from "./errors.js";
 import { resolve, resolveVariation, ResolverOptions } from "./resolver.js";
 import {
@@ -18,7 +19,12 @@ import {
   isWritable,
   MemoryData,
 } from "./data.js";
-import { evaluateCondition, builtinEvaluators, noConditionEvaluator } from "./conditions/index.js";
+import {
+  evaluateCondition,
+  builtinEvaluators,
+  noConditionEvaluator,
+  defaultCreateRegex,
+} from "./conditions/index.js";
 import type {
   Annotations,
   ConditionEvaluator,
@@ -26,6 +32,7 @@ import type {
   ConditionEvaluators,
   Dependencies,
   EvaluateConditionArgs,
+  RegexFactory,
 } from "./conditions/index.js";
 import { parseYaml, parseObject, parsePresetsObject, parsePresetsYaml } from "./parsers.js";
 import { noopLogger } from "./logger.js";
@@ -34,7 +41,7 @@ import type { Logger } from "./logger.js";
 export * from "./schemas/index.js";
 
 // evaluators
-export { evaluateCondition, builtinEvaluators, noConditionEvaluator };
+export { evaluateCondition, builtinEvaluators, noConditionEvaluator, defaultCreateRegex };
 export type {
   Annotations,
   ConditionEvaluator,
@@ -42,6 +49,7 @@ export type {
   ConditionEvaluators,
   Dependencies,
   EvaluateConditionArgs,
+  RegexFactory,
 };
 
 // presets
@@ -58,6 +66,7 @@ export {
   VariationNotFoundError,
   InvalidContextError,
   DataError,
+  ConditionError,
 };
 
 // data

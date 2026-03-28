@@ -74,14 +74,14 @@ describe("ConditionSchema", () => {
     );
   });
 
-  it("rejects string condition with invalid regex pattern", () => {
+  it("accepts string condition with invalid regex pattern (validation deferred to resolve time)", () => {
     const result = ConditionSchema.safeParse({
       type: "string",
       key: "name",
       op: "regex",
       value: "[invalid",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects regex op with array value", () => {
@@ -437,7 +437,6 @@ describe("ResolutionSchema", () => {
         key: "checkout_v2",
         value: true,
         meta: {
-          context: { env: "prod" },
           variation: {
             index: 0,
             conditionCount: 1,
@@ -454,7 +453,6 @@ describe("ResolutionSchema", () => {
         key: "checkout_v2",
         value: true,
         meta: {
-          context: { env: "prod" },
           variation: {
             index: 0,
             id: "var-1",
@@ -473,7 +471,6 @@ describe("ResolutionSchema", () => {
         key: "checkout_v2",
         value: false,
         meta: {
-          context: { env: "dev" },
           variation: {
             index: 1,
           },
