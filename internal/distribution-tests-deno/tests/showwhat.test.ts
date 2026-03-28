@@ -1,4 +1,4 @@
-import { assertEquals, assertRejects } from "jsr:@std/assert";
+import { assertEquals } from "jsr:@std/assert";
 import {
   showwhat,
   registerEvaluators,
@@ -25,39 +25,49 @@ Deno.test("showwhat — resolves a definition end-to-end", async () => {
   const data = await MemoryData.fromObject(DEFINITIONS);
 
   const result = await showwhat({
-    key: "dark-mode",
+    keys: ["dark-mode"],
     context: { plan: "premium" },
     options: { data, evaluators: builtinEvaluators },
   });
 
-  assertEquals(result.value, true);
-  assertEquals(result.key, "dark-mode");
+  const entry = result["dark-mode"];
+  assertEquals(entry.success, true);
+  if (entry.success) {
+    assertEquals(entry.value, true);
+    assertEquals(entry.key, "dark-mode");
+  }
 });
 
 Deno.test("showwhat — returns fallback when condition does not match", async () => {
   const data = await MemoryData.fromObject(DEFINITIONS);
 
   const result = await showwhat({
-    key: "dark-mode",
+    keys: ["dark-mode"],
     context: { plan: "free" },
     options: { data, evaluators: builtinEvaluators },
   });
 
-  assertEquals(result.value, false);
+  const entry = result["dark-mode"];
+  assertEquals(entry.success, true);
+  if (entry.success) {
+    assertEquals(entry.value, false);
+  }
 });
 
-Deno.test("showwhat — throws DefinitionNotFoundError for missing key", async () => {
+Deno.test("showwhat — returns ResolutionError for missing key", async () => {
   const data = await MemoryData.fromObject(DEFINITIONS);
 
-  await assertRejects(
-    () =>
-      showwhat({
-        key: "nonexistent",
-        context: { plan: "premium" },
-        options: { data, evaluators: builtinEvaluators },
-      }),
-    DefinitionNotFoundError,
-  );
+  const result = await showwhat({
+    keys: ["nonexistent"],
+    context: { plan: "premium" },
+    options: { data, evaluators: builtinEvaluators },
+  });
+
+  const entry = result["nonexistent"];
+  assertEquals(entry.success, false);
+  if (!entry.success) {
+    assertEquals(entry.error instanceof DefinitionNotFoundError, true);
+  }
 });
 
 Deno.test("showwhat — registerEvaluators merges custom with builtins", () => {
