@@ -161,6 +161,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -202,6 +203,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       staleResolve({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -262,7 +264,13 @@ describe("PreviewPanel", () => {
     fireEvent.click(button);
 
     await act(async () => {
-      rejectPromise(new DefinitionInactiveError("inactive"));
+      resolvePromise({
+        "flag-a": {
+          success: false,
+          key: "flag-a",
+          error: new DefinitionInactiveError("inactive"),
+        },
+      });
     });
 
     await waitFor(() => {
@@ -278,7 +286,13 @@ describe("PreviewPanel", () => {
     fireEvent.click(button);
 
     await act(async () => {
-      rejectPromise(new VariationNotFoundError("no match"));
+      resolvePromise({
+        "flag-a": {
+          success: false,
+          key: "flag-a",
+          error: new VariationNotFoundError("no match"),
+        },
+      });
     });
 
     await waitFor(() => {
@@ -294,7 +308,13 @@ describe("PreviewPanel", () => {
     fireEvent.click(button);
 
     await act(async () => {
-      rejectPromise(new DefinitionNotFoundError("not found"));
+      resolvePromise({
+        "flag-a": {
+          success: false,
+          key: "flag-a",
+          error: new DefinitionNotFoundError("not found"),
+        },
+      });
     });
 
     await waitFor(() => {
@@ -350,6 +370,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 0 }, annotations: {} },
         },
@@ -370,6 +391,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 0 }, annotations: {} },
         },
@@ -404,6 +426,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: "hello world",
           meta: { variation: { index: 1, conditionCount: 2 }, annotations: {} },
         },
@@ -425,6 +448,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: {
             context: { env: "prod" },
@@ -487,6 +511,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -510,6 +535,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 0 }, annotations: {} },
         },
@@ -628,6 +654,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -654,6 +681,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -683,6 +711,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -712,6 +741,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -745,6 +775,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
         },
@@ -777,6 +808,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       resolvePromise({
         "flag-a": {
+          success: true,
           value: { nested: "object" },
           meta: { variation: { index: 2, conditionCount: 1 }, annotations: {} },
         },
@@ -805,7 +837,13 @@ describe("PreviewPanel", () => {
 
     const { VariationNotFoundError } = await import("showwhat");
     await act(async () => {
-      rejectPromise(new VariationNotFoundError("no match"));
+      resolvePromise({
+        "flag-a": {
+          success: false,
+          key: "flag-a",
+          error: new VariationNotFoundError("no match"),
+        },
+      });
     });
 
     await waitFor(() => {
@@ -834,6 +872,7 @@ describe("PreviewPanel", () => {
     await act(async () => {
       staleResolve({
         "flag-a": {
+          success: true,
           value: true,
           meta: { variation: { index: 0, conditionCount: 0 }, annotations: {} },
         },
