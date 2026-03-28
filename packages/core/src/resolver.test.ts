@@ -877,6 +877,39 @@ describe("deps threading", () => {
 
     expect(receivedDeps).toBe(myDeps);
   });
+
+  it("custom evaluator uses deps.hash and writes to annotations", async () => {
+    const rolloutEvaluator: ConditionEvaluator = async ({
+      condition,
+      context,
+      deps,
+      annotations,
+    }) => {
+      const c = condition as { threshold: number };
+      const hash = (deps as { hash: (id: string) => number }).hash;
+      const userId = String((context as Record<string, unknown>).userId);
+      const bucket = hash(userId) % 100;
+      annotations.rollout = { bucket, threshold: c.threshold };
+      return bucket < c.threshold;
+    };
+    const evaluators = { ...builtinEvaluators, rollout: rolloutEvaluator };
+    const myDeps = { hash: (id: string) => id.length * 10 };
+
+    const result = await resolveVariation({
+      variations: [
+        { value: "treatment", conditions: [{ type: "rollout", threshold: 80 } as never] },
+        { value: "control" },
+      ],
+      context: { env: "prod", userId: "user-42" } as never,
+      deps: myDeps,
+      options: { evaluators },
+    });
+
+    expect(result!.variation.value).toBe("treatment");
+    expect(result!.annotations).toEqual({
+      rollout: { bucket: 70, threshold: 80 },
+    });
+  });
 });
 
 describe("strict evaluators", () => {
