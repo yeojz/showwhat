@@ -253,7 +253,7 @@ describe("ShowwhatProvider", () => {
     it("calls data.close() if available", async () => {
       let closeCalled = false;
       const data = await MemoryData.fromObject({ definitions: {} });
-      (data as Record<string, unknown>).close = async () => {
+      (data as unknown as Record<string, unknown>).close = async () => {
         closeCalled = true;
       };
 
@@ -268,7 +268,7 @@ describe("ShowwhatProvider", () => {
     it("calls data.load() if available", async () => {
       let loadCalled = false;
       const data = await MemoryData.fromObject({ definitions: {} });
-      (data as Record<string, unknown>).load = async () => {
+      (data as unknown as Record<string, unknown>).load = async () => {
         loadCalled = true;
       };
 

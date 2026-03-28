@@ -72,6 +72,8 @@ describe("boolEvaluator", () => {
         condition: { type: "bool", key: "flag", op: "eq", value: true },
         context: { flag: true },
         annotations: {},
+        deps: {},
+        depth: "",
       }),
     ).toBe(true);
   });

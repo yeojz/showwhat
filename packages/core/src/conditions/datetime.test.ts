@@ -118,6 +118,8 @@ describe("datetimeEvaluator", () => {
         condition: { type: "datetime", key: "at", op: "eq", value: "2025-01-01T00:00:00Z" },
         context: { at: "2025-01-01T00:00:00Z" },
         annotations: {},
+        deps: {},
+        depth: "",
       }),
     ).toBe(true);
   });

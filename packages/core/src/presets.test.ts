@@ -67,6 +67,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "eq", value: "free" },
       context: ctx,
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(result).toBe(true);
@@ -75,6 +76,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "neq", value: "free" },
       context: ctx,
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(resultNeq).toBe(false);
@@ -88,6 +90,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "in", value: ["free", "basic"] },
       context: { tier: "free" },
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(result).toBe(true);
@@ -96,6 +99,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "in", value: ["pro", "enterprise"] },
       context: { tier: "free" },
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(resultFalse).toBe(false);
@@ -109,6 +113,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "regex", value: "^fr" },
       context: { tier: "free" },
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(result).toBe(true);
@@ -124,6 +129,7 @@ describe("createPresetConditions", () => {
         condition: { type: "age", op: "gt", value: 18 },
         context: { user_age: 25 },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(true);
@@ -132,6 +138,7 @@ describe("createPresetConditions", () => {
         condition: { type: "age", op: "lt", value: 18 },
         context: { user_age: 25 },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(false);
@@ -140,6 +147,7 @@ describe("createPresetConditions", () => {
         condition: { type: "age", op: "eq", value: 25 },
         context: { user_age: 25 },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(true);
@@ -155,6 +163,7 @@ describe("createPresetConditions", () => {
         condition: { type: "admin", value: true },
         context: { is_admin: true },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(true);
@@ -163,6 +172,7 @@ describe("createPresetConditions", () => {
         condition: { type: "admin", value: true },
         context: { is_admin: false },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(false);
@@ -179,6 +189,7 @@ describe("createPresetConditions", () => {
         condition: { type: "cutoff", op: "gt", value: ts },
         context: { event_time: "2025-06-01T00:00:00.000Z" },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(true);
@@ -187,6 +198,7 @@ describe("createPresetConditions", () => {
         condition: { type: "cutoff", op: "lt", value: ts },
         context: { event_time: "2025-06-01T00:00:00.000Z" },
         annotations: {},
+        deps: {},
         depth: "",
       }),
     ).toBe(false);
@@ -200,6 +212,7 @@ describe("createPresetConditions", () => {
       condition: { type: "tier", op: "eq", value: "free" },
       context: {},
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(result).toBe(false);

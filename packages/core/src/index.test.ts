@@ -7,6 +7,7 @@ describe("noConditionEvaluator", () => {
       condition: {},
       context: { env: "prod" },
       annotations: {},
+      deps: {},
       depth: "",
     });
     expect(result).toBe(false);
