@@ -7,7 +7,12 @@ import type {
   ContextValue,
 } from "./schemas/index.js";
 import { evaluateCondition } from "./conditions/index.js";
-import type { Annotations, ConditionEvaluator, ConditionEvaluators } from "./conditions/index.js";
+import type {
+  Annotations,
+  ConditionEvaluator,
+  ConditionEvaluators,
+  Dependencies,
+} from "./conditions/index.js";
 import {
   DefinitionInactiveError,
   DefinitionNotFoundError,
@@ -36,13 +41,16 @@ function getLogger(options?: ResolverOptions): Logger {
 
 export async function resolveVariation<
   T extends Record<string, ContextValue> = Record<string, ContextValue>,
+  D extends Record<string, unknown> = Record<string, unknown>,
 >({
   variations,
   context,
+  deps,
   options,
 }: {
   variations: Variation[];
   context: Readonly<Context<T>>;
+  deps?: Dependencies<D>;
   options?: ResolverOptions;
 }): Promise<{ variation: Variation; variationIndex: number; annotations: Annotations } | null> {
   const evaluators = getEvaluators(options);
@@ -63,6 +71,7 @@ export async function resolveVariation<
       context,
       evaluators,
       annotations,
+      deps: deps ?? {},
       logger,
       fallback: options?.fallback,
     });
@@ -116,6 +125,7 @@ async function resolveKey<T extends Record<string, ContextValue> = Record<string
   key: string,
   definitions: Definitions,
   context: Readonly<Context<T>>,
+  deps?: Dependencies,
   options?: ResolverOptions,
 ): Promise<Resolution> {
   const logger = getLogger(options);
@@ -136,7 +146,12 @@ async function resolveKey<T extends Record<string, ContextValue> = Record<string
     variationCount: definition.variations.length,
   });
 
-  const result = await resolveVariation({ variations: definition.variations, context, options });
+  const result = await resolveVariation({
+    variations: definition.variations,
+    context,
+    deps,
+    options,
+  });
 
   if (!result) {
     logger.warn("no matching variation", { key });
@@ -160,19 +175,22 @@ async function resolveKey<T extends Record<string, ContextValue> = Record<string
  */
 export async function resolve<
   T extends Record<string, ContextValue> = Record<string, ContextValue>,
+  D extends Record<string, unknown> = Record<string, unknown>,
 >({
   definitions,
   context,
+  deps,
   options,
 }: {
   definitions: Definitions;
   context: Readonly<Context<T>>;
+  deps?: Dependencies<D>;
   options?: ResolverOptions;
 }): Promise<Record<string, Resolution | ResolutionError>> {
   const keys = Object.keys(definitions);
   const entries = await Promise.all(
     keys.map((key) =>
-      resolveKey<T>(key, definitions, context, options).catch(
+      resolveKey<T>(key, definitions, context, deps, options).catch(
         (reason): ResolutionError => ({
           success: false,
           key,

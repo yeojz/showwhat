@@ -5,7 +5,7 @@ import type {
   ResolutionDetails,
 } from "@openfeature/server-sdk";
 import { ErrorCode, StandardResolutionReasons } from "@openfeature/server-sdk";
-import type { ConditionEvaluators, DefinitionReader, Logger } from "showwhat";
+import type { ConditionEvaluators, DefinitionReader, Dependencies, Logger } from "showwhat";
 import { showwhat } from "showwhat";
 import { toShowwhatContext } from "./context.js";
 import { mapShowwhatError } from "./errors.js";
@@ -13,6 +13,7 @@ import { mapShowwhatError } from "./errors.js";
 export type ShowwhatProviderOptions = {
   data: DefinitionReader;
   evaluators?: ConditionEvaluators;
+  deps?: Dependencies;
   logger?: Logger;
 };
 
@@ -22,11 +23,13 @@ export class ShowwhatProvider implements Provider {
 
   #data: DefinitionReader;
   #evaluators: ConditionEvaluators | undefined;
+  #deps: Dependencies | undefined;
   #logger: Logger | undefined;
 
   constructor(options: ShowwhatProviderOptions) {
     this.#data = options.data;
     this.#evaluators = options.evaluators;
+    this.#deps = options.deps;
     this.#logger = options.logger;
   }
 
@@ -96,6 +99,7 @@ export class ShowwhatProvider implements Provider {
       const results = await showwhat({
         keys: [flagKey],
         context: ctx,
+        deps: this.#deps,
         options: {
           data: this.#data,
           evaluators: this.#evaluators,

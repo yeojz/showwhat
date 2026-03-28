@@ -30,6 +30,8 @@ Each evaluator receives a single args object and returns `Promise<boolean>`.
 | `condition`   | `unknown`                 | Raw condition object from your definition              |
 | `context`     | `Readonly<Context>`       | Resolution context                                     |
 | `annotations` | `Record<string, unknown>` | Mutable record — write metadata here during evaluation |
+| `deps`        | `Readonly<Dependencies>`  | Injected runtime utilities (hash functions, fetchers)  |
+| `depth`       | `string`                  | Depth tracking string for nested conditions            |
 
 Return `true` to match, `false` to skip the variation.
 
@@ -142,38 +144,122 @@ const myEvaluators = registerEvaluators({
 
 The annotations object is shared across all evaluators for a given resolution and returned in `entry.meta.annotations` (after checking that `entry.success` is `true`).
 
+## Dependency injection
+
+Custom evaluators often need runtime utilities — hash functions, async fetchers, lookup tables — that don't belong in the evaluation context. The `deps` parameter lets you inject these at the call site and access them in every evaluator.
+
+### Passing deps
+
+Pass `deps` alongside `context` at any entry point:
+
+```ts
+import { showwhat, registerEvaluators } from "showwhat";
+
+const result = await showwhat({
+  keys: ["new_checkout"],
+  context: { env: "prod", userId: "user-42" },
+  deps: { hash: murmurhash.v3 },
+  options: { data, evaluators: myEvaluators },
+});
+```
+
+`deps` is optional and defaults to `{}`. It is passed as `Readonly` to evaluators — evaluators should read from it, not mutate it.
+
+### Typed deps with evaluator contracts
+
+Each evaluator can export an interface describing the deps it requires:
+
+```ts
+// rollout-evaluator.ts
+export interface RolloutDeps {
+  hash: (id: string) => number;
+}
+
+export interface RolloutAnnotations {
+  bucketId: number;
+}
+
+const rolloutEvaluator: ConditionEvaluator = async ({ condition, context, deps, annotations }) => {
+  const { value } = condition as { type: "rollout"; value: number };
+  const { hash } = deps as RolloutDeps;
+  const userId = String(context.userId);
+  const bucket = hash(userId) % 100;
+  (annotations as RolloutAnnotations).bucketId = bucket;
+  return bucket < value;
+};
+```
+
+Users compose deps types by intersection:
+
+```ts
+import type { RolloutDeps } from "./rollout-evaluator";
+import type { SegmentDeps } from "./segment-evaluator";
+import type { Dependencies } from "showwhat";
+
+type MyDeps = RolloutDeps & SegmentDeps;
+
+const result = await showwhat<MyContext, MyDeps>({
+  keys: ["feature"],
+  context: myContext,
+  deps: { hash: murmurhash.v3, fetchSegments: mySegmentFetcher },
+  options: { data, evaluators },
+});
+```
+
+### deps vs context
+
+|                                 | `context`                             | `deps`                                 |
+| ------------------------------- | ------------------------------------- | -------------------------------------- |
+| **Contains**                    | Evaluation data (env, userId, region) | Runtime utilities (functions, clients) |
+| **Mutability**                  | Readonly                              | Readonly                               |
+| **Schema-validated**            | Yes                                   | No                                     |
+| **Used by built-in evaluators** | Yes                                   | No                                     |
+
 ## Summary
 
 | API                         | Purpose                                               |
 | --------------------------- | ----------------------------------------------------- |
 | `ConditionEvaluator`        | Type signature for evaluator functions                |
 | `ConditionEvaluators<T>`    | Evaluators map type — `Record<T, ConditionEvaluator>` |
+| `Annotations<T>`            | Generic type for evaluator-written metadata           |
+| `Dependencies<T>`           | Generic type for injected runtime utilities           |
 | `registerEvaluators(extra)` | Merge custom evaluators with built-ins                |
 | `options.evaluators`        | Pass your evaluators to `showwhat()` or `resolve()`   |
+| `deps`                      | Pass runtime utilities to `showwhat()` or `resolve()` |
 
 ## Examples
 
 ### Percentage rollouts {#example-percentage-rollouts}
 
-Percentage rollouts assign users to buckets deterministically — the same user ID always produces the same result. You provide context at evaluation time and control the hashing yourself.
+Percentage rollouts assign users to buckets deterministically. Inject the hash function via `deps` so your evaluator stays pure and testable:
 
-The examples below use [`murmurhash`](https://www.npmjs.com/package/murmurhash), but any deterministic hash function works (e.g. [`@sindresorhus/fnv1a`](https://www.npmjs.com/package/@sindresorhus/fnv1a)):
+```ts
+import type { ConditionEvaluator } from "showwhat";
+
+export interface RolloutDeps {
+  hash: (id: string) => number;
+}
+
+const rolloutEvaluator: ConditionEvaluator = async ({ condition, context, deps }) => {
+  const { value } = condition as { type: "percentage"; value: number };
+  const { hash } = deps as RolloutDeps;
+  const userId = context.userId;
+  if (!userId) return false;
+  return hash(String(userId)) % 100 < value;
+};
+```
 
 ```ts
 import murmurhash from "murmurhash";
-// or: import fnv1a from "@sindresorhus/fnv1a";
-import { registerEvaluators } from "showwhat";
+import { showwhat, registerEvaluators } from "showwhat";
 
-const myEvaluators = registerEvaluators({
-  percentage: async ({ condition, context }) => {
-    const { value } = condition as { type: "percentage"; value: number };
-    const userId = context.userId;
-    if (!userId) return false;
-    const hash = murmurhash.v3(String(userId));
-    // or:
-    const hash = fnv1a(String(userId), { size: 32 });
-    return hash % 100 < value;
-  },
+const myEvaluators = registerEvaluators({ percentage: rolloutEvaluator });
+
+const result = await showwhat({
+  keys: ["checkout_redesign"],
+  context: { env: "prod", userId: "user-42" },
+  deps: { hash: murmurhash.v3 },
+  options: { data, evaluators: myEvaluators },
 });
 ```
 

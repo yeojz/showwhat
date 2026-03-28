@@ -6,6 +6,7 @@ import type {
   ContextValue,
   Definitions,
   DefinitionReader,
+  Dependencies,
   Resolution,
   ResolutionError,
   ResolverOptions,
@@ -35,13 +36,16 @@ async function fetchDefinitions(data: DefinitionReader, keys?: string[]): Promis
 
 export async function showwhat<
   T extends Record<string, ContextValue> = Record<string, ContextValue>,
+  D extends Record<string, unknown> = Record<string, unknown>,
 >({
   keys,
   context,
+  deps,
   options,
 }: {
   keys?: string[];
   context: Context<T>;
+  deps?: Dependencies<D>;
   options: ShowWhatOptions;
 }): Promise<Resolutions> {
   const contextResult = ContextSchema.safeParse(context);
@@ -55,6 +59,7 @@ export async function showwhat<
   return resolve({
     definitions: await fetchDefinitions(options.data, keys),
     context: contextResult.data as Context<T>,
+    deps,
     options: {
       evaluators: options.evaluators ?? builtinEvaluators,
       fallback: options.fallback,

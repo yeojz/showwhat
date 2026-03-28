@@ -253,7 +253,7 @@ describe("ShowwhatProvider", () => {
     it("calls data.close() if available", async () => {
       let closeCalled = false;
       const data = await MemoryData.fromObject({ definitions: {} });
-      (data as Record<string, unknown>).close = async () => {
+      (data as unknown as Record<string, unknown>).close = async () => {
         closeCalled = true;
       };
 
@@ -268,7 +268,7 @@ describe("ShowwhatProvider", () => {
     it("calls data.load() if available", async () => {
       let loadCalled = false;
       const data = await MemoryData.fromObject({ definitions: {} });
-      (data as Record<string, unknown>).load = async () => {
+      (data as unknown as Record<string, unknown>).load = async () => {
         loadCalled = true;
       };
 
@@ -340,6 +340,40 @@ describe("ShowwhatProvider", () => {
       });
 
       expect(result.value).toBe("prod-value");
+    });
+  });
+
+  describe("deps forwarding", () => {
+    it("passes deps from constructor to showwhat calls", async () => {
+      const { showwhat } = await import("showwhat");
+      const myDeps = { hash: (id: string) => id.length };
+      const data = await MemoryData.fromObject({
+        definitions: {
+          "flag.ok": { variations: [{ value: true }] },
+        },
+      });
+
+      const provider = new ShowwhatProvider({ data, deps: myDeps });
+
+      await provider.resolveBooleanEvaluation("flag.ok", false, {});
+
+      expect(vi.mocked(showwhat)).toHaveBeenCalledWith(expect.objectContaining({ deps: myDeps }));
+    });
+
+    it("omits deps when not provided", async () => {
+      const { showwhat } = await import("showwhat");
+      const data = await MemoryData.fromObject({
+        definitions: {
+          "flag.ok": { variations: [{ value: true }] },
+        },
+      });
+
+      const provider = new ShowwhatProvider({ data });
+      await provider.resolveBooleanEvaluation("flag.ok", false, {});
+
+      expect(vi.mocked(showwhat)).toHaveBeenCalledWith(
+        expect.objectContaining({ deps: undefined }),
+      );
     });
   });
 });

@@ -170,6 +170,8 @@ describe("numberEvaluator", () => {
         condition: { type: "number", key: "count", op: "eq", value: 5 },
         context: { count: 5 },
         annotations: {},
+        deps: {},
+        depth: "",
       }),
     ).toBe(true);
   });

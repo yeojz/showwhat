@@ -341,6 +341,47 @@ describe("showwhat - builtinEvaluators default", () => {
   });
 });
 
+describe("deps threading", () => {
+  it("passes deps to custom evaluators via showwhat", async () => {
+    let receivedDeps: unknown;
+    const spy: ConditionEvaluator = async ({ deps }) => {
+      receivedDeps = deps;
+      return true;
+    };
+    const customFlags: Definitions = {
+      flag: {
+        variations: [
+          { value: "matched", conditions: [{ type: "spy" } as never] },
+          { value: "default" },
+        ],
+      },
+    };
+    const data = await MemoryData.fromObject({ definitions: customFlags });
+    const customEvaluators = registerEvaluators({ spy });
+    const myDeps = { hash: (id: string) => id.length };
+
+    const result = await showwhat({
+      keys: ["flag"],
+      context: { env: "prod" },
+      deps: myDeps,
+      options: { data, evaluators: customEvaluators },
+    });
+
+    expect(receivedDeps).toBe(myDeps);
+    expect((result["flag"] as { value: unknown }).value).toBe("matched");
+  });
+
+  it("works without deps (backwards compatible)", async () => {
+    const data = await MemoryData.fromObject({ definitions: flags });
+    const result = await showwhat({
+      keys: ["checkout_v2"],
+      context: { env: "prod" },
+      options: { data },
+    });
+    expect(result["checkout_v2"].success).toBe(true);
+  });
+});
+
 describe("registerEvaluators", () => {
   it("throws when attempting to register reserved 'and' type", () => {
     const dummy: ConditionEvaluator = async () => true;
