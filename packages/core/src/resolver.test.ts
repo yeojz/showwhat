@@ -813,6 +813,72 @@ describe("ctx.at evaluation time", () => {
   });
 });
 
+describe("deps threading", () => {
+  it("passes deps to custom evaluators via resolveVariation", async () => {
+    let receivedDeps: unknown;
+    const hashEvaluator: ConditionEvaluator = async ({ condition, deps }) => {
+      receivedDeps = deps;
+      const c = condition as { threshold: number };
+      const hash = (deps as { hash: (id: string) => number }).hash;
+      return hash("user-1") % 100 < c.threshold;
+    };
+    const evaluators = { ...builtinEvaluators, rollout: hashEvaluator };
+    const myDeps = { hash: (id: string) => id.length };
+
+    const result = await resolveVariation({
+      variations: [
+        { value: "treatment", conditions: [{ type: "rollout", threshold: 50 } as never] },
+        { value: "control" },
+      ],
+      context: { env: "prod" },
+      deps: myDeps,
+      options: { evaluators },
+    });
+
+    expect(receivedDeps).toBe(myDeps);
+    expect(result!.variation.value).toBe("treatment");
+  });
+
+  it("defaults deps to empty object in resolveVariation", async () => {
+    let receivedDeps: unknown;
+    const spy: ConditionEvaluator = async ({ deps }) => {
+      receivedDeps = deps;
+      return true;
+    };
+    const evaluators = { ...builtinEvaluators, spy };
+
+    await resolveVariation({
+      variations: [{ value: "a", conditions: [{ type: "spy" } as never] }],
+      context: { env: "prod" },
+      options: { evaluators },
+    });
+
+    expect(receivedDeps).toEqual({});
+  });
+
+  it("passes deps through resolve", async () => {
+    let receivedDeps: unknown;
+    const spy: ConditionEvaluator = async ({ deps }) => {
+      receivedDeps = deps;
+      return true;
+    };
+    const evaluators = { ...builtinEvaluators, spy };
+    const myDeps = { fetch: async () => [] };
+    const defs: Definitions = {
+      flag: { variations: [{ value: true, conditions: [{ type: "spy" } as never] }] },
+    };
+
+    await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      deps: myDeps,
+      options: { evaluators },
+    });
+
+    expect(receivedDeps).toBe(myDeps);
+  });
+});
+
 describe("strict evaluators", () => {
   it("returns ResolutionError for every key when no evaluators provided", async () => {
     const result = await resolve({ definitions: flags, context: { env: "prod" } });
