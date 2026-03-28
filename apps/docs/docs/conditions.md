@@ -60,9 +60,13 @@ conditions:
 Use `eq`/`neq` for single-value comparison, `in`/`nin` for matching against a list, and `regex` for pattern matching. If you need to match multiple patterns with regex, use alternation: `"^us-|^eu-"`.
 :::
 
-#### Custom regex engine
+::: warning Regex and ReDoS
+The `regex` op uses the native JavaScript `RegExp` engine by default. Native `RegExp` is susceptible to catastrophic backtracking (ReDoS) on pathological patterns. This is acceptable when definitions are authored by trusted admins, but may be a concern if patterns come from less trusted sources. See [Custom regex engine](#custom-regex-engine) below for how to use a safe engine like RE2.
 
-By default, the `regex` op uses the native JavaScript `RegExp` engine. Native `RegExp` is susceptible to catastrophic backtracking (ReDoS) on pathological patterns — this is safe when definitions are authored by trusted admins, but may be a concern if patterns come from less trusted sources.
+Regex patterns are **not** validated at parse time. Validation happens at resolve time using the configured regex engine, so an invalid pattern will surface as a [`ConditionError`](/docs/errors#conditionerror) (wrapped in a `ResolutionError` for that key) rather than a parse-time schema error.
+:::
+
+#### Custom regex engine
 
 You can supply a custom regex factory via `options.createRegex` to replace the runtime regex engine. This is a resolver-level option, so it applies to all condition evaluators (builtin and custom) that perform regex matching.
 
@@ -79,18 +83,14 @@ const result = await showwhat({
 });
 ```
 
-The factory receives a pattern string and must return an object with a `test(input: string) => boolean` method. If it throws, the condition evaluates to `false`.
+The factory receives a pattern string and must return an object with a `test(input: string) => boolean` method. If the factory throws (e.g. the pattern is invalid under the configured engine), a [`ConditionError`](/docs/errors#conditionerror) is raised and surfaces as a `ResolutionError` for that key — invalid patterns are never silently treated as non-matches.
 
 Custom evaluators receive `createRegex` in their args and should use it instead of `new RegExp(...)` directly:
 
 ```ts
 const myEvaluator: ConditionEvaluator = ({ condition, context, createRegex }) => {
   const pattern = (condition as MyCondition).pattern;
-  try {
-    return createRegex(pattern).test(String(context.value));
-  } catch {
-    return false;
-  }
+  return createRegex(pattern).test(String(context.value));
 };
 ```
 

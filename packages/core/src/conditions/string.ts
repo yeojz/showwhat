@@ -2,6 +2,7 @@ import type { Context } from "../schemas/context.js";
 import type { StringCondition } from "../schemas/condition.js";
 import type { ConditionEvaluator, RegexFactory } from "./types.js";
 import { defaultCreateRegex } from "./types.js";
+import { ConditionError } from "../errors.js";
 
 export async function evaluateString(
   condition: StringCondition,
@@ -23,11 +24,18 @@ export async function evaluateString(
     case "nin":
       return !(condition.value as string[]).includes(actual);
     case "regex": {
+      const pattern = condition.value as string;
+      let regex: { test: (input: string) => boolean };
       try {
-        return createRegex(condition.value as string).test(actual);
-      } catch {
-        return false;
+        regex = createRegex(pattern);
+      } catch (e) {
+        throw new ConditionError(
+          "string",
+          `Invalid regex pattern "${pattern}": ${(e as Error).message}`,
+          e,
+        );
       }
+      return regex.test(actual);
     }
   }
 }

@@ -75,9 +75,8 @@ export async function showwhat<
     context: contextResult.data as Context<T>,
     deps,
     options: {
+      ...options,
       evaluators: options.evaluators ?? builtinEvaluators,
-      fallback: options.fallback,
-      logger: options.logger,
     },
   });
 }

@@ -153,10 +153,9 @@ describe("parseObject", () => {
   });
 });
 
-describe("regex validation at parse time", () => {
-  it("rejects invalid regex pattern in string condition with regex op", async () => {
-    await expect(
-      parseYaml(`
+describe("regex validation deferred to resolve time", () => {
+  it("accepts invalid regex pattern at parse time (validated at resolve via createRegex)", async () => {
+    const flags = await parseYaml(`
 definitions:
   feature_a:
     variations:
@@ -167,8 +166,8 @@ definitions:
             op: regex
             value: "[invalid"
       - value: false
-`),
-    ).rejects.toThrow(ValidationError);
+`);
+    expect(flags.definitions["feature_a"]).toBeDefined();
   });
 
   it("accepts valid regex pattern in string condition with regex op", async () => {
@@ -182,22 +181,6 @@ definitions:
             key: region
             op: regex
             value: "^hello-"
-      - value: false
-`);
-    expect(flags.definitions["feature_a"]).toBeDefined();
-  });
-
-  it("does not validate regex for eq op", async () => {
-    const flags = await parseYaml(`
-definitions:
-  feature_a:
-    variations:
-      - value: true
-        conditions:
-          - type: string
-            key: region
-            op: eq
-            value: "[invalid"
       - value: false
 `);
     expect(flags.definitions["feature_a"]).toBeDefined();

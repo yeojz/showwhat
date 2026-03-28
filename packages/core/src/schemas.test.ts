@@ -74,14 +74,14 @@ describe("ConditionSchema", () => {
     );
   });
 
-  it("rejects string condition with invalid regex pattern", () => {
+  it("accepts string condition with invalid regex pattern (validation deferred to resolve time)", () => {
     const result = ConditionSchema.safeParse({
       type: "string",
       key: "name",
       op: "regex",
       value: "[invalid",
     });
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
   });
 
   it("rejects regex op with array value", () => {

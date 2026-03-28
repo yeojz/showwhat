@@ -168,32 +168,18 @@ const BLOCKED_OPEN_UNION_TYPES = new Set<string>(Object.values(CONDITION_TYPES))
 // ── ConditionSchema ───────────────────────────────────────────────────────────
 // z.ZodType<Condition> annotation is required for the recursive schema.
 
-export const ConditionSchema: z.ZodType<Condition> = z
-  .union([
-    BuiltinConditionSchema,
-    AndConditionSchema,
-    OrConditionSchema,
-    z.looseObject({ type: z.string() }).refine((val) => !BLOCKED_OPEN_UNION_TYPES.has(val.type), {
-      message: "Reserved condition type",
-    }),
-  ])
-  .superRefine((val, ctx) => {
-    // Validates that regex patterns compile. Does NOT detect catastrophic backtracking — admin-authored patterns are trusted.
-    if (val.type === CONDITION_TYPES.string) {
-      const sc = val as StringCondition;
-      if (sc.op === "regex") {
-        try {
-          new RegExp(sc.value as string);
-        } catch (e) {
-          ctx.addIssue({
-            code: "custom",
-            message: `Invalid regex pattern "${sc.value}": ${(e as Error).message}`,
-            path: ["value"],
-          });
-        }
-      }
-    }
-  });
+// Regex pattern validation is deferred to resolve time via the configured
+// createRegex factory (see ResolverOptions). This avoids divergence between
+// the parse-time engine (always native RegExp) and the runtime engine
+// (which may be RE2 or another safe-regex implementation).
+export const ConditionSchema: z.ZodType<Condition> = z.union([
+  BuiltinConditionSchema,
+  AndConditionSchema,
+  OrConditionSchema,
+  z.looseObject({ type: z.string() }).refine((val) => !BLOCKED_OPEN_UNION_TYPES.has(val.type), {
+    message: "Reserved condition type",
+  }),
+]);
 
 // ── Composite types (inferred after schema is defined) ────────────────────────
 

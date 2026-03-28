@@ -8,6 +8,7 @@ import {
   VariationNotFoundError,
   InvalidContextError,
   DataError,
+  ConditionError,
 } from "./errors.js";
 import { resolve, resolveVariation, ResolverOptions } from "./resolver.js";
 import {
@@ -65,6 +66,7 @@ export {
   VariationNotFoundError,
   InvalidContextError,
   DataError,
+  ConditionError,
 };
 
 // data

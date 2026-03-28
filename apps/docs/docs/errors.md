@@ -53,6 +53,12 @@ Returned in `ResolutionError` when the definition has `active: false`.
 
 Returned in `ResolutionError` when no variation in the definition matches the context.
 
+### `ConditionError`
+
+Returned in `ResolutionError` when a condition fails to evaluate due to a configuration error — for example, an invalid regex pattern under the active regex engine. This is distinct from a condition that simply does not match.
+
+The `conditionType` property indicates which condition type produced the error (e.g. `"string"`).
+
 ### `ValidationError`
 
 Thrown when the context object fails schema validation. This is a systemic error that prevents resolution from starting.
@@ -80,6 +86,7 @@ ShowwhatError
 ├── DefinitionNotFoundError
 ├── DefinitionInactiveError
 ├── VariationNotFoundError
+├── ConditionError
 ├── ValidationError
 ├── ParseError
 ├── SchemaValidationError
@@ -95,6 +102,7 @@ import {
   DefinitionNotFoundError,
   DefinitionInactiveError,
   VariationNotFoundError,
+  ConditionError,
   ValidationError,
   ParseError,
   SchemaValidationError,

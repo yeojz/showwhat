@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evaluateString as evaluate } from "./string.js";
+import { ConditionError } from "../errors.js";
 
 describe("string (eq op)", () => {
   it("returns true when context key matches a single string value", async () => {
@@ -43,13 +44,10 @@ describe("string (regex op)", () => {
     ).toBe(true);
   });
 
-  it("returns false for invalid regex (defense-in-depth)", async () => {
-    expect(
-      await evaluate(
-        { type: "string", key: "x", op: "regex", value: "[invalid" },
-        { x: "anything" },
-      ),
-    ).toBe(false);
+  it("throws ConditionError for invalid regex pattern", async () => {
+    await expect(
+      evaluate({ type: "string", key: "x", op: "regex", value: "[invalid" }, { x: "anything" }),
+    ).rejects.toThrow(ConditionError);
   });
 
   it("returns false when no pattern matches", async () => {
@@ -149,17 +147,17 @@ describe("string (regex op with custom createRegex)", () => {
     ).toBe(false);
   });
 
-  it("returns false when custom createRegex throws", async () => {
+  it("throws ConditionError when custom createRegex throws", async () => {
     const createRegex = () => {
       throw new Error("unsupported pattern");
     };
-    expect(
-      await evaluate(
+    await expect(
+      evaluate(
         { type: "string", key: "x", op: "regex", value: ".*" },
         { x: "anything" },
         createRegex,
       ),
-    ).toBe(false);
+    ).rejects.toThrow(ConditionError);
   });
 
   it("falls back to native RegExp when createRegex is not provided", async () => {

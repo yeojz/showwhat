@@ -78,3 +78,14 @@ export class DataError extends ShowwhatError {
     this.name = "DataError";
   }
 }
+
+export class ConditionError extends ShowwhatError {
+  constructor(
+    public readonly conditionType: string,
+    message: string,
+    cause?: unknown,
+  ) {
+    super(message, cause !== undefined ? { cause } : undefined);
+    this.name = "ConditionError";
+  }
+}
