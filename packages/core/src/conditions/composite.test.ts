@@ -323,4 +323,94 @@ describe("evaluateCondition", () => {
     });
     expect(result).toBe(true);
   });
+
+  describe("deps threading", () => {
+    it("passes deps to leaf evaluators", async () => {
+      let receivedDeps: unknown;
+      const spy: ConditionEvaluator = async ({ deps }) => {
+        receivedDeps = deps;
+        return true;
+      };
+      const evaluators = { ...builtinEvaluators, spy };
+
+      await evaluateCondition({
+        condition: { type: "spy" },
+        context: ctx,
+        evaluators,
+        annotations: {},
+        deps: { hash: (id: string) => id.length },
+      });
+
+      expect(receivedDeps).toEqual({ hash: expect.any(Function) });
+    });
+
+    it("defaults deps to empty object when omitted", async () => {
+      let receivedDeps: unknown;
+      const spy: ConditionEvaluator = async ({ deps }) => {
+        receivedDeps = deps;
+        return true;
+      };
+      const evaluators = { ...builtinEvaluators, spy };
+
+      await evaluateCondition({
+        condition: { type: "spy" },
+        context: ctx,
+        evaluators,
+        annotations: {},
+      });
+
+      expect(receivedDeps).toEqual({});
+    });
+
+    it("threads deps through nested composites", async () => {
+      const received: unknown[] = [];
+      const spy: ConditionEvaluator = async ({ deps }) => {
+        received.push(deps);
+        return true;
+      };
+      const evaluators = { ...builtinEvaluators, spy };
+      const myDeps = { hash: (id: string) => id.length };
+
+      await evaluateCondition({
+        condition: {
+          type: "and",
+          conditions: [
+            {
+              type: "or",
+              conditions: [{ type: "spy" }],
+            },
+            { type: "spy" },
+          ],
+        },
+        context: ctx,
+        evaluators,
+        annotations: {},
+        deps: myDeps,
+      });
+
+      expect(received).toHaveLength(2);
+      expect(received[0]).toBe(myDeps);
+      expect(received[1]).toBe(myDeps);
+    });
+
+    it("passes deps to fallback evaluator", async () => {
+      let receivedDeps: unknown;
+      const fallback: ConditionEvaluator = async ({ deps }) => {
+        receivedDeps = deps;
+        return true;
+      };
+      const myDeps = { fetch: async () => [] };
+
+      await evaluateCondition({
+        condition: { type: "unknown-type" },
+        context: ctx,
+        evaluators: builtinEvaluators,
+        annotations: {},
+        deps: myDeps,
+        fallback,
+      });
+
+      expect(receivedDeps).toBe(myDeps);
+    });
+  });
 });

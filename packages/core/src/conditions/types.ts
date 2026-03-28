@@ -1,11 +1,13 @@
 import type { Context } from "../schemas/context.js";
 
-export type Annotations = Record<string, unknown>;
+export type Annotations<T extends Record<string, unknown> = Record<string, unknown>> = T;
+export type Dependencies<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
 export type ConditionEvaluatorArgs = {
   condition: unknown;
   context: Readonly<Context>;
   annotations: Annotations;
+  deps: Readonly<Dependencies>;
   depth: string;
 };
 

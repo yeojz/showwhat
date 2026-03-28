@@ -1,7 +1,12 @@
 import type { Condition } from "../schemas/condition.js";
 import { isAndCondition, isOrCondition } from "../schemas/condition.js";
 import type { Context } from "../schemas/context.js";
-import type { Annotations, ConditionEvaluator, ConditionEvaluators } from "./types.js";
+import type {
+  Annotations,
+  ConditionEvaluator,
+  ConditionEvaluators,
+  Dependencies,
+} from "./types.js";
 import type { Logger } from "../logger.js";
 import { noopLogger } from "../logger.js";
 import { ShowwhatError } from "../errors.js";
@@ -11,6 +16,7 @@ export type EvaluateConditionArgs = {
   context: Readonly<Context>;
   evaluators: ConditionEvaluators;
   annotations: Annotations;
+  deps?: Readonly<Dependencies>;
   depth?: string;
   logger?: Logger;
   fallback?: ConditionEvaluator;
@@ -21,6 +27,7 @@ export async function evaluateCondition({
   context,
   evaluators,
   annotations,
+  deps = {},
   depth = "",
   logger = noopLogger,
   fallback,
@@ -33,6 +40,7 @@ export async function evaluateCondition({
         context,
         evaluators,
         annotations,
+        deps,
         depth: childDepth,
         logger,
         fallback,
@@ -57,6 +65,7 @@ export async function evaluateCondition({
         context,
         evaluators,
         annotations,
+        deps,
         depth: childDepth,
         logger,
         fallback,
@@ -77,7 +86,7 @@ export async function evaluateCondition({
 
   if (!evaluator) {
     if (fallback) {
-      const result = await fallback({ condition, context, annotations, depth });
+      const result = await fallback({ condition, context, annotations, deps, depth });
       logger.debug("condition evaluated (fallback)", {
         type: condition.type,
         depth,
@@ -89,7 +98,7 @@ export async function evaluateCondition({
     throw new ShowwhatError(`Unknown condition type "${condition.type}".`);
   }
 
-  const result = await evaluator({ condition, context, annotations, depth });
+  const result = await evaluator({ condition, context, annotations, deps, depth });
   logger.debug("condition evaluated", {
     type: condition.type,
     depth,

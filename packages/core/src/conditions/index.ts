@@ -13,6 +13,7 @@ export type {
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,
+  Dependencies,
 } from "./types.js";
 export { evaluateCondition } from "./composite.js";
 export type { EvaluateConditionArgs } from "./composite.js";
