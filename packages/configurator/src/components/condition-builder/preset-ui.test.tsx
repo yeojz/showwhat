@@ -13,26 +13,21 @@ const SAMPLE_PRESETS: Presets = {
   tier: {
     type: "string",
     key: "tier",
-    defaults: { op: "eq", value: "free" },
   },
   age: {
     type: "number",
     key: "user_age",
-    defaults: { op: "gt", value: 18 },
   },
   admin: {
     type: "bool",
     key: "is_admin",
-    defaults: { value: true },
   },
   cutoff: {
     type: "datetime",
     key: "event_time",
-    defaults: { op: "gte", value: "2025-01-01T00:00:00Z" },
   },
   segment: {
     type: "segment_match",
-    defaults: { region: "us", plan: "free" },
   },
 };
 
@@ -54,8 +49,11 @@ describe("createPresetConditionMeta", () => {
     expect(segmentMeta!.description).toContain("segment_match");
   });
 
-  it("merges preset defaults into meta defaults", () => {
-    const metas = createPresetConditionMeta(SAMPLE_PRESETS);
+  it("merges preset overrides into meta defaults", () => {
+    const presetsWithOverrides: Presets = {
+      tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+    };
+    const metas = createPresetConditionMeta(presetsWithOverrides);
     const tierMeta = metas.find((m) => m.type === "tier");
     expect(tierMeta!.defaults).toMatchObject({
       type: "tier",
@@ -73,7 +71,7 @@ describe("createPresetConditionMeta", () => {
 });
 
 describe("createPresetConditionMeta edge cases", () => {
-  it("handles presets without defaults", () => {
+  it("handles presets without overrides", () => {
     const metas = createPresetConditionMeta({
       tier: { type: "string", key: "tier" },
     });
@@ -81,9 +79,9 @@ describe("createPresetConditionMeta edge cases", () => {
     expect(tierMeta!.defaults).toMatchObject({ type: "tier", key: "tier" });
   });
 
-  it("preset defaults override type defaults", () => {
+  it("preset overrides override type defaults", () => {
     const metas = createPresetConditionMeta({
-      tier: { type: "string", key: "tier", defaults: { op: "neq", value: "enterprise" } },
+      tier: { type: "string", key: "tier", overrides: { op: "neq", value: "enterprise" } },
     });
     const tierMeta = metas.find((m) => m.type === "tier");
     expect(tierMeta!.defaults.op).toBe("neq");
@@ -790,5 +788,79 @@ describe("ConditionValueEditor with extensions", () => {
     );
     // CustomConditionEditor shows a Type input
     expect(screen.getByDisplayValue("segment")).toBeInTheDocument();
+  });
+});
+
+describe("Preset overrides disable fields", () => {
+  const LOCKED_PRESETS: Presets = {
+    tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+    age: { type: "number", key: "user_age", overrides: { op: "gte" } },
+    admin: { type: "bool", key: "is_admin", overrides: { value: true } },
+    cutoff: { type: "datetime", key: "event_time", overrides: { op: "gt" } },
+  };
+
+  it("string preset disables op and value when overridden", () => {
+    const extensions = createPresetUI(LOCKED_PRESETS);
+    const TierEditor = extensions.editorOverrides.get("tier")!;
+    render(
+      <TierEditor
+        condition={{ type: "tier", key: "tier", op: "eq", value: "free" }}
+        onChange={vi.fn()}
+      />,
+    );
+    // Key is always disabled
+    expect(screen.getByDisplayValue("tier")).toBeDisabled();
+    // Op select should be disabled
+    const comboboxes = screen.getAllByRole("combobox");
+    expect(comboboxes[0]).toBeDisabled();
+    // Value input should be disabled
+    const valueInput = screen.getByDisplayValue("free");
+    expect(valueInput).toBeDisabled();
+  });
+
+  it("number preset disables only op when only op is overridden", () => {
+    const extensions = createPresetUI(LOCKED_PRESETS);
+    const AgeEditor = extensions.editorOverrides.get("age")!;
+    render(
+      <AgeEditor
+        condition={{ type: "age", key: "user_age", op: "gte", value: 18 }}
+        onChange={vi.fn()}
+      />,
+    );
+    // Op select should be disabled
+    const comboboxes = screen.getAllByRole("combobox");
+    expect(comboboxes[0]).toBeDisabled();
+    // Value input should NOT be disabled
+    const valueInput = screen.getByDisplayValue("18");
+    expect(valueInput).not.toBeDisabled();
+  });
+
+  it("bool preset disables value when overridden", () => {
+    const extensions = createPresetUI(LOCKED_PRESETS);
+    const AdminEditor = extensions.editorOverrides.get("admin")!;
+    render(
+      <AdminEditor
+        condition={{ type: "admin", key: "is_admin", value: true }}
+        onChange={vi.fn()}
+      />,
+    );
+    // The value select should be disabled
+    const comboboxes = screen.getAllByRole("combobox");
+    const valueSelect = comboboxes[comboboxes.length - 1];
+    expect(valueSelect).toBeDisabled();
+  });
+
+  it("datetime preset disables op when overridden but leaves value editable", () => {
+    const extensions = createPresetUI(LOCKED_PRESETS);
+    const CutoffEditor = extensions.editorOverrides.get("cutoff")!;
+    render(
+      <CutoffEditor
+        condition={{ type: "cutoff", key: "event_time", op: "gt", value: "2025-01-01T00:00:00Z" }}
+        onChange={vi.fn()}
+      />,
+    );
+    // Op select should be disabled
+    const comboboxes = screen.getAllByRole("combobox");
+    expect(comboboxes[0]).toBeDisabled();
   });
 });

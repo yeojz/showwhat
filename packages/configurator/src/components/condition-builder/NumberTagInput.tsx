@@ -1,13 +1,14 @@
 import { useCallback, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { Badge } from "../ui/badge.js";
 
-type NumberTagInputProps = {
+export type NumberTagInputProps = {
   value: number | number[];
   onChange: (value: number | number[]) => void;
   placeholder?: string;
+  disabled?: boolean;
 };
 
-export function NumberTagInput({ value, onChange, placeholder }: NumberTagInputProps) {
+export function NumberTagInput({ value, onChange, placeholder, disabled }: NumberTagInputProps) {
   const values = Array.isArray(value) ? value : [value];
   const [text, setText] = useState("");
 
@@ -67,18 +68,22 @@ export function NumberTagInput({ value, onChange, placeholder }: NumberTagInputP
   );
 
   return (
-    <div className="border-input focus-within:border-ring focus-within:ring-ring/50 flex min-h-9 flex-1 flex-wrap items-center gap-1 rounded-md border px-2 py-1 focus-within:ring-[3px]">
+    <div
+      className={`border-input focus-within:border-ring focus-within:ring-ring/50 flex min-h-9 flex-1 flex-wrap items-center gap-1 rounded-md border px-2 py-1 focus-within:ring-[3px]${disabled ? " opacity-50" : ""}`}
+    >
       {values.map((v, i) => (
         <Badge key={`${v}-${i}`} variant="outline" className="bg-muted gap-1 font-mono text-xs">
           {v}
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground ml-0.5 cursor-pointer leading-none"
-            onClick={() => removeValue(i)}
-            aria-label={`Remove ${v}`}
-          >
-            {"\u00d7"}
-          </button>
+          {!disabled && (
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground ml-0.5 cursor-pointer leading-none"
+              onClick={() => removeValue(i)}
+              aria-label={`Remove ${v}`}
+            >
+              {"\u00d7"}
+            </button>
+          )}
         </Badge>
       ))}
       <input
@@ -89,6 +94,7 @@ export function NumberTagInput({ value, onChange, placeholder }: NumberTagInputP
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
+        disabled={disabled}
       />
     </div>
   );

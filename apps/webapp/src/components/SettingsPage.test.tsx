@@ -370,7 +370,7 @@ describe("SettingsPage", () => {
     storeState = {
       ...storeState,
       inlinePresets: {
-        tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
+        tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
       },
     };
     const user = userEvent.setup();
@@ -399,7 +399,7 @@ describe("SettingsPage", () => {
     expect(onTabChange).toHaveBeenCalledWith("presets");
   });
 
-  it("does not expand an inline preset row when it has no key and no defaults", async () => {
+  it("does not expand an inline preset row when it has no key and no overrides", async () => {
     storeState = {
       ...storeState,
       inlinePresets: {
@@ -419,13 +419,13 @@ describe("SettingsPage", () => {
     storeState = {
       ...storeState,
       inlinePresets: {
-        nokey: { type: "string", defaults: { op: "eq", value: "test" } },
+        nokey: { type: "string", overrides: { op: "eq", value: "test" } },
       },
     };
     const user = userEvent.setup();
     render(<SettingsPage tab="presets" onTabChange={vi.fn()} onBack={vi.fn()} />);
 
-    // Expand the row — it has defaults so it should be expandable
+    // Expand the row — it has overrides so it should be expandable
     await user.click(screen.getByText("nokey"));
     const pre = screen.getByText(/^type: string/);
     expect(pre.textContent).not.toContain("key:");

@@ -4,7 +4,7 @@ import { PRIMITIVE_CONDITION_TYPES } from "./condition.js";
 export type PresetDefinition = {
   type: string;
   key?: string;
-  defaults?: Record<string, unknown>;
+  overrides?: Record<string, unknown>;
 };
 
 export type Presets = Record<string, PresetDefinition>;
@@ -15,7 +15,7 @@ const PresetDefinitionSchema = z
   .object({
     type: z.string().min(1),
     key: z.string().min(1).optional(),
-    defaults: z.record(z.string(), z.unknown()).optional(),
+    overrides: z.record(z.string(), z.unknown()).optional(),
   })
   .superRefine((val, ctx) => {
     if (PRIMITIVE_TYPES.has(val.type) && !val.key) {

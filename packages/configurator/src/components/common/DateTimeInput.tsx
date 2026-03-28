@@ -23,7 +23,7 @@ function fromLocalDatetime(local: string): string {
   return d.toISOString();
 }
 
-export function DateTimeInput({ value, onChange }: DateTimeInputProps) {
+export function DateTimeInput({ value, onChange, disabled }: DateTimeInputProps) {
   const [rawValue, setRawValue] = useState(value);
   const [showRaw, setShowRaw] = useState(false);
   const prevValueRef = useRef(value);
@@ -43,6 +43,7 @@ export function DateTimeInput({ value, onChange }: DateTimeInputProps) {
             setRawValue(e.target.value);
             onChange(e.target.value);
           }}
+          disabled={disabled}
         />
         <button
           type="button"
@@ -63,6 +64,7 @@ export function DateTimeInput({ value, onChange }: DateTimeInputProps) {
         type="datetime-local"
         value={toLocalDatetime(value)}
         onChange={(e) => onChange(fromLocalDatetime(e.target.value))}
+        disabled={disabled}
       />
       <button
         type="button"

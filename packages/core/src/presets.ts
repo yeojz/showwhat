@@ -36,6 +36,8 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
     const delegateEvaluator = BUILTIN_EVALUATORS[primitiveType];
     const presetKey = preset.key!;
 
+    const overrides = preset.overrides ?? {};
+
     const evaluator: ConditionEvaluator = ({
       condition,
       context,
@@ -46,7 +48,7 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
     }) => {
       const rec = condition as Record<string, unknown>;
       return delegateEvaluator({
-        condition: { ...rec, type: primitiveType, key: presetKey },
+        condition: { ...rec, ...overrides, type: primitiveType, key: presetKey },
         context,
         annotations,
         deps,
