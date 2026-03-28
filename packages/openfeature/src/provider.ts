@@ -93,8 +93,8 @@ export class ShowwhatProvider implements Provider {
     const ctx = toShowwhatContext(evalCtx, this.#logger);
 
     try {
-      const resolution = await showwhat({
-        key: flagKey,
+      const results = await showwhat({
+        keys: [flagKey],
         context: ctx,
         options: {
           data: this.#data,
@@ -103,7 +103,19 @@ export class ShowwhatProvider implements Provider {
         },
       });
 
-      const value = resolution.value;
+      const entry = results[flagKey];
+
+      if (!entry.success) {
+        const mapped = mapShowwhatError(entry.error);
+        return {
+          value: defaultValue,
+          reason: StandardResolutionReasons.ERROR,
+          errorCode: mapped.errorCode,
+          errorMessage: mapped.errorMessage,
+        };
+      }
+
+      const value = entry.value;
 
       if (!typeGuard(value)) {
         return {
@@ -114,11 +126,11 @@ export class ShowwhatProvider implements Provider {
         };
       }
 
-      const hasConditions = resolution.meta.variation.conditionCount > 0;
+      const hasConditions = entry.meta.variation.conditionCount > 0;
 
       return {
         value,
-        variant: resolution.meta.variation.id ?? String(resolution.meta.variation.index),
+        variant: entry.meta.variation.id ?? String(entry.meta.variation.index),
         reason: hasConditions
           ? StandardResolutionReasons.TARGETING_MATCH
           : StandardResolutionReasons.STATIC,

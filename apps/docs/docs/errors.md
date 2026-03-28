@@ -6,34 +6,56 @@ title: Errors
 
 All errors extend `ShowwhatError`.
 
-## Error types
+## Per-key errors vs thrown errors
 
-### `DefinitionNotFoundError`
-
-Thrown when the requested key does not exist in the data source.
+With the new `showwhat()` API, most errors are **returned per-key** inside a `ResolutionError` entry rather than thrown. Only systemic failures (such as context validation) are thrown as exceptions.
 
 ```ts
-try {
-  await showwhat({ key: "missing", context: {}, options: { data } });
-} catch (e) {
-  if (e instanceof DefinitionNotFoundError) {
-    console.log(e.key); // "missing"
-    console.log(e.context); // {}
+const result = await showwhat({
+  keys: ["missing", "checkout_v2"],
+  context: { env: "prod" },
+  options: { data },
+});
+
+const entry = result["missing"];
+if (!entry.success) {
+  // Per-key error — not thrown, check the error property
+  if (entry.error instanceof DefinitionNotFoundError) {
+    console.log(entry.error.key); // "missing"
   }
 }
 ```
 
+Systemic errors that prevent resolution entirely are still thrown:
+
+```ts
+try {
+  await showwhat({ keys: ["checkout_v2"], context: invalid, options: { data } });
+} catch (e) {
+  // ValidationError is thrown because it is a systemic failure
+  if (e instanceof ValidationError) {
+    console.log(e.message);
+  }
+}
+```
+
+## Error types
+
+### `DefinitionNotFoundError`
+
+Returned in `ResolutionError` when the requested key does not exist in the data source.
+
 ### `DefinitionInactiveError`
 
-Thrown when the definition has `active: false`.
+Returned in `ResolutionError` when the definition has `active: false`.
 
 ### `VariationNotFoundError`
 
-Thrown when no variation in the definition matches the context.
+Returned in `ResolutionError` when no variation in the definition matches the context.
 
 ### `ValidationError`
 
-Thrown when the context object fails schema validation.
+Thrown when the context object fails schema validation. This is a systemic error that prevents resolution from starting.
 
 ### `ParseError`
 

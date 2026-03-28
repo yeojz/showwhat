@@ -1,8 +1,16 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { ErrorCode, StandardResolutionReasons } from "@openfeature/server-sdk";
 import type { DefinitionReader, Definition, Definitions } from "showwhat";
 import { MemoryData } from "showwhat";
 import { ShowwhatProvider } from "./provider.js";
+
+vi.mock("showwhat", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("showwhat")>();
+  return {
+    ...actual,
+    showwhat: vi.fn(actual.showwhat),
+  };
+});
 
 async function createProvider(definitions: Record<string, unknown>): Promise<ShowwhatProvider> {
   const data = await MemoryData.fromObject({ definitions });
@@ -295,6 +303,23 @@ describe("ShowwhatProvider", () => {
 
       const result = await provider.resolveStringEvaluation("flag.v", "x", {});
       expect(result.variant).toBe("0");
+    });
+  });
+
+  describe("systemic errors", () => {
+    it("returns default with GENERAL error when showwhat rejects unexpectedly", async () => {
+      const { showwhat } = await import("showwhat");
+      const provider = await createProvider({
+        "flag.ok": { variations: [{ value: true }] },
+      });
+
+      vi.mocked(showwhat).mockRejectedValueOnce(new Error("unexpected failure"));
+
+      const result = await provider.resolveBooleanEvaluation("flag.ok", false, {});
+
+      expect(result.value).toBe(false);
+      expect(result.reason).toBe(StandardResolutionReasons.ERROR);
+      expect(result.errorCode).toBeDefined();
     });
   });
 

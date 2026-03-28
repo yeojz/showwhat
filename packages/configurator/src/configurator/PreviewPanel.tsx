@@ -267,35 +267,43 @@ export function PreviewPanel() {
       if (controller.signal.aborted) return;
 
       const resolution = result[selectedKey];
-      setPreviewResult({
-        status: "success",
-        value: resolution.value,
-        meta: resolution.meta,
-      });
+      if (resolution.success) {
+        setPreviewResult({
+          status: "success",
+          value: resolution.value,
+          meta: resolution.meta,
+        });
+      } else {
+        const err = resolution.error;
+        if (err instanceof DefinitionInactiveError) {
+          setPreviewResult({
+            status: "inactive",
+            message: `"${selectedKey}" is inactive`,
+          });
+        } else if (err instanceof VariationNotFoundError) {
+          setPreviewResult({
+            status: "no-match",
+            message: "No variation matched the given context",
+          });
+        } else if (err instanceof DefinitionNotFoundError) {
+          setPreviewResult({
+            status: "error",
+            message: `Definition "${selectedKey}" not found`,
+          });
+        } else {
+          setPreviewResult({
+            status: "error",
+            message: err.message,
+          });
+        }
+      }
     } catch (err) {
       if (controller.signal.aborted) return;
 
-      if (err instanceof DefinitionInactiveError) {
-        setPreviewResult({
-          status: "inactive",
-          message: `"${selectedKey}" is inactive`,
-        });
-      } else if (err instanceof VariationNotFoundError) {
-        setPreviewResult({
-          status: "no-match",
-          message: "No variation matched the given context",
-        });
-      } else if (err instanceof DefinitionNotFoundError) {
-        setPreviewResult({
-          status: "error",
-          message: `Definition "${selectedKey}" not found`,
-        });
-      } else {
-        setPreviewResult({
-          status: "error",
-          message: err instanceof Error ? err.message : "Unknown error",
-        });
-      }
+      setPreviewResult({
+        status: "error",
+        message: err instanceof Error ? err.message : "Unknown error",
+      });
     } finally {
       if (!controller.signal.aborted) {
         setIsResolving(false);

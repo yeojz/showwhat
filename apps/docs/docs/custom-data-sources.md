@@ -81,7 +81,7 @@ import { showwhat } from "showwhat";
 const data = new MyApiData({ baseUrl: "https://api.example.com/flags" });
 
 const result = await showwhat({
-  key: "checkout_v2",
+  keys: ["checkout_v2"],
   context: { env: "prod" },
   options: { data },
 });
@@ -127,7 +127,7 @@ class FileData implements DefinitionReader {
 ```ts
 const data = new FileData("./flags.yaml");
 const result = await showwhat({
-  key: "checkout_v2",
+  keys: ["checkout_v2"],
   context: { env: "prod" },
   options: { data },
 });

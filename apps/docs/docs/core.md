@@ -17,13 +17,29 @@ deno install npm:showwhat
 
 ## `showwhat()`
 
-The main entry point. Resolves a single definition key against a context.
+The main entry point. Resolves one or more definition keys against a context.
 
 ```ts
 import { showwhat } from "showwhat";
 
 const result = await showwhat({
-  key: "checkout_v2",
+  keys: ["checkout_v2"],
+  context: { env: "prod" },
+  options: { data },
+});
+
+const entry = result["checkout_v2"];
+if (!entry.success) {
+  console.log(entry.error); // ShowwhatError
+} else {
+  console.log(entry.value); // true
+}
+```
+
+Omit `keys` to resolve all definitions in the data source:
+
+```ts
+const allResults = await showwhat({
   context: { env: "prod" },
   options: { data },
 });
@@ -31,38 +47,48 @@ const result = await showwhat({
 
 **Parameters:**
 
-| Field                | Type                  | Description                                   |
-| -------------------- | --------------------- | --------------------------------------------- |
-| `key`                | `string`              | The definition key to resolve                 |
-| `context`            | `Context`             | The context object                            |
-| `options.data`       | `DefinitionReader`    | The data source                               |
-| `options.evaluators` | `ConditionEvaluators` | Optional custom condition evaluators          |
-| `options.fallback`   | `ConditionEvaluator`  | Optional fallback for unknown condition types |
-| `options.logger`     | `Logger`              | Optional logger for debug output              |
+| Field                | Type                  | Description                                      |
+| -------------------- | --------------------- | ------------------------------------------------ |
+| `keys`               | `string[]?`           | Definition keys to resolve (omit to resolve all) |
+| `context`            | `Context`             | The context object                               |
+| `options.data`       | `DefinitionReader`    | The data source                                  |
+| `options.evaluators` | `ConditionEvaluators` | Optional custom condition evaluators             |
+| `options.fallback`   | `ConditionEvaluator`  | Optional fallback for unknown condition types    |
+| `options.logger`     | `Logger`              | Optional logger for debug output                 |
 
-**Returns:** `Promise<Resolution>`
+**Returns:** `Promise<Resolutions>`
+
+`Resolutions` is `Record<string, Resolution | ResolutionError>`. Each entry is either a successful `Resolution` or a `ResolutionError` containing the error for that key.
 
 **`Resolution` fields:**
 
-| Field                           | Type                      | Description                                        |
-| ------------------------------- | ------------------------- | -------------------------------------------------- |
-| `key`                           | `string`                  | The definition key that was resolved               |
-| `value`                         | `unknown`                 | The matched variation's value                      |
-| `meta.context`                  | `Context`                 | The context used for resolution                    |
-| `meta.variation.index`          | `number`                  | Index of the matched variation                     |
-| `meta.variation.id`             | `string?`                 | Optional variation identifier                      |
-| `meta.variation.description`    | `string?`                 | Optional variation description                     |
-| `meta.variation.conditionCount` | `number`                  | Number of conditions evaluated                     |
-| `meta.annotations`              | `Record<string, unknown>` | Metadata populated by evaluators during resolution |
+| Field                           | Type                      | Description                                         |
+| ------------------------------- | ------------------------- | --------------------------------------------------- |
+| `success`                       | `true`                    | Always `true` on success (for union discrimination) |
+| `key`                           | `string`                  | The definition key that was resolved                |
+| `value`                         | `unknown`                 | The matched variation's value                       |
+| `meta.context`                  | `Context`                 | The context used for resolution                     |
+| `meta.variation.index`          | `number`                  | Index of the matched variation                      |
+| `meta.variation.id`             | `string?`                 | Optional variation identifier                       |
+| `meta.variation.description`    | `string?`                 | Optional variation description                      |
+| `meta.variation.conditionCount` | `number`                  | Number of conditions evaluated                      |
+| `meta.annotations`              | `Record<string, unknown>` | Metadata populated by evaluators during resolution  |
 
 The `annotations` record contains metadata populated by custom evaluators during resolution (see [Custom Conditions](/docs/custom-conditions)).
 
+**`ResolutionError` fields:**
+
+| Field     | Type            | Description                                                  |
+| --------- | --------------- | ------------------------------------------------------------ |
+| `success` | `false`         | Always `false` on error (for union discrimination)           |
+| `key`     | `string`        | The definition key that failed                               |
+| `error`   | `ShowwhatError` | The error that occurred (e.g. not found, inactive, no match) |
+
+Per-key errors such as `DefinitionNotFoundError`, `DefinitionInactiveError`, and `VariationNotFoundError` are wrapped in `ResolutionError` and returned in the result record -- they are never thrown.
+
 **Throws:**
 
-- `ValidationError` — invalid context
-- `DefinitionNotFoundError` — key not found in data source
-- `DefinitionInactiveError` — definition has `active: false`
-- `VariationNotFoundError` — no variation matched
+- `ValidationError` — invalid context (systemic failure, thrown before resolution begins)
 
 ## `resolve()`
 
@@ -208,4 +234,13 @@ type Definition = {
 type Definitions = Record<string, Definition>;
 
 // Resolution — see showwhat() return type above
+
+type ResolutionError = {
+  success: false;
+  key: string;
+  error: ShowwhatError;
+};
+
+// Record of all resolved keys
+type Resolutions = Record<string, Resolution | ResolutionError>;
 ```

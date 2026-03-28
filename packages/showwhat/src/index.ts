@@ -1,17 +1,13 @@
-import {
-  ContextSchema,
-  builtinEvaluators,
-  DefinitionNotFoundError,
-  ValidationError,
-  resolve,
-} from "@showwhat/core";
+import { ContextSchema, builtinEvaluators, ValidationError, resolve } from "@showwhat/core";
 import type {
   BuiltinCondition,
   ConditionEvaluators,
   Context,
   ContextValue,
+  Definitions,
   DefinitionReader,
   Resolution,
+  ResolutionError,
   ResolverOptions,
 } from "@showwhat/core";
 
@@ -21,18 +17,33 @@ export type ShowWhatOptions = ResolverOptions & {
   data: DefinitionReader;
 };
 
+export type Resolutions = Record<string, Resolution | ResolutionError>;
+
+async function fetchDefinitions(data: DefinitionReader, keys?: string[]): Promise<Definitions> {
+  if (!keys) {
+    return data.getAll();
+  }
+
+  const definitions = {} as Record<string, Definitions[string] | null>;
+  await Promise.all(
+    keys.map(async (key) => {
+      definitions[key] = await data.get(key).catch(() => null);
+    }),
+  );
+  return definitions as Definitions;
+}
+
 export async function showwhat<
-  V = unknown,
   T extends Record<string, ContextValue> = Record<string, ContextValue>,
 >({
-  key,
+  keys,
   context,
   options,
 }: {
-  key: string;
+  keys?: string[];
   context: Context<T>;
   options: ShowWhatOptions;
-}): Promise<Resolution<V>> {
+}): Promise<Resolutions> {
   const contextResult = ContextSchema.safeParse(context);
   if (!contextResult.success) {
     throw new ValidationError(
@@ -41,24 +52,15 @@ export async function showwhat<
     );
   }
 
-  const validatedContext = contextResult.data as Context<T>;
-  const def = await options.data.get(key);
-
-  if (!def) {
-    throw new DefinitionNotFoundError(key);
-  }
-
-  const result = await resolve<V, T>({
-    definitions: { [key]: def },
-    context: validatedContext,
+  return resolve({
+    definitions: await fetchDefinitions(options.data, keys),
+    context: contextResult.data as Context<T>,
     options: {
       evaluators: options.evaluators ?? builtinEvaluators,
       fallback: options.fallback,
       logger: options.logger,
     },
   });
-
-  return result[key];
 }
 
 const COMPOSITE_TYPES = new Set(["and", "or"]);

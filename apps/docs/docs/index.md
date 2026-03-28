@@ -78,15 +78,20 @@ definitions:
 `);
 
 const result = await showwhat({
-  key: "checkout_v2",
+  keys: ["checkout_v2"],
   context: { env: "prod" },
   options: { data },
 });
 
-console.log(result.value); // true
+const entry = result["checkout_v2"];
+if (!entry.success) {
+  console.log(entry.error); // ShowwhatError
+} else {
+  console.log(entry.value); // true
+}
 ```
 
-The `context` object tells showwhat about the current environment. The `data` option provides the definitions.
+The `context` object tells showwhat about the current environment. The `data` option provides the definitions. The result is a `Resolutions` record keyed by definition name, with each entry is either a successful `Resolution` (`success: true`) or a `ResolutionError` (`success: false`).
 
 ### Next steps
 

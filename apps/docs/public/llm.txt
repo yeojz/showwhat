@@ -76,10 +76,17 @@ Architecture: `schemas/` contains Zod types (no evaluator imports). `conditions/
 
 High-level convenience API. Re-exports everything from @showwhat/core plus:
 
-- `showwhat({ key, context, options: { data } })` — single-key resolution with built-in context validation and builtin evaluators
+- `showwhat({ keys?, context, options: { data } })` — resolve one or more keys, returns `Resolutions` record
+  - `keys` provided: fetches each via `data.get(key)` in parallel
+  - `keys` omitted: fetches all via `data.getAll()`
+  - Per-key errors wrapped in `ResolutionError`, never thrown
+  - Only systemic failures (context validation) are thrown
+- `ResolutionError` — `{ success: false; key: string; error: ShowwhatError }` for failed keys
+- `Resolutions` — `Record<string, Resolution | ResolutionError>`
+- `Resolution` has `success: true`, `ResolutionError` has `success: false` — check `entry.success` to narrow
 - Validates context against ContextSchema (Zod) automatically
 
-Use `showwhat` for simple single-key lookups. Use `@showwhat/core` directly for batch resolution or custom evaluator injection.
+Use `showwhat` for resolving flags with built-in evaluators and error wrapping. Use `@showwhat/core` directly for low-level batch resolution or custom evaluator injection.
 
 ## @showwhat/configurator
 
@@ -110,19 +117,16 @@ OpenFeature Server SDK provider. Key exports:
 A definition is a feature flag configuration:
 
 ```yaml
-key: my-feature
-description: Optional description
-type: boolean          # boolean | string | number | object
-defaultVariation: off
-variations:
-  - key: on
-    value: true
-    conditions:        # first match wins
-      - type: env
-        operator: eq
-        value: production
-  - key: off
-    value: false
+my-feature:
+  description: Optional description
+  active: true                    # set false to disable
+  variations:
+    - value: true
+      conditions:                 # first match wins
+        - type: env
+          op: eq
+          value: production
+    - value: false                # catch-all (no conditions)
 ```
 
 Supported condition types: env, string, number, bool, datetime, startAt, endAt, and (nested), or (nested). Custom evaluators can be registered.

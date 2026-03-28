@@ -26,37 +26,49 @@ describe("showwhat package", () => {
     const data = await MemoryData.fromObject(DEFINITIONS);
 
     const result = await showwhat({
-      key: "dark-mode",
+      keys: ["dark-mode"],
       context: { plan: "premium" },
       options: { data, evaluators: builtinEvaluators },
     });
 
-    expect(result.value).toBe(true);
-    expect(result.key).toBe("dark-mode");
+    const entry = result["dark-mode"];
+    expect(entry.success).toBe(true);
+    if (entry.success) {
+      expect(entry.value).toBe(true);
+      expect(entry.key).toBe("dark-mode");
+    }
   });
 
   it("showwhat() returns fallback when condition does not match", async () => {
     const data = await MemoryData.fromObject(DEFINITIONS);
 
     const result = await showwhat({
-      key: "dark-mode",
+      keys: ["dark-mode"],
       context: { plan: "free" },
       options: { data, evaluators: builtinEvaluators },
     });
 
-    expect(result.value).toBe(false);
+    const entry = result["dark-mode"];
+    expect(entry.success).toBe(true);
+    if (entry.success) {
+      expect(entry.value).toBe(false);
+    }
   });
 
-  it("showwhat() throws DefinitionNotFoundError for missing key", async () => {
+  it("showwhat() returns ResolutionError for missing key", async () => {
     const data = await MemoryData.fromObject(DEFINITIONS);
 
-    await expect(
-      showwhat({
-        key: "nonexistent",
-        context: { plan: "premium" },
-        options: { data, evaluators: builtinEvaluators },
-      }),
-    ).rejects.toThrow(DefinitionNotFoundError);
+    const result = await showwhat({
+      keys: ["nonexistent"],
+      context: { plan: "premium" },
+      options: { data, evaluators: builtinEvaluators },
+    });
+
+    const entry = result["nonexistent"];
+    expect(entry.success).toBe(false);
+    if (!entry.success) {
+      expect(entry.error).toBeInstanceOf(DefinitionNotFoundError);
+    }
   });
 
   it("registerEvaluators() merges custom evaluators with builtins", () => {
