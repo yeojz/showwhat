@@ -36,6 +36,8 @@ const enabled = await client.getBooleanValue("checkout_v2", false, {
 | ------------ | --------------------- | -------- | ------------------------------------------------------------------------------ |
 | `data`       | `DefinitionReader`    | yes      | Source of flag definitions                                                     |
 | `evaluators` | `ConditionEvaluators` | no       | Custom condition evaluators (see [Custom Conditions](/docs/custom-conditions)) |
+| `deps`       | `Dependencies`        | no       | Runtime utilities forwarded to all evaluator calls                             |
+| `logger`     | `Logger`              | no       | Logger instance for debug output                                               |
 
 ```ts
 import { ShowwhatProvider } from "@showwhat/openfeature";
@@ -52,8 +54,13 @@ const data = await MemoryData.fromObject({
 const provider = new ShowwhatProvider({
   data,
   evaluators: registerEvaluators({ tier: tierEvaluator }),
+  deps: { hash: murmurhash.v3 },
 });
 ```
+
+::: tip Shared lifetime
+Since `deps` is stored on the provider instance, the same object is shared across all evaluations for the lifetime of the provider. This is appropriate for stateless functions (hash, fetch). If you need per-call deps, extend `ShowwhatProvider` or wrap it in a factory.
+:::
 
 ## Context mapping
 
@@ -123,8 +130,8 @@ Any `DefinitionReader` works:
 
 ## Exports
 
-| Export                    | Description                                                      |
-| ------------------------- | ---------------------------------------------------------------- |
-| `ShowwhatProvider`        | OpenFeature `Provider` implementation                            |
-| `ShowwhatProviderOptions` | Options type for the provider constructor (`data`, `evaluators`) |
-| `toShowwhatContext`       | Utility to flatten `EvaluationContext` into showwhat `Context`   |
+| Export                    | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| `ShowwhatProvider`        | OpenFeature `Provider` implementation                                    |
+| `ShowwhatProviderOptions` | Options type for the provider constructor (`data`, `evaluators`, `deps`) |
+| `toShowwhatContext`       | Utility to flatten `EvaluationContext` into showwhat `Context`           |

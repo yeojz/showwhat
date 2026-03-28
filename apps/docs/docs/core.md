@@ -51,6 +51,7 @@ const allResults = await showwhat({
 | -------------------- | --------------------- | ------------------------------------------------ |
 | `keys`               | `string[]?`           | Definition keys to resolve (omit to resolve all) |
 | `context`            | `Context`             | The context object                               |
+| `deps`               | `Dependencies?`       | Optional runtime utilities for custom evaluators |
 | `options.data`       | `DefinitionReader`    | The data source                                  |
 | `options.evaluators` | `ConditionEvaluators` | Optional custom condition evaluators             |
 | `options.fallback`   | `ConditionEvaluator`  | Optional fallback for unknown condition types    |
@@ -108,11 +109,12 @@ results.flag_b.value; // resolved value
 
 **Parameters:**
 
-| Field         | Type              | Description                           |
-| ------------- | ----------------- | ------------------------------------- |
-| `definitions` | `Definitions`     | Map of key → Definition               |
-| `context`     | `Context`         | The context object                    |
-| `options`     | `ResolverOptions` | Optional evaluators, fallback, logger |
+| Field         | Type              | Description                                      |
+| ------------- | ----------------- | ------------------------------------------------ |
+| `definitions` | `Definitions`     | Map of key → Definition                          |
+| `context`     | `Context`         | The context object                               |
+| `deps`        | `Dependencies?`   | Optional runtime utilities for custom evaluators |
+| `options`     | `ResolverOptions` | Optional evaluators, fallback, logger            |
 
 **Returns:** `Promise<Record<string, Resolution>>`
 
@@ -136,11 +138,12 @@ if (result) {
 
 **Parameters:**
 
-| Field        | Type              | Description                            |
-| ------------ | ----------------- | -------------------------------------- |
-| `variations` | `Variation[]`     | Ordered list of variations to evaluate |
-| `context`    | `Context`         | The context object                     |
-| `options`    | `ResolverOptions` | Optional evaluators, fallback, logger  |
+| Field        | Type              | Description                                      |
+| ------------ | ----------------- | ------------------------------------------------ |
+| `variations` | `Variation[]`     | Ordered list of variations to evaluate           |
+| `context`    | `Context`         | The context object                               |
+| `deps`       | `Dependencies?`   | Optional runtime utilities for custom evaluators |
+| `options`    | `ResolverOptions` | Optional evaluators, fallback, logger            |
 
 **Returns:** `Promise<{ variation: Variation; variationIndex: number; annotations: Record<string, unknown> } | null>`
 
@@ -216,6 +219,8 @@ These are simplified representations. See the source schemas in `packages/core/s
 // A context value: primitive, array of primitives, or nested record
 type ContextValue = string | number | boolean | ContextValue[] | Record<string, ContextValue>;
 type Context = Record<string, ContextValue>;
+type Annotations<T extends Record<string, unknown> = Record<string, unknown>> = T;
+type Dependencies<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
 type Variation = {
   id?: string;

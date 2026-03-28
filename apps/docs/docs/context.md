@@ -61,3 +61,7 @@ context: {
 ```
 
 If `context.at` is not provided, time-based conditions will not match.
+
+## Context vs deps
+
+`context` holds evaluation data — values that conditions check against. For runtime utilities like hash functions, async fetchers, or lookup clients, use `deps` instead. See [Dependency injection](/docs/custom-conditions#dependency-injection) for details.
