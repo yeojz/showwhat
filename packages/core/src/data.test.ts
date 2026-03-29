@@ -128,6 +128,13 @@ describe("MemoryData.fromObject", () => {
     expect(Object.keys(all)).toContain("checkout_v2");
   });
 
+  it("listKeys() returns all definition keys", async () => {
+    const data = await MemoryData.fromObject(RAW_FLAGS);
+    const keys = await data.listKeys();
+    expect(keys).toEqual(expect.arrayContaining(["checkout_v2", "max_upload_mb"]));
+    expect(keys).toHaveLength(2);
+  });
+
   it("throws ValidationError for invalid input", async () => {
     await expect(MemoryData.fromObject({ bad: "shape" })).rejects.toThrow(ValidationError);
   });
