@@ -2,10 +2,9 @@
   <div class="hero-section">
     <section class="hero">
       <div class="hero-text">
-        <h1>Schema for configurations and feature flags.</h1>
+        <h1>Feature flags and config you own. Platform-agnostic.</h1>
         <p class="hero-sub">
-          A portable YAML/JSON format, an evaluation engine, and a visual configurator. No platform
-          required.
+          Define rules in YAML or JSON. Evaluate them in your app. Store them wherever you want.
         </p>
         <div class="hero-actions">
           <a href="/docs/" class="btn btn-primary">Get started</a>

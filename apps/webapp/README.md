@@ -1,6 +1,8 @@
 # @showwhat/webapp
 
-Web-based configurator UI for **showwhat** feature flag definitions.
+Standalone browser app for authoring and testing **showwhat** definitions.
+
+The webapp packages the showwhat configurator: a visual editor for building rules, previewing resolution, and exporting YAML or JSON definitions.
 
 ## Getting the webapp
 

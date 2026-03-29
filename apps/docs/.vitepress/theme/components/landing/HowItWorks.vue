@@ -11,8 +11,8 @@ const format = ref("yaml");
       <div>
         <h2>Define once, evaluate anywhere.</h2>
         <p class="how-sub">
-          The definition format is the contract between your config authors and your runtime. Write
-          it in YAML or JSON, evaluate it with one function call.
+          The definition is the contract between authors and runtime. Write it in YAML or JSON,
+          then resolve it with one function call.
         </p>
       </div>
       <div class="how-demo">

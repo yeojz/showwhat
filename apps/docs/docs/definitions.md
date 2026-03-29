@@ -4,7 +4,7 @@ title: Definitions
 
 # Definitions
 
-A **definition** is a named feature configuration. Each definition contains an ordered list of **variations** and optional metadata.
+A **definition** is a named rule-based configuration entry. It can represent a boolean feature flag, a remote config value, or a structured object. Each definition contains an ordered list of **variations** and optional metadata.
 
 ## Structure
 

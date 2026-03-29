@@ -5,7 +5,7 @@ outline: [2, 3]
 
 # Using the App
 
-The showwhat configurator is a standalone web app that runs entirely in your browser. There is no server -- your work is saved automatically to localStorage and can be exported as YAML or JSON at any time.
+The showwhat configurator is a standalone web app for authoring and testing definitions. It runs entirely in your browser. There is no server -- your work is saved automatically to localStorage and can be exported as YAML or JSON at any time.
 
 ## Overview
 
@@ -21,15 +21,15 @@ When you open the app for the first time, you see an empty state with two option
 
 To create a definition later, click the **New definition** button at the bottom of the sidebar. A text field appears -- type a key for your definition (for example, `dark-mode` or `pricing-tier`) and press Enter. The new definition opens in the editor with no variations yet.
 
-At the top of the editor you will see the definition key displayed as a large heading. Click it to rename it inline. Below the key is a **description** field -- an optional one-liner that helps your team understand what this flag controls.
+At the top of the editor you will see the definition key displayed as a large heading. Click it to rename it inline. Below the key is a **description** field -- an optional one-liner that helps your team understand what this definition controls.
 
 ## Enabling and disabling
 
-Every definition has an **Active** toggle in the top-right corner of the editor. When a definition is inactive, the rule engine skips it entirely during resolution and throws a `DefinitionInactiveError`. This is useful when you want to temporarily disable a flag without deleting it or its configuration.
+Every definition has an **Active** toggle in the top-right corner of the editor. When a definition is inactive, the rule engine skips it entirely during resolution and throws a `DefinitionInactiveError`. This is useful when you want to temporarily disable a flag or config definition without deleting it.
 
 ## Adding variations
 
-A **variation** is a possible value your flag can return. Each definition can have multiple variations, and the rule engine evaluates them in order, returning the first one whose conditions match.
+A **variation** is a possible value your definition can resolve to. Each definition can have multiple variations, and the rule engine evaluates them in order, returning the first one whose conditions match.
 
 To add a variation, click the **Add** button next to the "Variations" heading. A new collapsed card appears. Click it to expand and reveal the editing fields:
 
@@ -93,7 +93,7 @@ tier:true
 geo:false
 ```
 
-When you click Resolve, any condition whose type appears in the simulator will use your override value instead of failing. This lets you test complex flag configurations without wiring up a real evaluator.
+When you click Resolve, any condition whose type appears in the simulator will use your override value instead of failing. This lets you test complex rule configurations without wiring up a real evaluator.
 
 ![Preview panel](/images/configurator-preview.png)
 

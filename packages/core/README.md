@@ -1,6 +1,8 @@
 # @showwhat/core
 
-Low-level condition engine and schemas for [`showwhat`](https://www.npmjs.com/package/showwhat) - an extensible schema and rule based evaluation engine for feature flags and configuration.
+Low-level schemas, parsers, and rule engine for [`showwhat`](https://www.npmjs.com/package/showwhat).
+
+Use `@showwhat/core` when you want the evaluation primitives without the higher-level convenience API.
 
 ## Installation
 

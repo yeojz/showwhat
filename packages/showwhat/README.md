@@ -1,6 +1,8 @@
 # showwhat
 
-An extensible schema and rule based evaluation engine for feature flags and configuration.
+Feature flags and config you own. Platform-agnostic.
+
+`showwhat` combines a YAML/JSON definition format with a schema-validated, extensible rule engine. Define flags and config as variations with conditions, evaluate them in your app, and store definitions wherever you want.
 
 ## Installation
 
@@ -37,7 +39,7 @@ console.log(results.checkout_v2.value); // true
 
 ## Features
 
-- `showwhat()` resolution engine with context validation
+- `showwhat()` resolution engine for flags and config values
 - Built-in condition evaluators: `string`, `number`, `datetime`, `bool`, `env`, `startAt`, `endAt`
 - Custom evaluators via `registerEvaluators()`
 - YAML and JSON parsing with schema validation

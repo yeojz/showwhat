@@ -4,7 +4,7 @@ title: Configurator
 
 # Configurator
 
-The **showwhat configurator** is a browser-based visual editor for creating and managing definitions — like Swagger UI for feature configuration. You can <a href="/configurator/" target="_blank">try it now</a>.
+The **showwhat configurator** is a browser-based visual editor for creating and testing definitions — like Swagger UI for your feature flags and config rules. You can <a href="/configurator/" target="_blank">try it now</a>.
 
 ## What it does
 

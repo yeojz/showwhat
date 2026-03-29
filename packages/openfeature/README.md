@@ -1,6 +1,8 @@
 # @showwhat/openfeature
 
-[OpenFeature](https://openfeature.dev/) provider for **showwhat** - use showwhat's rule engine through the standard OpenFeature Server SDK.
+[OpenFeature](https://openfeature.dev/) provider for **showwhat**.
+
+Bridge showwhat's rule engine to the standard OpenFeature Server SDK. Evaluate flags and config through OpenFeature clients using showwhat definitions.
 
 ## Installation
 

@@ -1,6 +1,8 @@
 # @showwhat/configurator
 
-A reusable React component library for visually editing showwhat feature flag definitions. Provides a complete rule-builder UI — bring your own store and persistence.
+A reusable React component library for visually editing showwhat definitions — like Swagger UI for your flag and config rules.
+
+Provides a complete rule-builder UI while letting your app own storage, workflow, and persistence.
 
 ## Installation
 
