@@ -1,6 +1,6 @@
 {
   "name": "@showwhat/configurator",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Reusable configurator component library for showwhat library",
   "keywords": [
     "feature-flags",
