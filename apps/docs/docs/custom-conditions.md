@@ -311,3 +311,9 @@ definitions:
             value: [pro, enterprise]
       - value: false
 ```
+
+## Next steps
+
+- [Conditions](/docs/conditions) for all built-in condition types
+- [Custom Data Sources](/docs/custom-data-sources) to pair custom evaluators with your own storage
+- [Context](/docs/context) for details on the context object and when to use `deps` vs `context`

@@ -157,3 +157,9 @@ if (!result.success) {
   console.error(result.error.issues);
 }
 ```
+
+## Next steps
+
+- [Conditions](/docs/conditions) for all built-in condition types that presets build on
+- [Custom Conditions](/docs/custom-conditions) to go beyond presets with fully custom evaluators
+- [Configurator](/docs/configurator) to use presets in the visual editor

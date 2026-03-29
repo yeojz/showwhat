@@ -40,3 +40,9 @@ Schema arrays and strings have minimum length constraints but no maximum bounds.
 ## Access control
 
 Which users or systems may create, modify, or deploy definitions is outside the scope of this library. Implement access control in your application layer.
+
+## Related
+
+- [Custom Conditions](/docs/custom-conditions) for regex engine customization and nesting context
+- [Context](/docs/context) for what data is passed to evaluators at runtime
+- [Conditions](/docs/conditions#string) for string condition regex operator details

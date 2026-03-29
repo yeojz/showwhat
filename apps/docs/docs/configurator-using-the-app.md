@@ -124,3 +124,9 @@ Inside the editor, the action bar at the top provides **Save** and **Discard** b
 The **status badge** in the toolbar reflects the global state across all definitions. It shows "ready" (green) when everything is saved, "unsaved changes" (amber) when any definition has pending edits, or "errors" (red) when validation issues exist. When unsaved changes are present, clicking the badge opens a confirmation dialog to **revert all changes** at once.
 
 If you try to close or navigate away from the browser tab while unsaved changes exist, the browser will warn you before discarding your work.
+
+## Next steps
+
+- [Conditions](/docs/conditions) for details on each condition type available in the builder
+- [Definitions](/docs/definitions) for how definitions and variations work under the hood
+- [Using the Library](/docs/configurator-using-the-library) to embed the configurator in your own React app

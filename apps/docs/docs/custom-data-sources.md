@@ -227,3 +227,9 @@ class HttpData implements DefinitionReader {
 | `DefinitionData`     | Combined read + write (`DefinitionReader & DefinitionWriter`)         |
 | `isWritable(reader)` | Runtime check for write support                                       |
 | `options.data`       | Pass your data source to `showwhat()` or `resolve()`                  |
+
+## Next steps
+
+- [Data Sources](/docs/data-sources) for an overview of built-in sources
+- [MemoryData](/docs/memory) for the in-memory data source reference
+- [Custom Conditions](/docs/custom-conditions) to pair custom data sources with custom evaluators

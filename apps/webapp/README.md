@@ -55,3 +55,9 @@ By default the webapp uses relative asset paths (`./`), so it works from any dir
 ```bash
 VITE_BASE_PATH=/your/path/ pnpm build:webapp
 ```
+
+## Documentation
+
+- [Configurator overview](https://showwhat.yeojz.dev/docs/configurator)
+- [Using the App](https://showwhat.yeojz.dev/docs/configurator-using-the-app) for a step-by-step walkthrough
+- [Using the Library](https://showwhat.yeojz.dev/docs/configurator-using-the-library) to embed the configurator in your own React app

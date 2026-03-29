@@ -248,3 +248,10 @@ type ResolutionError = {
 // Record of all resolved keys
 type Resolutions = Record<string, Resolution | ResolutionError>;
 ```
+
+## See also
+
+- [MemoryData](/docs/memory) for the built-in in-memory data source
+- [Errors](/docs/errors) for the full error hierarchy and when errors are thrown vs returned
+- [Custom Conditions](/docs/custom-conditions) for writing and registering custom evaluators
+- [Custom Data Sources](/docs/custom-data-sources) for implementing `DefinitionReader` and `DefinitionWriter`
