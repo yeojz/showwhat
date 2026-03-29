@@ -1,3 +1,11 @@
+import {
+  type S3Client,
+  GetObjectCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsV2Command,
+  HeadBucketCommand,
+} from "@aws-sdk/client-s3";
 import type {
   Definition,
   Definitions,
@@ -5,8 +13,7 @@ import type {
   PresetReader,
   Presets,
 } from "@showwhat/core";
-import { S3Client } from "./s3-client.js";
-import { S3ConflictError, S3StorageError } from "./errors.js";
+import { S3ConflictError, S3AuthError, S3StorageError } from "./errors.js";
 import type { S3DataOptions } from "./types.js";
 
 const DEFINITIONS_PREFIX = "definitions/";
@@ -16,10 +23,18 @@ const DEFAULT_CONCURRENCY = 10;
 
 export class S3Data implements DefinitionData, PresetReader {
   readonly #client: S3Client;
+  readonly #bucket: string;
+  readonly #prefix: string;
   readonly #etags = new Map<string, string>();
 
   constructor(options: S3DataOptions) {
-    this.#client = new S3Client(options);
+    this.#client = options.client;
+    this.#bucket = options.bucket;
+    this.#prefix = options.prefix?.replace(/\/+$/, "") ?? "";
+  }
+
+  #fullKey(path: string): string {
+    return this.#prefix ? `${this.#prefix}/${path}` : path;
   }
 
   #defPath(key: string): string {
@@ -30,41 +45,83 @@ export class S3Data implements DefinitionData, PresetReader {
     return `${PRESETS_PREFIX}${key ?? "_default"}${JSON_EXT}`;
   }
 
-  #keyFromPath(path: string): string {
-    return path
-      .replace(new RegExp(`^${DEFINITIONS_PREFIX}`), "")
-      .replace(new RegExp(`${JSON_EXT.replace(".", "\\.")}$`), "");
+  #keyFromPath(objectKey: string): string {
+    // Strip prefix if present, then strip definitions/ prefix and .json extension
+    let path = objectKey;
+    if (this.#prefix) {
+      path = path.replace(new RegExp(`^${this.#prefix}/`), "");
+    }
+    return path.replace(new RegExp(`^${DEFINITIONS_PREFIX}`), "").replace(/\.json$/, "");
+  }
+
+  #isNotFound(err: unknown): boolean {
+    const name = (err as { name?: string })?.name;
+    return name === "NoSuchKey" || name === "NotFound";
+  }
+
+  #wrapError(err: unknown, key?: string): never {
+    const metadata = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata;
+    const status = metadata?.httpStatusCode;
+    const message = err instanceof Error ? err.message : String(err);
+
+    if (status === 401 || status === 403) {
+      throw new S3AuthError(message, status);
+    }
+    if (status === 412 && key !== undefined) {
+      throw new S3ConflictError(key);
+    }
+    throw new S3StorageError(message, status ?? 0, err);
   }
 
   async get(key: string): Promise<Definition | null> {
     const path = this.#defPath(key);
-    const result = await this.#client.getObject(path);
-    if (!result) return null;
-
-    if (result.etag) this.#etags.set(path, result.etag);
-    return result.body as Definition;
+    try {
+      const res = await this.#client.send(
+        new GetObjectCommand({ Bucket: this.#bucket, Key: this.#fullKey(path) }),
+      );
+      const bodyStr = (await res.Body?.transformToString()) ?? "{}";
+      const etag = res.ETag ?? "";
+      if (etag) this.#etags.set(path, etag);
+      return JSON.parse(bodyStr) as Definition;
+    } catch (err) {
+      if (this.#isNotFound(err)) return null;
+      this.#wrapError(err);
+    }
   }
 
   async getAll(): Promise<Definitions> {
-    const paths = await this.#client.listObjects(DEFINITIONS_PREFIX);
-    if (paths.length === 0) return {};
+    const objectKeys = await this.#listObjectKeys(DEFINITIONS_PREFIX);
+    if (objectKeys.length === 0) return {};
 
     const definitions: Definitions = {};
-    const chunks = this.#chunk(paths, DEFAULT_CONCURRENCY);
+    const chunks = this.#chunk(objectKeys, DEFAULT_CONCURRENCY);
 
     for (const chunk of chunks) {
       const results = await Promise.all(
-        chunk.map(async (path) => {
-          const result = await this.#client.getObject(path);
-          return { path, result };
+        chunk.map(async (objectKey) => {
+          try {
+            const res = await this.#client.send(
+              new GetObjectCommand({ Bucket: this.#bucket, Key: objectKey }),
+            );
+            const bodyStr = (await res.Body?.transformToString()) ?? "{}";
+            const etag = res.ETag ?? "";
+            // Store etag keyed by the relative path (without prefix)
+            const relativePath = this.#prefix
+              ? objectKey.replace(new RegExp(`^${this.#prefix}/`), "")
+              : objectKey;
+            if (etag) this.#etags.set(relativePath, etag);
+            return { objectKey, body: JSON.parse(bodyStr) as Definition };
+          } catch (err) {
+            if (this.#isNotFound(err)) return null;
+            this.#wrapError(err);
+          }
         }),
       );
 
-      for (const { path, result } of results) {
+      for (const result of results) {
         if (!result) continue;
-        if (result.etag) this.#etags.set(path, result.etag);
-        const key = this.#keyFromPath(path);
-        definitions[key] = result.body as Definition;
+        const key = this.#keyFromPath(result.objectKey);
+        definitions[key] = result.body;
       }
     }
 
@@ -72,8 +129,8 @@ export class S3Data implements DefinitionData, PresetReader {
   }
 
   async listKeys(): Promise<string[]> {
-    const paths = await this.#client.listObjects(DEFINITIONS_PREFIX);
-    return paths.map((p) => this.#keyFromPath(p));
+    const objectKeys = await this.#listObjectKeys(DEFINITIONS_PREFIX);
+    return objectKeys.map((k) => this.#keyFromPath(k));
   }
 
   async put(key: string, definition: Definition): Promise<void> {
@@ -81,24 +138,32 @@ export class S3Data implements DefinitionData, PresetReader {
     const existingEtag = this.#etags.get(path);
 
     try {
-      const newEtag = await this.#client.putObject(
-        path,
-        definition,
-        existingEtag ? { etag: existingEtag } : { ifNoneMatch: true },
+      const res = await this.#client.send(
+        new PutObjectCommand({
+          Bucket: this.#bucket,
+          Key: this.#fullKey(path),
+          Body: JSON.stringify(definition),
+          ContentType: "application/json",
+          ...(existingEtag ? { IfMatch: existingEtag } : { IfNoneMatch: "*" }),
+        }),
       );
-      this.#etags.set(path, newEtag);
+      const newEtag = res.ETag ?? "";
+      if (newEtag) this.#etags.set(path, newEtag);
     } catch (err) {
-      if (err instanceof S3StorageError && err.status === 412) {
-        throw new S3ConflictError(key);
-      }
-      throw err;
+      this.#wrapError(err, key);
     }
   }
 
   async delete(key: string): Promise<void> {
     const path = this.#defPath(key);
-    await this.#client.deleteObject(path);
-    this.#etags.delete(path);
+    try {
+      await this.#client.send(
+        new DeleteObjectCommand({ Bucket: this.#bucket, Key: this.#fullKey(path) }),
+      );
+      this.#etags.delete(path);
+    } catch (err) {
+      this.#wrapError(err);
+    }
   }
 
   async putMany(flags: Definitions, options?: { replace?: boolean }): Promise<void> {
@@ -116,21 +181,32 @@ export class S3Data implements DefinitionData, PresetReader {
 
   async getPresets(key?: string): Promise<Presets> {
     const path = this.#presetPath(key);
-    const result = await this.#client.getObject(path);
-    if (!result) return {};
-    return result.body as Presets;
+    try {
+      const res = await this.#client.send(
+        new GetObjectCommand({ Bucket: this.#bucket, Key: this.#fullKey(path) }),
+      );
+      const bodyStr = (await res.Body?.transformToString()) ?? "{}";
+      return JSON.parse(bodyStr) as Presets;
+    } catch (err) {
+      if (this.#isNotFound(err)) return {};
+      this.#wrapError(err);
+    }
   }
 
   async load(): Promise<void> {
-    await this.#client.headBucket();
+    try {
+      await this.#client.send(new HeadBucketCommand({ Bucket: this.#bucket }));
+    } catch (err) {
+      this.#wrapError(err);
+    }
   }
 
   async close(): Promise<void> {
-    // Stateless HTTP — no-op
+    // Stateless — no-op (user manages S3Client lifecycle)
   }
 
   async ping(): Promise<void> {
-    await this.#client.headBucket();
+    await this.load();
   }
 
   async reload(): Promise<Definitions> {
@@ -140,8 +216,47 @@ export class S3Data implements DefinitionData, PresetReader {
 
   async forcePut(key: string, definition: Definition): Promise<void> {
     const path = this.#defPath(key);
-    const newEtag = await this.#client.putObject(path, definition);
-    this.#etags.set(path, newEtag);
+    try {
+      const res = await this.#client.send(
+        new PutObjectCommand({
+          Bucket: this.#bucket,
+          Key: this.#fullKey(path),
+          Body: JSON.stringify(definition),
+          ContentType: "application/json",
+        }),
+      );
+      const newEtag = res.ETag ?? "";
+      if (newEtag) this.#etags.set(path, newEtag);
+    } catch (err) {
+      this.#wrapError(err);
+    }
+  }
+
+  async #listObjectKeys(prefix: string): Promise<string[]> {
+    const allKeys: string[] = [];
+    let continuationToken: string | undefined;
+
+    do {
+      try {
+        const res = await this.#client.send(
+          new ListObjectsV2Command({
+            Bucket: this.#bucket,
+            Prefix: this.#fullKey(prefix),
+            ContinuationToken: continuationToken,
+          }),
+        );
+        if (res.Contents) {
+          for (const obj of res.Contents) {
+            if (obj.Key) allKeys.push(obj.Key);
+          }
+        }
+        continuationToken = res.IsTruncated ? res.NextContinuationToken : undefined;
+      } catch (err) {
+        this.#wrapError(err);
+      }
+    } while (continuationToken);
+
+    return allKeys;
   }
 
   #chunk<T>(arr: T[], size: number): T[][] {

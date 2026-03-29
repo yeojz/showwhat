@@ -43,7 +43,11 @@
   "dependencies": {
     "@showwhat/core": "workspace:*"
   },
+  "peerDependencies": {
+    "@aws-sdk/client-s3": "^3.0.0"
+  },
   "devDependencies": {
+    "@aws-sdk/client-s3": "^3.821.0",
     "@types/node": "^25.5.0",
     "@vitest/coverage-v8": "^4.1.2",
     "tsup": "^8.5.1",
