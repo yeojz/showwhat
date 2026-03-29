@@ -15,19 +15,21 @@ At minimum, a data source must implement two methods:
 interface DefinitionReader {
   get(key: string): Promise<Definition | null>;
   getAll(): Promise<Definitions>;
+  listKeys(): Promise<string[]>;
   load?(): Promise<void>;
   close?(): Promise<void>;
   ping?(): Promise<void>;
 }
 ```
 
-| Method   | Required | Description                                        |
-| -------- | -------- | -------------------------------------------------- |
-| `get`    | Yes      | Return a single definition by key, or `null`       |
-| `getAll` | Yes      | Return all definitions as a keyed record           |
-| `load`   | No       | One-time initialisation (lazy-load, connect, etc.) |
-| `close`  | No       | Tear down connections or release resources         |
-| `ping`   | No       | Health check — verify the source is reachable      |
+| Method     | Required | Description                                        |
+| ---------- | -------- | -------------------------------------------------- |
+| `get`      | Yes      | Return a single definition by key, or `null`       |
+| `getAll`   | Yes      | Return all definitions as a keyed record           |
+| `listKeys` | Yes      | Return all definition keys                         |
+| `load`     | No       | One-time initialisation (lazy-load, connect, etc.) |
+| `close`    | No       | Tear down connections or release resources         |
+| `ping`     | No       | Health check — verify the source is reachable      |
 
 ## The `DefinitionWriter` interface
 
@@ -38,22 +40,20 @@ interface DefinitionWriter {
   put(key: string, definition: Definition): Promise<void>;
   delete(key: string): Promise<void>;
   putMany(flags: Definitions, options?: { replace?: boolean }): Promise<void>;
-  listKeys(): Promise<string[]>;
   load?(): Promise<void>;
   close?(): Promise<void>;
   ping?(): Promise<void>;
 }
 ```
 
-| Method     | Required | Description                                        |
-| ---------- | -------- | -------------------------------------------------- |
-| `put`      | Yes      | Create or update a single definition               |
-| `delete`   | Yes      | Remove a definition by key                         |
-| `putMany`  | Yes      | Bulk upsert; `replace: true` clears existing first |
-| `listKeys` | Yes      | Return all definition keys                         |
-| `load`     | No       | One-time initialisation (connect, etc.)            |
-| `close`    | No       | Tear down connections or release resources         |
-| `ping`     | No       | Health check — verify the source is reachable      |
+| Method    | Required | Description                                        |
+| --------- | -------- | -------------------------------------------------- |
+| `put`     | Yes      | Create or update a single definition               |
+| `delete`  | Yes      | Remove a definition by key                         |
+| `putMany` | Yes      | Bulk upsert; `replace: true` clears existing first |
+| `load`    | No       | One-time initialisation (connect, etc.)            |
+| `close`   | No       | Tear down connections or release resources         |
+| `ping`    | No       | Health check — verify the source is reachable      |
 
 A data source that implements both is a `DefinitionData`:
 
@@ -220,10 +220,10 @@ class HttpData implements DefinitionReader {
 
 ## Summary
 
-| API                  | Purpose                                                                           |
-| -------------------- | --------------------------------------------------------------------------------- |
-| `DefinitionReader`   | Read-only interface — minimum for a data source                                   |
-| `DefinitionWriter`   | Write interface — `put`, `delete`, `putMany`, `listKeys`, plus optional lifecycle |
-| `DefinitionData`     | Combined read + write (`DefinitionReader & DefinitionWriter`)                     |
-| `isWritable(reader)` | Runtime check for write support                                                   |
-| `options.data`       | Pass your data source to `showwhat()` or `resolve()`                              |
+| API                  | Purpose                                                               |
+| -------------------- | --------------------------------------------------------------------- |
+| `DefinitionReader`   | Read interface — `get`, `getAll`, `listKeys`, plus optional lifecycle |
+| `DefinitionWriter`   | Write interface — `put`, `delete`, `putMany`, plus optional lifecycle |
+| `DefinitionData`     | Combined read + write (`DefinitionReader & DefinitionWriter`)         |
+| `isWritable(reader)` | Runtime check for write support                                       |
+| `options.data`       | Pass your data source to `showwhat()` or `resolve()`                  |

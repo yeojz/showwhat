@@ -13,6 +13,9 @@ describe("isWritable", () => {
       async getAll(): Promise<Definitions> {
         return {};
       },
+      async listKeys() {
+        return [];
+      },
     };
     expect(isWritable(reader)).toBe(false);
   });
@@ -25,11 +28,11 @@ describe("isWritable", () => {
       async getAll(): Promise<Definitions> {
         return {};
       },
-      async put() {},
-      async putMany() {},
       async listKeys() {
         return [];
       },
+      async put() {},
+      async putMany() {},
     };
     expect(isWritable(partial)).toBe(false);
   });

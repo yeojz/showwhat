@@ -39,7 +39,7 @@ const data = await MemoryData.fromObject({
 
 ## Interface
 
-`MemoryData` implements both `DefinitionReader` and `DefinitionWriter`:
+`MemoryData` implements `DefinitionReader`:
 
 ```ts
 await data.get("checkout_v2"); // Definition | null

@@ -12,6 +12,7 @@ At its simplest, a data source implements the `DefinitionReader` interface:
 interface DefinitionReader {
   get(key: string): Promise<Definition | null>;
   getAll(): Promise<Definitions>;
+  listKeys(): Promise<string[]>;
   load?(): Promise<void>;
   close?(): Promise<void>;
   ping?(): Promise<void>;
