@@ -1,0 +1,35 @@
+# showwhat
+
+> Feature flags and config you own. Platform-agnostic.
+
+showwhat is a definition format, rule engine, and visual tooling for feature flags and config. Define rules in YAML or JSON, evaluate them in your app, and store definitions wherever you want.
+
+## Documentation
+
+- [Introduction](https://showwhat.yeojz.dev/docs/): Quick start, installation, and first definition
+- [Definitions](https://showwhat.yeojz.dev/docs/definitions): How definitions and variations are structured
+- [Conditions](https://showwhat.yeojz.dev/docs/conditions): All built-in condition types
+- [Context](https://showwhat.yeojz.dev/docs/context): The runtime context object
+- [Data Sources](https://showwhat.yeojz.dev/docs/data-sources): Built-in and custom data source interfaces
+- [Presets](https://showwhat.yeojz.dev/docs/presets): Reusable condition templates
+- [Custom Conditions](https://showwhat.yeojz.dev/docs/custom-conditions): Writing and registering custom evaluators
+- [Custom Data Sources](https://showwhat.yeojz.dev/docs/custom-data-sources): Filesystem, HTTP, and database implementations
+- [OpenFeature](https://showwhat.yeojz.dev/docs/openfeature): OpenFeature Server SDK provider
+- [Configurator](https://showwhat.yeojz.dev/docs/configurator): Browser-based visual editor for definitions
+- [Core API](https://showwhat.yeojz.dev/docs/core): Full API reference
+- [Errors](https://showwhat.yeojz.dev/docs/errors): Error types and hierarchy
+- [Comparison](https://showwhat.yeojz.dev/docs/comparison): How showwhat differs from hosted platforms
+
+## Packages
+
+- [showwhat](https://www.npmjs.com/package/showwhat): Main API for resolving feature flags and config values
+- [@showwhat/core](https://www.npmjs.com/package/@showwhat/core): Rule engine, schemas, parsers, and in-memory data source
+- [@showwhat/configurator](https://www.npmjs.com/package/@showwhat/configurator): React component library for visual rule editing
+- [@showwhat/openfeature](https://www.npmjs.com/package/@showwhat/openfeature): OpenFeature bridge for showwhat definitions
+
+## Optional
+
+- [llms-full.txt](https://showwhat.yeojz.dev/llms-full.txt): Full codebase context for LLMs (monorepo layout, exports, conventions, key files)
+- [GitHub](https://github.com/yeojz/showwhat): Source code and issues
+- [Security](https://showwhat.yeojz.dev/docs/security): Security considerations for untrusted definitions
+- [Sample Config](https://showwhat.yeojz.dev/docs/sample-config): Example definition file
