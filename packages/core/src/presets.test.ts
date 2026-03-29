@@ -7,9 +7,9 @@ import type { Context } from "./schemas/context.js";
 describe("PresetsSchema", () => {
   it("validates correct input", () => {
     const input = {
-      tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
-      age: { type: "number", key: "dob_num", defaults: { op: "gt", value: 18 } },
-      segment: { type: "segment_match", defaults: { region: "us" } },
+      tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+      age: { type: "number", key: "dob_num", overrides: { op: "gt", value: 18 } },
+      segment: { type: "segment_match", overrides: { region: "us" } },
     };
     const result = PresetsSchema.safeParse(input);
     expect(result.success).toBe(true);
@@ -51,14 +51,14 @@ describe("createPresetConditions", () => {
 
   it("skips custom type presets (no evaluator generated)", () => {
     const result = createPresetConditions({
-      segment: { type: "segment_match", defaults: { region: "us" } },
+      segment: { type: "segment_match", overrides: { region: "us" } },
     });
     expect(Object.keys(result)).toHaveLength(0);
   });
 
   it("generates evaluator for string preset", async () => {
     const presetConditions = createPresetConditions({
-      tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
+      tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
     });
     expect(presetConditions).toHaveProperty("tier");
 
@@ -72,14 +72,26 @@ describe("createPresetConditions", () => {
     });
     expect(result).toBe(true);
 
-    const resultNeq = await presetConditions.tier({
-      condition: { type: "tier", op: "neq", value: "free" },
+    // overrides force op: "eq" and value: "free", so even with op: "neq"
+    // in the condition, the override wins and the result is still true
+    const resultOverridden = await presetConditions.tier({
+      condition: { type: "tier", op: "neq", value: "pro" },
       context: ctx,
       annotations: {},
       deps: {},
       depth: "",
     });
-    expect(resultNeq).toBe(false);
+    expect(resultOverridden).toBe(true);
+
+    // with a non-matching context, overrides still force op: "eq", value: "free"
+    const resultNoMatch = await presetConditions.tier({
+      condition: { type: "tier", op: "eq", value: "free" },
+      context: { tier: "pro" },
+      annotations: {},
+      deps: {},
+      depth: "",
+    });
+    expect(resultNoMatch).toBe(false);
   });
 
   it("string preset supports in operator", async () => {

@@ -41,7 +41,7 @@ export function PresetEditor() {
         <Textarea
           className="min-h-[200px] font-mono text-sm"
           value={draft}
-          placeholder={`# Example:\ntier:\n  type: string\n  key: "tier"\n  defaults:\n    op: eq\n    value: free`}
+          placeholder={`# Example:\ntier:\n  type: string\n  key: "tier"\n  overrides:\n    op: eq\n    value: free`}
           onChange={(e) => {
             setDraft(e.target.value);
             setStatus({ type: "idle" });
@@ -67,9 +67,9 @@ function formatPresetYaml(preset: Presets[string]): string {
   if (preset.key) {
     lines.push(`key: ${preset.key}`);
   }
-  if (preset.defaults && Object.keys(preset.defaults).length > 0) {
-    lines.push("defaults:");
-    for (const [k, v] of Object.entries(preset.defaults)) {
+  if (preset.overrides && Object.keys(preset.overrides).length > 0) {
+    lines.push("overrides:");
+    for (const [k, v] of Object.entries(preset.overrides)) {
       lines.push(`  ${k}: ${String(v)}`);
     }
   }
@@ -86,7 +86,7 @@ function InlinePresetRow({
   overridesCustom: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const hasDetails = preset.key || (preset.defaults && Object.keys(preset.defaults).length > 0);
+  const hasDetails = preset.key || (preset.overrides && Object.keys(preset.overrides).length > 0);
 
   return (
     <div className="rounded-lg border border-border bg-card">

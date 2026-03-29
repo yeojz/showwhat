@@ -18,14 +18,14 @@ presets:
   tier:
     type: string
     key: tier
-    defaults:
+    overrides:
       op: eq
       value: free
 
   age:
     type: number
     key: user_age
-    defaults:
+    overrides:
       op: gte
       value: 18
 
@@ -40,12 +40,12 @@ presets:
     "tier": {
       "type": "string",
       "key": "tier",
-      "defaults": { "op": "eq", "value": "free" }
+      "overrides": { "op": "eq", "value": "free" }
     },
     "age": {
       "type": "number",
       "key": "user_age",
-      "defaults": { "op": "gte", "value": 18 }
+      "overrides": { "op": "gte", "value": 18 }
     },
     "premium": {
       "type": "bool",
@@ -57,11 +57,11 @@ presets:
 
 :::
 
-| Field      | Required | Description                                                                 |
-| ---------- | -------- | --------------------------------------------------------------------------- |
-| `type`     | Yes      | The underlying condition type (`string`, `number`, `bool`, or `datetime`)   |
-| `key`      | Yes\*    | The context property to match against. Required for built-in types.         |
-| `defaults` | No       | Default field values used when adding this condition in the Configurator UI |
+| Field       | Required | Description                                                                                                                            |
+| ----------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`      | Yes      | The underlying condition type (`string`, `number`, `bool`, or `datetime`)                                                              |
+| `key`       | Yes\*    | The context property to match against. Required for built-in types.                                                                    |
+| `overrides` | No       | Field values that are forced and locked. Overridden fields cannot be edited in the Configurator UI and are enforced during evaluation. |
 
 ::: tip
 Preset names cannot collide with built-in or reserved condition types (`string`, `number`, `bool`, `datetime`, `env`, `startAt`, `endAt`, `and`, `or`).
@@ -75,7 +75,7 @@ Use `createPresetConditions` to generate evaluators from your preset map, then m
 import { showwhat, registerEvaluators, createPresetConditions } from "showwhat";
 
 const presets = {
-  tier: { type: "string", key: "tier", defaults: { op: "eq", value: "free" } },
+  tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
   age: { type: "number", key: "user_age" },
 };
 
@@ -95,7 +95,7 @@ if (!banner.error) {
 }
 ```
 
-Definitions can then use preset types directly. The `key` is already bound by the preset, so you only specify `op` and `value`:
+Definitions can then use preset types directly. The `key` is already bound by the preset, so you only specify `op` and `value`. Any fields listed in `overrides` are forced during evaluation and cannot be changed in the Configurator UI:
 
 ```yaml
 definitions:
@@ -124,18 +124,18 @@ function App() {
 }
 ```
 
-With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Premium"). Each preset renders a type-specific editor with the key pre-filled and locked.
+With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Premium"). Each preset renders a type-specific editor with the key pre-filled and locked. Fields listed in `overrides` are also disabled in the editor.
 
 ## API reference
 
 ### Types
 
-| Type                  | Import from              | Description                                                          |
-| --------------------- | ------------------------ | -------------------------------------------------------------------- |
-| `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`                                   |
-| `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string; defaults?: Record<string, unknown> }` |
-| `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"`                       |
-| `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                           |
+| Type                  | Import from              | Description                                                           |
+| --------------------- | ------------------------ | --------------------------------------------------------------------- |
+| `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`                                    |
+| `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string; overrides?: Record<string, unknown> }` |
+| `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"`                        |
+| `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                            |
 
 ### Functions
 

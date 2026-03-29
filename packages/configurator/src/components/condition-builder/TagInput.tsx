@@ -1,13 +1,14 @@
 import { useCallback, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { Badge } from "../ui/badge.js";
 
-type TagInputProps = {
+export type TagInputProps = {
   value: string | string[];
   onChange: (value: string | string[]) => void;
   placeholder?: string;
+  disabled?: boolean;
 };
 
-export function TagInput({ value, onChange, placeholder }: TagInputProps) {
+export function TagInput({ value, onChange, placeholder, disabled }: TagInputProps) {
   const values = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
   const [text, setText] = useState("");
 
@@ -63,18 +64,22 @@ export function TagInput({ value, onChange, placeholder }: TagInputProps) {
   );
 
   return (
-    <div className="border-input focus-within:border-ring focus-within:ring-ring/50 flex min-h-9 flex-1 flex-wrap items-center gap-1 rounded-md border px-2 py-1 focus-within:ring-[3px]">
+    <div
+      className={`border-input focus-within:border-ring focus-within:ring-ring/50 flex min-h-9 flex-1 flex-wrap items-center gap-1 rounded-md border px-2 py-1 focus-within:ring-[3px]${disabled ? " opacity-50" : ""}`}
+    >
       {values.map((v, i) => (
         <Badge key={`${v}-${i}`} variant="outline" className="bg-muted gap-1 font-mono text-xs">
           {v}
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground ml-0.5 cursor-pointer leading-none"
-            onClick={() => removeValue(i)}
-            aria-label={`Remove ${v}`}
-          >
-            {"\u00d7"}
-          </button>
+          {!disabled && (
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground ml-0.5 cursor-pointer leading-none"
+              onClick={() => removeValue(i)}
+              aria-label={`Remove ${v}`}
+            >
+              {"\u00d7"}
+            </button>
+          )}
         </Badge>
       ))}
       <input
@@ -84,6 +89,7 @@ export function TagInput({ value, onChange, placeholder }: TagInputProps) {
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
+        disabled={disabled}
       />
     </div>
   );

@@ -47,7 +47,7 @@ export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[]
       type: name,
       label: capitalize(name),
       description,
-      defaults: { ...baseDefaults, ...preset.defaults, type: name },
+      defaults: { ...baseDefaults, ...preset.overrides, type: name },
     };
   });
 }
@@ -58,13 +58,22 @@ export function createPresetEditor(
   presetName: string,
   builtinType: string,
   presetKey: string,
+  overrides: Record<string, unknown> = {},
 ): ComponentType<ConditionValueEditorProps> {
+  const lockedFields = new Set(Object.keys(overrides));
+
   function PresetConditionEditor({ condition, onChange }: ConditionValueEditorProps) {
     const rec = useMemo(() => condition as Record<string, unknown>, [condition]);
     const update = useCallback(
       (field: string, value: unknown) => {
         onChange(
-          buildCustomCondition({ ...rec, [field]: value, key: presetKey, type: presetName }),
+          buildCustomCondition({
+            ...rec,
+            [field]: value,
+            ...overrides,
+            key: presetKey,
+            type: presetName,
+          }),
         );
       },
       [rec, onChange],
@@ -97,6 +106,8 @@ export function createPresetEditor(
             }),
           );
         };
+        const opLocked = lockedFields.has("op");
+        const valueLocked = lockedFields.has("value");
         return (
           <ConditionRow>
             <KeyInput value={presetKey} disabled />
@@ -104,12 +115,14 @@ export function createPresetEditor(
               value={String(rec.op ?? "eq")}
               onChange={handleOpChange}
               options={STRING_OPS}
+              disabled={opLocked}
             />
             {isArray ? (
               <TagInput
                 value={(rec.value as string | string[]) ?? ""}
                 onChange={(v) => update("value", v)}
                 placeholder={`e.g. ${presetKey} value`}
+                disabled={valueLocked}
               />
             ) : isRegex ? (
               <Input
@@ -117,6 +130,7 @@ export function createPresetEditor(
                 value={String(rec.value ?? "")}
                 placeholder="e.g. ^test.*$"
                 onChange={(e) => update("value", e.target.value)}
+                disabled={valueLocked}
               />
             ) : (
               <Input
@@ -124,6 +138,7 @@ export function createPresetEditor(
                 value={String(rec.value ?? "")}
                 placeholder={`e.g. ${presetKey} value`}
                 onChange={(e) => update("value", e.target.value)}
+                disabled={valueLocked}
               />
             )}
           </ConditionRow>
@@ -154,6 +169,8 @@ export function createPresetEditor(
             }),
           );
         };
+        const numOpLocked = lockedFields.has("op");
+        const numValueLocked = lockedFields.has("value");
         return (
           <ConditionRow>
             <KeyInput value={presetKey} disabled />
@@ -161,12 +178,14 @@ export function createPresetEditor(
               value={String(rec.op ?? "eq")}
               onChange={handleNumOpChange}
               options={NUMBER_OPS}
+              disabled={numOpLocked}
             />
             {isNumArray ? (
               <NumberTagInput
                 value={(rec.value as number | number[]) ?? []}
                 onChange={(v) => update("value", v)}
                 placeholder={`e.g. ${presetKey} value`}
+                disabled={numValueLocked}
               />
             ) : (
               <Input
@@ -177,12 +196,14 @@ export function createPresetEditor(
                 onChange={(e) =>
                   update("value", e.target.value === "" ? "" : Number(e.target.value))
                 }
+                disabled={numValueLocked}
               />
             )}
           </ConditionRow>
         );
       }
-      case "bool":
+      case "bool": {
+        const boolValueLocked = lockedFields.has("value");
         return (
           <ConditionRow>
             <KeyInput value={presetKey} disabled />
@@ -190,6 +211,7 @@ export function createPresetEditor(
             <Select
               value={String(rec.value ?? "true")}
               onValueChange={(v) => update("value", v === "true")}
+              disabled={boolValueLocked}
             >
               <SelectTrigger className="h-8 text-sm">
                 <SelectValue />
@@ -201,7 +223,10 @@ export function createPresetEditor(
             </Select>
           </ConditionRow>
         );
-      case "datetime":
+      }
+      case "datetime": {
+        const dtOpLocked = lockedFields.has("op");
+        const dtValueLocked = lockedFields.has("value");
         return (
           <ConditionRow>
             <KeyInput value={presetKey} disabled />
@@ -209,10 +234,16 @@ export function createPresetEditor(
               value={String(rec.op ?? "eq")}
               onChange={(v) => update("op", v)}
               options={DATETIME_OPS}
+              disabled={dtOpLocked}
             />
-            <DateTimeInput value={String(rec.value ?? "")} onChange={(v) => update("value", v)} />
+            <DateTimeInput
+              value={String(rec.value ?? "")}
+              onChange={(v) => update("value", v)}
+              disabled={dtValueLocked}
+            />
           </ConditionRow>
         );
+      }
     }
     return null;
   }
@@ -229,7 +260,10 @@ export function createPresetUI(presets: Presets): ConditionExtensions {
 
   for (const [name, preset] of Object.entries(presets)) {
     if (PRIMITIVE_TYPES.has(preset.type) && preset.key) {
-      editorOverrides.set(name, createPresetEditor(name, preset.type, preset.key));
+      editorOverrides.set(
+        name,
+        createPresetEditor(name, preset.type, preset.key, preset.overrides),
+      );
     }
   }
 

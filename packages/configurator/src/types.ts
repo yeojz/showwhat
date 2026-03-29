@@ -99,6 +99,7 @@ export type ValueInputProps = {
 export type DateTimeInputProps = {
   value: string;
   onChange: (value: string) => void;
+  disabled?: boolean;
 };
 
 export type ValidationIssueDisplay = {
