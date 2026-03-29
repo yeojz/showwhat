@@ -110,3 +110,10 @@ import {
   DataError,
 } from "showwhat";
 ```
+
+## Related
+
+- [Core API](/docs/core) for `showwhat()` return types and when errors are thrown vs returned
+- [Definitions](/docs/definitions) for how definitions and variations are structured
+- [Custom Conditions](/docs/custom-conditions) for `ConditionError` scenarios with custom evaluators
+- [Custom Data Sources](/docs/custom-data-sources) for `DataError` scenarios

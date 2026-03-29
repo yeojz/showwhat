@@ -12,7 +12,7 @@ showwhat ships with a handful of built-in condition types, but the real power is
 When the resolver encounters a condition, it looks up the evaluator in the evaluators map by `condition.type`:
 
 1. If the type is `and` or `or`, the resolver handles it internally (recursive composite evaluation)
-2. Otherwise, it calls `evaluators[condition.type]({ condition, context, annotations })`
+2. Otherwise, it calls `evaluators[condition.type](...)`
 3. If no evaluator is found for the type, the condition returns `false` (fail-closed)
 
 This fail-closed default means typos in condition types or missing evaluators safely prevent a variation from matching, rather than accidentally enabling it.
@@ -311,3 +311,9 @@ definitions:
             value: [pro, enterprise]
       - value: false
 ```
+
+## Next steps
+
+- [Conditions](/docs/conditions) for all built-in condition types
+- [Custom Data Sources](/docs/custom-data-sources) to pair custom evaluators with your own storage
+- [Context](/docs/context) for details on the context object and when to use `deps` vs `context`

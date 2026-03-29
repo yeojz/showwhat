@@ -5,9 +5,9 @@
 
 # showwhat
 
-An extensible schema and rule based evaluation engine for feature flags and configuration.
+Feature flags and config you own. Platform-agnostic.
 
-Define feature configs as **variations with conditions** in a YAML or JSON. At runtime, `showwhat` evaluates the conditions against a context object and resolves the first matching variation's value — booleans, strings, numbers, or full objects. No platform, no infrastructure, no vendor lock-in.
+Define flags and config as **variations with conditions** in YAML or JSON. At runtime, `showwhat` evaluates those definitions against a context object and resolves the first matching value: booleans, strings, numbers, or full objects. Store definitions in files, serve them from an API, or manage them in version control. Like OpenAPI for APIs, showwhat gives you a spec-first workflow with tooling built around it.
 
 **[Documentation](https://showwhat.yeojz.dev)** · **[Quick Start](https://showwhat.yeojz.dev/docs/)**
 
@@ -15,11 +15,11 @@ Define feature configs as **variations with conditions** in a YAML or JSON. At r
 
 | Package                                             | Description                                              |
 | --------------------------------------------------- | -------------------------------------------------------- |
-| [`showwhat`](./packages/showwhat)                   | Resolution engine and main API                           |
+| [`showwhat`](./packages/showwhat)                   | Main API for resolving feature flags and config values   |
 | [`@showwhat/core`](./packages/core)                 | Rule engine, schemas, parsers, and in-memory data source |
 | [`@showwhat/configurator`](./packages/configurator) | React UI library for visual rule editing                 |
-| [`@showwhat/openfeature`](./packages/openfeature)   | OpenFeature provider integration                         |
-| [`@showwhat/webapp`](./apps/webapp)                 | Web app for managing definitions                         |
+| [`@showwhat/openfeature`](./packages/openfeature)   | OpenFeature bridge for showwhat definitions              |
+| [`@showwhat/webapp`](./apps/webapp)                 | Browser app for authoring and testing definitions        |
 | [`@showwhat/docs`](./apps/docs)                     | Documentation site                                       |
 
 ## Quick start
@@ -59,7 +59,7 @@ console.log(result.value); // true
 
 ## Definition format
 
-Definitions are YAML or JSON documents with a `definitions` root key. Each definition has one or more **variations** evaluated in order — the first matching variation wins. The format is portable: store it in a file, serve it from an API, or manage it in Git with PR reviews as your governance layer.
+Definitions are YAML or JSON documents with a `definitions` root key. Each definition has one or more **variations** evaluated in order. The first matching variation wins. Use definitions for boolean flags, config values, or structured objects.
 
 ```yaml
 definitions:

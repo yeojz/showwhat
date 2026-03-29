@@ -1,7 +1,7 @@
 <template>
   <div class="cta-section">
     <section class="cta">
-      <h2>Write your first definition now.</h2>
+      <h2>Start in five minutes.</h2>
       <div class="cta-install">
         <code>npm install showwhat</code>
       </div>

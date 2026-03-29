@@ -2,10 +2,10 @@
   <div class="skip-section">
     <section class="skip">
       <div class="skip-header">
-        <h2>1 library, 1 file, 0 platform to operate.</h2>
+        <h2>One definition file. Zero infrastructure. Full control.</h2>
         <p>
-          Like OpenAPI and Swagger, but for feature flags. <br />A specification-first approach
-          where the definition file is the source of truth, not a vendor database.
+          Like OpenAPI for APIs, showwhat gives you a spec-first workflow for feature flags and
+          config. <br />The definition file is the source of truth. No vendors required.
         </p>
       </div>
       <div class="skip-grid">
@@ -31,7 +31,7 @@
           <h3>Portable format</h3>
           <p>
             Definitions are plain YAML or JSON. Store them in Git, serve from an API, or embed
-            inline. The format stays the same everywhere.
+            inline. Same format everywhere.
           </p>
         </div>
         <div class="skip-card">
@@ -52,10 +52,11 @@
               />
             </svg>
           </div>
-          <h3>Extensible conditions</h3>
+          <h3>Extensible rule engine</h3>
           <p>
-            Built-in primitives for strings, numbers, datetimes, and booleans. <br />Shorthand types
-            for environments and time windows. Add your own with <code>registerEvaluators()</code>.
+            Built-in primitives for strings, numbers, datetimes, and booleans. <br />Shorthand
+            types for environments and time windows. Add your own with
+            <code>registerEvaluators()</code>.
           </p>
         </div>
         <div class="skip-card">
@@ -76,8 +77,8 @@
           </div>
           <h3>Git-native workflow</h3>
           <p>
-            PR reviews are your approval process. Commit history is your audit log. Branch
-            protection is your RBAC. No separate dashboard to operate.
+            PRs are your approval process. Commit history is your audit log. Definitions fit
+            naturally into code review and CI. Scale up to a database when you need.
           </p>
         </div>
       </div>

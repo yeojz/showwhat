@@ -31,7 +31,7 @@ onUnmounted(() => {
   <section class="time-section">
     <div class="time-inner">
       <div class="time-text">
-        <h2>Time windows are config, not cron jobs.</h2>
+        <h2>Time windows are rules, not cron jobs.</h2>
         <p>
           Rules resolve top-to-bottom. Time windows, environment matching, and catch-all defaults
           compose in the same definition. No special syntax. No separate scheduling interface.

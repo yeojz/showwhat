@@ -131,6 +131,10 @@ export default defineConfig({
                 { text: "Fallback Evaluator", link: "/docs/custom-conditions#fallback-evaluator" },
                 { text: "Annotations", link: "/docs/custom-conditions#annotations" },
                 {
+                  text: "Dependency Injection",
+                  link: "/docs/custom-conditions#dependency-injection",
+                },
+                {
                   text: "Percentage Rollouts",
                   link: "/docs/custom-conditions#example-percentage-rollouts",
                 },

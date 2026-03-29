@@ -18,8 +18,8 @@ const sdkTabs = [
       <div class="sdk-left">
         <h2>Works everywhere JavaScript runs.</h2>
         <p>
-          The core uses Web Standard APIs only. Zero Node.js-specific dependencies. Pick your
-          runtime, import, and go.
+          The core uses Web Standard APIs only. Zero Node.js-specific dependencies. Use showwhat
+          directly or through OpenFeature. Same definitions, any runtime.
         </p>
       </div>
       <div class="sdk-right">

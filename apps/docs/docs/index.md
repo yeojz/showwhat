@@ -4,13 +4,14 @@ title: showwhat
 
 # showwhat
 
-An extensible schema and rule based evaluation engine for feature flags and configuration.
+showwhat is a definition format, rule engine, and visual tooling for feature flags and config.
 
-- **Specification-first** — definitions are YAML/JSON files that live in Git
-- **Zero infrastructure** — no server, database, or vendor to operate
-- **Extensible** — add custom condition types, bring your own data source
+- **Portable format** — YAML/JSON definitions you can store in files, APIs, databases, or version control
+- **In-app evaluation** — resolve flags and config inside your own application
+- **Extensible rule engine** — schema-validated, fail-closed, with custom condition types
+- **Optional visual tooling** — author and test definitions in the [configurator](/docs/configurator)
 
-See [Comparison](/docs/comparison) for how this differs from feature flag platforms.
+See [Comparison](/docs/comparison) for how this differs from hosted feature flag platforms.
 
 ## Quick Start {#quick-start}
 
@@ -59,7 +60,7 @@ definitions:
 
 :::
 
-Each definition has **variations** evaluated top-to-bottom. The first variation whose conditions all match wins. A variation with no conditions always matches (use it as a default).
+Each definition has **variations** evaluated top-to-bottom. The first variation whose conditions all match wins. Use definitions for boolean flags, config values, or structured objects. A variation with no conditions always matches, so use it as the default.
 
 ### Resolve a definition
 

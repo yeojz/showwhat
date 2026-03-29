@@ -4,7 +4,7 @@ title: OpenFeature
 
 # OpenFeature
 
-Use showwhat through the standard [OpenFeature](https://openfeature.dev/) Server SDK. The `@showwhat/openfeature` package provides a `Provider` that maps OpenFeature evaluations to showwhat's rule engine.
+Use showwhat as the evaluation engine behind the standard [OpenFeature](https://openfeature.dev/) Server SDK. The `@showwhat/openfeature` package provides a `Provider` that bridges OpenFeature evaluations to showwhat's rule engine.
 
 ```bash
 npm install @showwhat/openfeature @openfeature/server-sdk
@@ -34,7 +34,7 @@ const enabled = await client.getBooleanValue("checkout_v2", false, {
 
 | Option       | Type                  | Required | Description                                                                    |
 | ------------ | --------------------- | -------- | ------------------------------------------------------------------------------ |
-| `data`       | `DefinitionReader`    | yes      | Source of flag definitions                                                     |
+| `data`       | `DefinitionReader`    | yes      | Source of showwhat definitions                                                 |
 | `evaluators` | `ConditionEvaluators` | no       | Custom condition evaluators (see [Custom Conditions](/docs/custom-conditions)) |
 | `deps`       | `Dependencies`        | no       | Runtime utilities forwarded to all evaluator calls                             |
 | `logger`     | `Logger`              | no       | Logger instance for debug output                                               |

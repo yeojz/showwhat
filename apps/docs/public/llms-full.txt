@@ -1,11 +1,11 @@
 # showwhat
 
-> Schema and rule-based evaluation engine for feature flags and configuration management.
+> Feature flags and config you own. Platform-agnostic.
 
-showwhat is a vendor-neutral, infrastructure-free feature flag library. It resolves feature definitions against runtime contexts using YAML or JSON-based rules. First matching variation wins.
+showwhat is a definition format, rule engine, and visual tooling for feature flags and config. Define rules in YAML or JSON, evaluate them in your app, and store definitions wherever you want. Like OpenAPI for APIs, showwhat gives you a spec-first workflow with tooling built around it.
 
 - Documentation: https://showwhat.yeojz.dev
-- Repository: https://github.com/nicerapp/showwhat
+- Repository: https://github.com/yeojz/showwhat
 - License: MIT
 
 ## Monorepo Layout
@@ -63,12 +63,13 @@ Low-level engine. Key exports:
 - `resolveVariation(definition, context, evaluators)` — evaluate a single definition
 - `builtinEvaluators` — condition types: env, string, number, bool, datetime, startAt, endAt, and, or
 - `registerEvaluators(custom)` — merge custom evaluators with builtins
-- `MemoryData` — in-memory data source implementing DefinitionReader
+- `MemoryData` — in-memory data source implementing DefinitionReader and DefinitionWriter
 - `parseYaml(str)`, `parseObject(obj)` — parse definitions from YAML strings or plain objects
 - `parsePresetsYaml(str)`, `parsePresetsObject(obj)` — parse preset condition templates
 - `createPresetConditions(presets, params)` — instantiate reusable condition templates
+- `isWritable(reader)` — runtime check for DefinitionWriter support
 - Zod schemas: Definition, Variation, Condition, Context, Resolution
-- Typed errors: ShowwhatError, ValidationError, DefinitionNotFoundError, VariationNotFoundError, InvalidContextError, DataError, ParseError, SchemaValidationError
+- Typed errors: ShowwhatError, DefinitionNotFoundError, DefinitionInactiveError, VariationNotFoundError, ConditionError, ValidationError, ParseError, SchemaValidationError, InvalidContextError, DataError
 
 Architecture: `schemas/` contains Zod types (no evaluator imports). `conditions/` contains evaluator implementations (imports from schemas). No default evaluators injected; consumers must pass evaluators explicitly.
 
@@ -76,14 +77,14 @@ Architecture: `schemas/` contains Zod types (no evaluator imports). `conditions/
 
 High-level convenience API. Re-exports everything from @showwhat/core plus:
 
-- `showwhat({ keys?, context, options: { data } })` — resolve one or more keys, returns `Resolutions` record
+- `showwhat({ keys?, context, deps?, options: { data, evaluators?, fallback?, logger? } })` — resolve one or more keys, returns `Resolutions` record
   - `keys` provided: fetches each via `data.get(key)` in parallel
   - `keys` omitted: fetches all via `data.getAll()`
   - Per-key errors wrapped in `ResolutionError`, never thrown
   - Only systemic failures (context validation) are thrown
 - `ResolutionError` — `{ success: false; key: string; error: ShowwhatError }` for failed keys
+- `Resolution` — `{ success: true; key: string; value: unknown; meta: { variation, annotations } }`
 - `Resolutions` — `Record<string, Resolution | ResolutionError>`
-- `Resolution` has `success: true`, `ResolutionError` has `success: false` — check `entry.success` to narrow
 - Validates context against ContextSchema (Zod) automatically
 
 Use `showwhat` for resolving flags with built-in evaluators and error wrapping. Use `@showwhat/core` directly for low-level batch resolution or custom evaluator injection.
@@ -99,6 +100,7 @@ React component library for visually building definitions. Key exports:
 - `ValueInput`, `DateTimeInput` — value editors
 - `ConfiguratorStore` interface — apps provide their own persistence backend
 - `useConfiguratorStore`, `useActionState`, `useConfiguratorSelector` — hooks
+- `createPresetUI(presets)` — generate condition extensions from preset definitions
 - CSS exported at `@showwhat/configurator/styles.css` (must be imported by consumers)
 
 Design: controlled components (props in, callbacks out), no internal mutations. Store interface abstracts persistence so apps can back it with files, localStorage, or APIs.
@@ -108,13 +110,22 @@ Design: controlled components (props in, callbacks out), no internal mutations. 
 OpenFeature Server SDK provider. Key exports:
 
 - `ShowwhatProvider` — implements OpenFeature provider interface
+- `ShowwhatProviderOptions` — configuration type for the provider
 - `toShowwhatContext()` — maps OpenFeature evaluation context to showwhat context
 - Supports boolean, string, number, object evaluation types
 - Custom evaluators via options, lifecycle management, error code mapping
 
+## Data Source Interfaces
+
+- `DefinitionReader` — read interface: `get(key)`, `getAll()`, `listKeys()`, plus optional `load()`, `close()`, `ping()`
+- `DefinitionWriter` — write interface: `put(key, def)`, `delete(key)`, `putMany(defs, opts?)`, plus optional lifecycle
+- `DefinitionData` — combined: `DefinitionReader & DefinitionWriter`
+- `MemoryData` implements both interfaces for in-memory use
+- Custom data sources: implement `DefinitionReader` for read-only, add `DefinitionWriter` for read-write
+
 ## Definition Structure
 
-A definition is a feature flag configuration:
+A definition is a named rule-based configuration entry. It can represent a boolean flag, a config value, or a structured object:
 
 ```yaml
 my-feature:
@@ -124,12 +135,22 @@ my-feature:
     - value: true
       conditions:                 # first match wins
         - type: env
-          op: eq
           value: production
     - value: false                # catch-all (no conditions)
 ```
 
-Supported condition types: env, string, number, bool, datetime, startAt, endAt, and (nested), or (nested). Custom evaluators can be registered.
+Variations are evaluated top-to-bottom. The first variation whose conditions all match wins. A variation with no conditions always matches (use as default).
+
+Supported condition types: env, string, number, bool, datetime, startAt, endAt, and (nested), or (nested). Custom evaluators can be registered via `registerEvaluators()`.
+
+## Custom Evaluators
+
+- `registerEvaluators({ typeName: evaluatorFn })` — merge custom evaluators with builtins
+- Each evaluator: `async ({ condition, context, annotations, deps, depth }) => boolean`
+- `deps` — injected runtime utilities (hash functions, fetchers), passed as Readonly
+- `annotations` — mutable record for attaching metadata to resolution results
+- Fallback evaluator: `options.fallback` handles unknown condition types gracefully
+- Reserved types `and` and `or` cannot be overridden
 
 ## Development Commands
 
@@ -164,11 +185,11 @@ pnpm build:docs         # build docs + dependencies
 - `packages/core/src/schemas/` — all Zod type definitions
 - `packages/core/src/conditions/` — evaluator implementations
 - `packages/core/src/resolver.ts` — resolution algorithm
-- `packages/showwhat/src/index.ts` — main package entry
-- `packages/showwhat/src/showwhat.ts` — high-level API wrapper
+- `packages/core/src/data.ts` — DefinitionReader, DefinitionWriter, MemoryData
+- `packages/showwhat/src/index.ts` — main package entry and high-level API
 - `packages/configurator/src/index.ts` — component library exports
 - `packages/configurator/src/types.ts` — store interface contract
 - `packages/openfeature/src/provider.ts` — OpenFeature provider implementation
-- `apps/webapp/src/stores/` — Zustand stores for webapp state
+- `apps/webapp/src/store/` — Zustand stores for webapp state
 - `turbo.json` — build pipeline and task dependencies
 - `pnpm-workspace.yaml` — workspace package locations

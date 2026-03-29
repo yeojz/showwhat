@@ -53,3 +53,8 @@ await data.remove("old_flag"); // void
 - Tests and scripts
 - Serverless functions (fetch config, parse in-memory)
 - Anywhere you don't want filesystem I/O
+
+## Next steps
+
+- [Data Sources](/docs/data-sources) for an overview of all data source types
+- [Custom Data Sources](/docs/custom-data-sources) to build filesystem, HTTP, or database-backed sources
