@@ -36,6 +36,12 @@ export default defineConfig({
           functions: 100,
           lines: 100,
         },
+        "packages/s3/src/**": {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100,
+        },
         "packages/showwhat/src/**": {
           statements: 100,
           branches: 100,
@@ -93,6 +99,13 @@ export default defineConfig({
         test: {
           name: "openfeature",
           root: "packages/openfeature",
+          include: ["src/**/*.test.ts"],
+        },
+      }),
+      defineProject({
+        test: {
+          name: "s3",
+          root: "packages/s3",
           include: ["src/**/*.test.ts"],
         },
       }),
