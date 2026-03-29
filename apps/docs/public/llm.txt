@@ -63,7 +63,7 @@ Low-level engine. Key exports:
 - `resolveVariation(definition, context, evaluators)` — evaluate a single definition
 - `builtinEvaluators` — condition types: env, string, number, bool, datetime, startAt, endAt, and, or
 - `registerEvaluators(custom)` — merge custom evaluators with builtins
-- `MemoryData` — in-memory data source implementing DefinitionReader/DefinitionWriter
+- `MemoryData` — in-memory data source implementing DefinitionReader
 - `parseYaml(str)`, `parseObject(obj)` — parse definitions from YAML strings or plain objects
 - `parsePresetsYaml(str)`, `parsePresetsObject(obj)` — parse preset condition templates
 - `createPresetConditions(presets, params)` — instantiate reusable condition templates

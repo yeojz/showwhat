@@ -13,6 +13,9 @@ describe("isWritable", () => {
       async getAll(): Promise<Definitions> {
         return {};
       },
+      async listKeys() {
+        return [];
+      },
     };
     expect(isWritable(reader)).toBe(false);
   });
@@ -25,11 +28,11 @@ describe("isWritable", () => {
       async getAll(): Promise<Definitions> {
         return {};
       },
-      async put() {},
-      async putMany() {},
       async listKeys() {
         return [];
       },
+      async put() {},
+      async putMany() {},
     };
     expect(isWritable(partial)).toBe(false);
   });
@@ -123,6 +126,13 @@ describe("MemoryData.fromObject", () => {
     const data = await MemoryData.fromObject(RAW_FLAGS);
     const all = await data.getAll();
     expect(Object.keys(all)).toContain("checkout_v2");
+  });
+
+  it("listKeys() returns all definition keys", async () => {
+    const data = await MemoryData.fromObject(RAW_FLAGS);
+    const keys = await data.listKeys();
+    expect(keys).toEqual(expect.arrayContaining(["checkout_v2", "max_upload_mb"]));
+    expect(keys).toHaveLength(2);
   });
 
   it("throws ValidationError for invalid input", async () => {

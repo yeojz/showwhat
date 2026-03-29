@@ -216,6 +216,9 @@ describe("ShowwhatProvider", () => {
         async getAll(): Promise<Definitions> {
           return { "flag.bad": nonJsonDefinition };
         },
+        async listKeys() {
+          return ["flag.bad"];
+        },
       };
       const provider = new ShowwhatProvider({ data });
 

@@ -5,6 +5,7 @@ import type { Presets } from "./schemas/index.js";
 export interface DefinitionReader {
   get(key: string): Promise<Definition | null>;
   getAll(): Promise<Definitions>;
+  listKeys(): Promise<string[]>;
   load?(): Promise<void>;
   close?(): Promise<void>;
   ping?(): Promise<void>;
@@ -14,7 +15,6 @@ export interface DefinitionWriter {
   put(key: string, definition: Definition): Promise<void>;
   delete(key: string): Promise<void>;
   putMany(flags: Definitions, options?: { replace?: boolean }): Promise<void>;
-  listKeys(): Promise<string[]>;
   load?(): Promise<void>;
   close?(): Promise<void>;
   ping?(): Promise<void>;
@@ -32,12 +32,7 @@ function hasMethod(obj: object, key: string): boolean {
 }
 
 export function isWritable(reader: DefinitionReader): reader is DefinitionData {
-  return (
-    hasMethod(reader, "put") &&
-    hasMethod(reader, "delete") &&
-    hasMethod(reader, "putMany") &&
-    hasMethod(reader, "listKeys")
-  );
+  return hasMethod(reader, "put") && hasMethod(reader, "delete") && hasMethod(reader, "putMany");
 }
 
 export class MemoryData implements DefinitionReader, PresetReader {
@@ -69,6 +64,10 @@ export class MemoryData implements DefinitionReader, PresetReader {
 
   async getAll(): Promise<Definitions> {
     return structuredClone(this.#flags);
+  }
+
+  async listKeys(): Promise<string[]> {
+    return Object.keys(this.#flags);
   }
 
   async getPresets(): Promise<Presets> {

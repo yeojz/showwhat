@@ -39,7 +39,7 @@ export function PresetEditor() {
       </p>
       <div className="mt-3 space-y-3">
         <Textarea
-          className="min-h-[200px] font-mono text-sm"
+          className="min-h-50 font-mono text-sm"
           value={draft}
           placeholder={`# Example:\ntier:\n  type: string\n  key: "tier"\n  overrides:\n    op: eq\n    value: free`}
           onChange={(e) => {
