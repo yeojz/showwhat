@@ -30,7 +30,7 @@ export class S3Data implements DefinitionData, PresetReader {
   constructor(options: S3DataOptions) {
     this.#client = options.client;
     this.#bucket = options.bucket;
-    this.#prefix = options.prefix?.replace(/\/+$/, "") ?? "";
+    this.#prefix = options.prefix ? options.prefix.replace(/\/+$/, "") : "";
   }
 
   #fullKey(path: string): string {
@@ -46,12 +46,9 @@ export class S3Data implements DefinitionData, PresetReader {
   }
 
   #keyFromPath(objectKey: string): string {
-    // Strip prefix if present, then strip definitions/ prefix and .json extension
-    let path = objectKey;
-    if (this.#prefix) {
-      path = path.replace(new RegExp(`^${this.#prefix}/`), "");
-    }
-    return path.replace(new RegExp(`^${DEFINITIONS_PREFIX}`), "").replace(/\.json$/, "");
+    // Strip optional bucket prefix, then "definitions/" prefix and ".json" extension
+    const start = (this.#prefix ? this.#prefix.length + 1 : 0) + DEFINITIONS_PREFIX.length;
+    return objectKey.slice(start, -JSON_EXT.length);
   }
 
   #isNotFound(err: unknown): boolean {
