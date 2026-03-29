@@ -69,6 +69,13 @@ describe("S3Data — read operations", () => {
       expect(result).toBeNull();
     });
 
+    it("handles response with empty etag", async () => {
+      fetchMock.mockResolvedValue(new Response(JSON.stringify(FEAT_A), { status: 200 }));
+
+      const result = await s3.get("feature-a");
+      expect(result).toEqual(FEAT_A);
+    });
+
     it("caches ETag from GET response", async () => {
       fetchMock.mockResolvedValue(jsonResponse(FEAT_A, { headers: { ETag: '"etag-a"' } }));
       await s3.get("feature-a");
@@ -110,6 +117,25 @@ describe("S3Data — read operations", () => {
       fetchMock.mockResolvedValue(xmlListResponse([]));
       const all = await s3.getAll();
       expect(all).toEqual({});
+    });
+
+    it("skips definitions that return 404 during fetch", async () => {
+      fetchMock.mockResolvedValueOnce(
+        xmlListResponse(["definitions/feature-a.json", "definitions/gone.json"]),
+      );
+      fetchMock.mockResolvedValueOnce(jsonResponse(FEAT_A, { headers: { ETag: '"ea"' } }));
+      fetchMock.mockResolvedValueOnce(new Response("Not Found", { status: 404 }));
+
+      const all = await s3.getAll();
+      expect(all).toEqual({ "feature-a": FEAT_A });
+    });
+
+    it("handles responses with empty etag", async () => {
+      fetchMock.mockResolvedValueOnce(xmlListResponse(["definitions/feature-a.json"]));
+      fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(FEAT_A), { status: 200 }));
+
+      const all = await s3.getAll();
+      expect(all).toEqual({ "feature-a": FEAT_A });
     });
   });
 
@@ -197,6 +223,12 @@ describe("S3Data — read operations", () => {
       fetchMock.mockResolvedValueOnce(new Response("Precondition Failed", { status: 412 }));
 
       await expect(s3.put("feature-a", FEAT_B)).rejects.toThrow(S3ConflictError);
+    });
+
+    it("re-throws non-412 errors from put", async () => {
+      fetchMock.mockResolvedValueOnce(new Response("Server Error", { status: 500 }));
+
+      await expect(s3.put("feature-a", FEAT_A)).rejects.toThrow("S3 request failed");
     });
   });
 

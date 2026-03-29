@@ -169,6 +169,11 @@ describe("S3Client", () => {
       const req = call[0] as Request;
       expect(req.method).toBe("DELETE");
     });
+
+    it("throws S3StorageError for non-success status", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("Error", { status: 500 })));
+      await expect(client.deleteObject("definitions/feat.json")).rejects.toThrow(S3StorageError);
+    });
   });
 
   describe("headBucket", () => {
@@ -277,6 +282,48 @@ describe("S3Client", () => {
       expect(req.url).toBe(
         "https://s3.us-east-1.amazonaws.com/my-bucket/tenant-a/definitions/feat.json",
       );
+    });
+
+    it("prepends prefix to listObjects prefix", async () => {
+      const prefixedClient = new S3Client({
+        endpoint: "https://s3.us-east-1.amazonaws.com",
+        bucket: "my-bucket",
+        prefix: "tenant-a",
+        signer,
+      });
+
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+  <IsTruncated>false</IsTruncated>
+</ListBucketResult>`;
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(xmlResponse(xml)));
+
+      await prefixedClient.listObjects("definitions/");
+
+      const call = vi.mocked(fetch).mock.calls[0];
+      const req = call[0] as Request;
+      const url = new URL(req.url);
+      expect(url.searchParams.get("prefix")).toBe("tenant-a/definitions/");
+    });
+  });
+
+  describe("edge cases", () => {
+    it("returns empty etag when ETag header is missing from GET", async () => {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue(new Response(JSON.stringify({}), { status: 200 })),
+      );
+
+      const result = await client.getObject("definitions/feat.json");
+      expect(result).not.toBeNull();
+      expect(result!.etag).toBe("");
+    });
+
+    it("returns empty etag when ETag header is missing from PUT", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 200 })));
+
+      const etag = await client.putObject("definitions/feat.json", {});
+      expect(etag).toBe("");
     });
   });
 });
