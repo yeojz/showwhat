@@ -50,7 +50,7 @@ export const ConditionGroup = memo(function ConditionGroup({
           variant="outline"
           className="select-none font-mono text-xs bg-muted/50 text-muted-foreground border-border"
         >
-          L{depth} | {type === "matchAnnotations" ? "MATCH ANN." : type.toUpperCase()}
+          L{depth} | {type}
         </Badge>
         <span className="text-sm text-muted-foreground">
           {conditions.length} condition{conditions.length !== 1 ? "s" : ""}
@@ -85,7 +85,7 @@ export const ConditionGroup = memo(function ConditionGroup({
                         : "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400",
                   )}
                 >
-                  {type === "matchAnnotations" ? "AND" : type.toUpperCase()}
+                  {type}
                 </Badge>
               </div>
             )}

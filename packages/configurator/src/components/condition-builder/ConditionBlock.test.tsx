@@ -20,7 +20,7 @@ describe("ConditionBlock", () => {
     };
     const onChange = vi.fn();
     render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
-    expect(screen.getByText(/AND/)).toBeDefined();
+    expect(screen.getByText(/and/)).toBeDefined();
   });
 
   it("renders an OR group via ConditionGroup", () => {
@@ -30,7 +30,7 @@ describe("ConditionBlock", () => {
     };
     const onChange = vi.fn();
     render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
-    expect(screen.getByText(/OR/)).toBeDefined();
+    expect(screen.getByText(/\bor\b/)).toBeDefined();
   });
 
   it("calls onChange with buildAndCondition when AND group children change", () => {
@@ -79,7 +79,7 @@ describe("ConditionBlock", () => {
     };
     const onChange = vi.fn();
     render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
-    expect(screen.getByText(/MATCH ANN\./)).toBeDefined();
+    expect(screen.getByText(/matchAnnotations/)).toBeDefined();
   });
 
   it("calls onChange with buildMatchAnnotationsCondition when matchAnnotations children change", () => {
