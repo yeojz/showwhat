@@ -95,7 +95,7 @@ describe("ConditionBuilder", () => {
     ];
     const onChange = vi.fn();
     render(<ConditionBuilder conditions={conditions} onChange={onChange} />);
-    expect(screen.getByText("L1 | AND")).toBeDefined();
+    expect(screen.getByText("L1 | and")).toBeDefined();
   });
 
   it("should remove condition group when X button is clicked", () => {
