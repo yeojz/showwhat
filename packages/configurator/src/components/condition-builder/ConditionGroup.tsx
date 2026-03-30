@@ -85,7 +85,7 @@ export const ConditionGroup = memo(function ConditionGroup({
                         : "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400",
                   )}
                 >
-                  {type}
+                  {type === "matchAnnotations" ? "and" : type}
                 </Badge>
               </div>
             )}
