@@ -135,11 +135,17 @@ function JsonEditorDialog({
   onOpenChange,
   value,
   onSave,
+  title = "Edit Context",
+  description = "JSON object with context values for resolving the definition.",
+  placeholder = '{\n  "env": "production",\n  "region": "us-east-1"\n}',
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: string;
   onSave: (value: string) => void;
+  title?: string;
+  description?: string;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState(value);
   const [formatError, setFormatError] = useState<string | null>(null);
@@ -173,13 +179,11 @@ function JsonEditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Context</DialogTitle>
-          <DialogDescription>
-            JSON object with context values for resolving the definition.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <Textarea
-          placeholder={'{\n  "env": "production",\n  "region": "us-east-1"\n}'}
+          placeholder={placeholder}
           value={draft}
           onChange={(e) => {
             setDraft(e.target.value);
@@ -213,6 +217,7 @@ export function PreviewPanel() {
   const [contextError, setContextError] = useState<string | null>(null);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
+  const [annotationsEditorOpen, setAnnotationsEditorOpen] = useState(false);
   const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [metaDialogOpen, setMetaDialogOpen] = useState(false);
@@ -408,17 +413,41 @@ export function PreviewPanel() {
             {simulatorOpen && (
               <div className="mt-2 space-y-3">
                 <div>
-                  <Label className="text-[10px] text-muted-foreground">Seed Annotations</Label>
-                  <Textarea
-                    placeholder={'{ "bucket": 42 }'}
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] text-muted-foreground">Seed Annotations</Label>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => setAnnotationsEditorOpen(true)}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      Edit
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-1 w-full cursor-pointer rounded-md border border-input bg-transparent px-3 py-2 text-left transition-colors hover:border-ring"
+                    onClick={() => setAnnotationsEditorOpen(true)}
+                  >
+                    {annotationsText.trim() ? (
+                      <pre className="max-h-20 overflow-hidden font-mono text-xs text-foreground">
+                        {annotationsText}
+                      </pre>
+                    ) : (
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {'{ "bucket": 42 }'}
+                      </span>
+                    )}
+                  </button>
+                  <JsonEditorDialog
+                    open={annotationsEditorOpen}
+                    onOpenChange={setAnnotationsEditorOpen}
                     value={annotationsText}
-                    onChange={(e) => setAnnotationsText(e.target.value)}
-                    className="mt-1 min-h-16 font-mono text-xs"
-                    rows={3}
+                    onSave={setAnnotationsText}
+                    title="Edit Seed Annotations"
+                    description="JSON object to pre-populate annotations for matchAnnotations conditions."
+                    placeholder={'{\n  "bucket": 42,\n  "threshold": 80\n}'}
                   />
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    JSON object to pre-populate annotations for matchAnnotations conditions
-                  </p>
                 </div>
                 <div>
                   <Label className="text-[10px] text-muted-foreground">Evaluator Overrides</Label>
