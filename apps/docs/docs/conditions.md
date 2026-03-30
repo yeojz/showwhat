@@ -7,7 +7,7 @@ outline: [2, 3]
 
 Conditions determine when a variation matches. Each condition has a `type` and type-specific fields.
 
-## Primitive condition types
+## Primitive types
 
 ### `string`
 
@@ -174,7 +174,7 @@ conditions:
 
 String context values `"true"` and `"false"` are coerced to booleans automatically.
 
-## Shorthand condition types
+## Shorthand types
 
 These are shortcuts for common patterns that delegate to primitives internally.
 
@@ -250,7 +250,7 @@ if (!banner.error) {
 
 :::
 
-## Composite conditions
+## Composite types
 
 ### `and`
 
@@ -304,6 +304,28 @@ conditions:
             value: us-east-1
 ```
 
-## Custom conditions
+## Modifier types
+
+Modifiers alter how nested conditions are evaluated without changing their semantics.
+
+### `matchAnnotations`
+
+Evaluates nested conditions against the [annotations](/docs/annotations) object instead of the regular context. Use this to verify that previous evaluators set expected annotation values.
+
+```yaml
+conditions:
+  - type: rollout
+    value: 50
+  - type: matchAnnotations
+    conditions:
+      - type: number
+        key: bucket
+        op: lt
+        value: 50
+```
+
+Nested conditions are implicitly AND'd. See [Annotations](/docs/annotations#the-matchannotations-condition) for details.
+
+## Custom types
 
 showwhat's condition system is fully extensible — you can register your own condition types with custom evaluator functions. See the [Custom Conditions](/docs/custom-conditions) guide for the full API and examples.

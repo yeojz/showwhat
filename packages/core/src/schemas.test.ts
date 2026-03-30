@@ -74,6 +74,30 @@ describe("ConditionSchema", () => {
     );
   });
 
+  it("accepts valid matchAnnotations condition", () => {
+    const result = ConditionSchema.safeParse({
+      type: "matchAnnotations",
+      conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects matchAnnotations condition with empty conditions array", () => {
+    expect(ConditionSchema.safeParse({ type: "matchAnnotations", conditions: [] }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects matchAnnotations condition without conditions field", () => {
+    expect(ConditionSchema.safeParse({ type: "matchAnnotations" }).success).toBe(false);
+  });
+
+  it("rejects { type: 'withAnnotations' } as a custom condition (reserved)", () => {
+    // The open-union arm must not match reserved types
+    const result = ConditionSchema.safeParse({ type: "matchAnnotations", foo: "bar" });
+    expect(result.success).toBe(false);
+  });
+
   it("accepts string condition with invalid regex pattern (validation deferred to resolve time)", () => {
     const result = ConditionSchema.safeParse({
       type: "string",

@@ -3,6 +3,7 @@ import {
   buildDefaultCondition,
   buildAndCondition,
   buildOrCondition,
+  buildMatchAnnotationsCondition,
   buildCustomCondition,
 } from "./utils.js";
 
@@ -25,6 +26,16 @@ describe("buildDefaultCondition", () => {
   it("builds an OR condition with an id", () => {
     const result = buildDefaultCondition("or", "my-id");
     expect(result).toEqual({ id: "my-id", type: "or", conditions: [] });
+  });
+
+  it("builds a matchAnnotations condition when type is 'matchAnnotations'", () => {
+    const result = buildDefaultCondition("matchAnnotations");
+    expect(result).toEqual({ type: "matchAnnotations", conditions: [] });
+  });
+
+  it("builds a matchAnnotations condition with an id", () => {
+    const result = buildDefaultCondition("matchAnnotations", "my-id");
+    expect(result).toEqual({ id: "my-id", type: "matchAnnotations", conditions: [] });
   });
 
   it("builds a custom condition when type is '__custom'", () => {
@@ -118,6 +129,14 @@ describe("re-exported builders", () => {
   it("re-exports buildOrCondition", () => {
     expect(buildOrCondition).toBeTypeOf("function");
     expect(buildOrCondition([])).toEqual({ type: "or", conditions: [] });
+  });
+
+  it("re-exports buildMatchAnnotationsCondition", () => {
+    expect(buildMatchAnnotationsCondition).toBeTypeOf("function");
+    expect(buildMatchAnnotationsCondition([])).toEqual({
+      type: "matchAnnotations",
+      conditions: [],
+    });
   });
 
   it("re-exports buildCustomCondition", () => {

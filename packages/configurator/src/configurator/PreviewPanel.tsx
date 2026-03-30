@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { ChevronRight, Eye, Loader2, Maximize2, Play } from "lucide-react";
 import { resolve, builtinEvaluators } from "showwhat";
-import type { ConditionEvaluator } from "showwhat";
+import type { Annotations, ConditionEvaluator } from "showwhat";
 import { DefinitionInactiveError, DefinitionNotFoundError, VariationNotFoundError } from "showwhat";
 import type { Context } from "showwhat";
 import { useConfiguratorSelector } from "./useConfiguratorSelector.js";
@@ -99,6 +99,16 @@ function parseContextJson(text: string): Context {
     }
   }
   return context;
+}
+
+function parseAnnotationsJson(text: string): Annotations | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const parsed = JSON.parse(trimmed);
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new SyntaxError("Annotations must be a JSON object");
+  }
+  return parsed as Annotations;
 }
 
 function parseEvaluatorOverrides(text: string): Record<string, boolean> {
@@ -198,6 +208,7 @@ export function PreviewPanel() {
   const externalFallback = useFallbackEvaluator();
 
   const [contextText, setContextText] = useState("");
+  const [annotationsText, setAnnotationsText] = useState("");
   const [evaluatorText, setEvaluatorText] = useState("");
   const [contextError, setContextError] = useState<string | null>(null);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
@@ -254,6 +265,15 @@ export function PreviewPanel() {
       return;
     }
 
+    let seedAnnotations: Annotations | null = null;
+    try {
+      seedAnnotations = parseAnnotationsJson(annotationsText);
+    } catch {
+      setPreviewResult({ status: "error", message: "Invalid JSON in annotations" });
+      setIsResolving(false);
+      return;
+    }
+
     try {
       const result = await resolve({
         definitions: { [selectedKey]: definitions[selectedKey] },
@@ -261,6 +281,7 @@ export function PreviewPanel() {
         options: {
           evaluators: builtinEvaluators,
           ...(fallback ? { fallback } : undefined),
+          ...(seedAnnotations ? { createAnnotations: () => ({ ...seedAnnotations }) } : undefined),
         },
       });
 
@@ -309,7 +330,7 @@ export function PreviewPanel() {
         setIsResolving(false);
       }
     }
-  }, [selectedKey, definitions, contextText, fallback]);
+  }, [selectedKey, definitions, contextText, annotationsText, fallback]);
 
   return (
     <div className="flex w-80 shrink-0 flex-col border-l border-border bg-muted/30">
@@ -385,17 +406,33 @@ export function PreviewPanel() {
               Condition Simulator
             </button>
             {simulatorOpen && (
-              <div className="mt-2">
-                <Textarea
-                  placeholder={"tier:true\ngeo:false"}
-                  value={evaluatorText}
-                  onChange={(e) => setEvaluatorText(e.target.value)}
-                  className="min-h-20 font-mono text-xs"
-                  rows={6}
-                />
-                <p className="mt-1 text-[10px] text-muted-foreground">
-                  Simulate unregistered condition types. One type:true|false per line
-                </p>
+              <div className="mt-2 space-y-3">
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Seed Annotations</Label>
+                  <Textarea
+                    placeholder={'{ "bucket": 42 }'}
+                    value={annotationsText}
+                    onChange={(e) => setAnnotationsText(e.target.value)}
+                    className="mt-1 min-h-16 font-mono text-xs"
+                    rows={3}
+                  />
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    JSON object to pre-populate annotations for matchAnnotations conditions
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Evaluator Overrides</Label>
+                  <Textarea
+                    placeholder={"tier:true\ngeo:false"}
+                    value={evaluatorText}
+                    onChange={(e) => setEvaluatorText(e.target.value)}
+                    className="mt-1 min-h-20 font-mono text-xs"
+                    rows={4}
+                  />
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Simulate unregistered condition types. One type:true|false per line
+                  </p>
+                </div>
               </div>
             )}
           </div>

@@ -27,6 +27,7 @@ import {
 } from "./conditions/index.js";
 import type {
   Annotations,
+  AnnotationsFactory,
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,
@@ -44,6 +45,7 @@ export * from "./schemas/index.js";
 export { evaluateCondition, builtinEvaluators, noConditionEvaluator, defaultCreateRegex };
 export type {
   Annotations,
+  AnnotationsFactory,
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,

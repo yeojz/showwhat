@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { buildAndCondition, buildOrCondition, buildCustomCondition } from "./condition-builders.js";
+import {
+  buildAndCondition,
+  buildOrCondition,
+  buildMatchAnnotationsCondition,
+  buildCustomCondition,
+} from "./condition-builders.js";
 
 describe("buildAndCondition", () => {
   it("builds an AND condition without id", () => {
@@ -29,6 +34,25 @@ describe("buildOrCondition", () => {
   it("builds an OR condition with id", () => {
     const result = buildOrCondition([], "test-id");
     expect(result).toEqual({ id: "test-id", type: "or", conditions: [] });
+  });
+});
+
+describe("buildMatchAnnotationsCondition", () => {
+  it("builds a matchAnnotations condition without id", () => {
+    const result = buildMatchAnnotationsCondition([]);
+    expect(result).toEqual({ type: "matchAnnotations", conditions: [] });
+  });
+
+  it("builds a matchAnnotations condition with id", () => {
+    const result = buildMatchAnnotationsCondition([], "test-id");
+    expect(result).toEqual({ id: "test-id", type: "matchAnnotations", conditions: [] });
+  });
+
+  it("builds a matchAnnotations condition with child conditions", () => {
+    const children = [{ type: "number" as const, key: "bucket", op: "eq" as const, value: 42 }];
+    const result = buildMatchAnnotationsCondition(children);
+    expect(result.conditions).toHaveLength(1);
+    expect(result.conditions[0]).toEqual(children[0]);
   });
 });
 

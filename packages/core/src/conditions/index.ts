@@ -10,6 +10,7 @@ import type { ConditionEvaluators } from "./types.js";
 export { noConditionEvaluator } from "./types.js";
 export type {
   Annotations,
+  AnnotationsFactory,
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,

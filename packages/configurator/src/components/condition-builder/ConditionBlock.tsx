@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { Condition } from "showwhat";
-import { isAndCondition, isOrCondition } from "showwhat";
+import { isAndCondition, isOrCondition, isMatchAnnotationsCondition } from "showwhat";
 import { X } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConditionValueEditor } from "./ConditionValueEditor.js";
@@ -8,7 +8,7 @@ import { ConditionGroup } from "./ConditionGroup.js";
 import { MoveButtons } from "./MoveButtons.js";
 import { getConditionMeta } from "./condition-registry.js";
 import { useConditionExtensions } from "./ConditionExtensionsContext.js";
-import { buildAndCondition, buildOrCondition } from "./utils.js";
+import { buildAndCondition, buildOrCondition, buildMatchAnnotationsCondition } from "./utils.js";
 import type { ConditionBlockProps } from "../../types.js";
 
 /** Zod emits "Invalid input" for discriminated union failures — we rephrase for clarity. */
@@ -26,17 +26,23 @@ export const ConditionBlock = memo(function ConditionBlock({
   function handleChange(updated: Condition) {
     onChange(updated);
   }
-  // Render AND/OR groups recursively
-  if (isAndCondition(condition) || isOrCondition(condition)) {
+  // Render AND/OR/matchAnnotations groups recursively
+  if (
+    isAndCondition(condition) ||
+    isOrCondition(condition) ||
+    isMatchAnnotationsCondition(condition)
+  ) {
     return (
       <ConditionGroup
-        type={condition.type as "and" | "or"}
+        type={condition.type as "and" | "or" | "matchAnnotations"}
         conditions={condition.conditions}
         onChange={(conditions) =>
           handleChange(
             condition.type === "and"
               ? buildAndCondition(conditions, condition.id)
-              : buildOrCondition(conditions, condition.id),
+              : condition.type === "or"
+                ? buildOrCondition(conditions, condition.id)
+                : buildMatchAnnotationsCondition(conditions, condition.id),
           )
         }
         onRemove={onRemove}

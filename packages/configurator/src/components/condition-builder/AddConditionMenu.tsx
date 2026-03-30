@@ -50,6 +50,9 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => onAdd("and")}>AND Group</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onAdd("or")}>OR Group</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onAdd("matchAnnotations")}>
+          Match Annotations
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => onAdd("__custom")}>Custom</DropdownMenuItem>
       </DropdownMenuContent>

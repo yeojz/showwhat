@@ -107,8 +107,10 @@ export default defineConfig({
           text: "Concepts",
           items: [
             { text: "Definitions", link: "/docs/definitions" },
+            { text: "Variations", link: "/docs/variations" },
             { text: "Conditions", link: "/docs/conditions" },
             { text: "Context", link: "/docs/context" },
+            { text: "Annotations", link: "/docs/annotations" },
             { text: "Presets", link: "/docs/presets" },
             { text: "Data Sources", link: "/docs/data-sources" },
           ],
@@ -129,7 +131,6 @@ export default defineConfig({
               link: "/docs/custom-conditions",
               items: [
                 { text: "Fallback Evaluator", link: "/docs/custom-conditions#fallback-evaluator" },
-                { text: "Annotations", link: "/docs/custom-conditions#annotations" },
                 {
                   text: "Dependency Injection",
                   link: "/docs/custom-conditions#dependency-injection",

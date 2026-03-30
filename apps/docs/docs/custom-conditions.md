@@ -126,23 +126,7 @@ Without a fallback, unknown condition types return a `ResolutionError` for the a
 
 ## Annotations
 
-Evaluators can write to the `annotations` record to attach metadata that appears in the `Resolution` result. This is useful for debugging, auditing, or passing evaluator-specific data back to the caller.
-
-```ts
-const myEvaluators = registerEvaluators({
-  percentage: async ({ condition, context, annotations }) => {
-    const { value } = condition as { type: "percentage"; value: number };
-    const userId = context.userId;
-    if (!userId) return false;
-    const hash = murmurhash.v3(String(userId));
-    const bucket = hash % 100;
-    annotations.rollout = { bucket, threshold: value };
-    return bucket < value;
-  },
-});
-```
-
-The annotations object is shared across all evaluators for a given resolution and returned in `entry.meta.annotations` (after checking that `entry.success` is `true`).
+Evaluators can write metadata to the `annotations` record during evaluation. See [Annotations](/docs/annotations) for the full lifecycle, reading results, and the built-in `annotations` condition type.
 
 ## Dependency injection
 
