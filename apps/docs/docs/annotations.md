@@ -105,9 +105,26 @@ annotations.threshold = 50;
 annotations.rollout = { bucket: 42, threshold: 50 };
 ```
 
+## Seeding annotations
+
+By default, each variation starts with an empty annotations object. You can provide a `createAnnotations` factory in `ResolverOptions` to seed initial values:
+
+```ts
+const results = await resolve({
+  definitions,
+  context: { env: "prod" },
+  options: {
+    evaluators,
+    createAnnotations: (definitionKey) => ({ source: "preview", key: definitionKey }),
+  },
+});
+```
+
+The factory is called once per variation attempt with the definition key (or `undefined` when calling `resolveVariation` directly without a key). Evaluators can overwrite seeded values during evaluation.
+
 ## Per-variation lifecycle
 
-Each variation evaluation creates a fresh annotations object. If a variation fails (conditions don't match), its annotations are discarded and the next variation starts with a clean slate:
+Each variation evaluation creates a fresh annotations object (or a fresh copy from `createAnnotations`). If a variation fails (conditions don't match), its annotations are discarded and the next variation starts with a clean slate:
 
 ```yaml
 variations:
