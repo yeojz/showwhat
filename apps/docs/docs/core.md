@@ -63,16 +63,16 @@ const allResults = await showwhat({
 
 **`Resolution` fields:**
 
-| Field                           | Type                      | Description                                         |
-| ------------------------------- | ------------------------- | --------------------------------------------------- |
-| `success`                       | `true`                    | Always `true` on success (for union discrimination) |
-| `key`                           | `string`                  | The definition key that was resolved                |
-| `value`                         | `unknown`                 | The matched variation's value                       |
-| `meta.variation.index`          | `number`                  | Index of the matched variation                      |
-| `meta.variation.id`             | `string?`                 | Optional variation identifier                       |
-| `meta.variation.description`    | `string?`                 | Optional variation description                      |
-| `meta.variation.conditionCount` | `number`                  | Number of conditions evaluated                      |
-| `meta.annotations`              | `Record<string, unknown>` | Metadata populated by evaluators during resolution  |
+| Field                           | Type                              | Description                                         |
+| ------------------------------- | --------------------------------- | --------------------------------------------------- |
+| `success`                       | `true`                            | Always `true` on success (for union discrimination) |
+| `key`                           | `string`                          | The definition key that was resolved                |
+| `value`                         | `unknown`                         | The matched variation's value                       |
+| `meta.variation.index`          | `number`                          | Index of the matched variation                      |
+| `meta.variation.id`             | `string?`                         | Optional variation identifier                       |
+| `meta.variation.description`    | `string?`                         | Optional variation description                      |
+| `meta.variation.conditionCount` | `number`                          | Number of conditions evaluated                      |
+| `meta.annotations`              | `Record<string, AnnotationValue>` | Metadata populated by evaluators during resolution  |
 
 The `annotations` record contains metadata populated by custom evaluators during resolution (see [Custom Conditions](/docs/custom-conditions)).
 
@@ -155,7 +155,7 @@ if (result) {
 | `options`       | `ResolverOptions` | Optional evaluators, fallback, logger, factories                           |
 | `definitionKey` | `string?`         | Passed to `createAnnotations` if provided (set automatically by `resolve`) |
 
-**Returns:** `Promise<{ variation: Variation; variationIndex: number; annotations: Record<string, unknown> } | null>`
+**Returns:** `Promise<{ variation: Variation; variationIndex: number; annotations: Annotations } | null>`
 
 ## `parseYaml()`
 
@@ -226,11 +226,18 @@ const matched = await evaluateCondition({
 These are simplified representations. See the source schemas in `packages/core/src/schemas/` for the authoritative definitions.
 
 ```ts
-// A context value: primitive, array of primitives, or nested record
-type ContextValue = string | number | boolean | ContextValue[] | Record<string, ContextValue>;
+// Shared base type for values in the data model.
+// Manually defined because TypeScript cannot infer recursive types via z.infer;
+// the non-recursive DataPrimitive IS inferred from its schema.
+type DataValue = string | number | boolean | DataValue[] | Record<string, DataValue>;
+
+type ContextValue = DataValue;
 type Context = Record<string, ContextValue>;
-type Annotations<T extends Record<string, unknown> = Record<string, unknown>> = T;
-type Dependencies<T extends Record<string, unknown> = Record<string, unknown>> = T;
+
+type AnnotationValue = DataValue;
+type Annotations = Record<string, AnnotationValue>;
+
+type Dependencies = Record<string, unknown>;
 
 type Variation = {
   id?: string;

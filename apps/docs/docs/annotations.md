@@ -5,7 +5,7 @@ outline: [2, 3]
 
 # Annotations
 
-**Annotations** are a mutable `Record<string, unknown>` that evaluators can write to during condition evaluation. They provide a way to attach metadata — such as rollout buckets, matched segments, or debug info — to a resolution result without affecting the match/no-match outcome.
+**Annotations** are a mutable `Record<string, AnnotationValue>` that evaluators can write to during condition evaluation. They provide a way to attach metadata — such as rollout buckets, matched segments, or debug info — to a resolution result without affecting the match/no-match outcome.
 
 ## How annotations flow
 

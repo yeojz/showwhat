@@ -4,7 +4,6 @@ import type {
   ResolutionError,
   Variation,
   Context,
-  ContextValue,
 } from "./schemas/index.js";
 import { evaluateCondition } from "./conditions/index.js";
 import type {
@@ -39,14 +38,11 @@ function getEvaluators(options?: ResolverOptions): ConditionEvaluators {
   return options.evaluators;
 }
 
-function getLogger(options?: ResolverOptions): Logger {
+function getLogger(options?: { logger?: Logger }): Logger {
   return options?.logger ?? noopLogger;
 }
 
-export async function resolveVariation<
-  T extends Record<string, ContextValue> = Record<string, ContextValue>,
-  D extends Record<string, unknown> = Record<string, unknown>,
->({
+export async function resolveVariation({
   variations,
   context,
   deps,
@@ -54,8 +50,8 @@ export async function resolveVariation<
   definitionKey,
 }: {
   variations: Variation[];
-  context: Readonly<Context<T>>;
-  deps?: Dependencies<D>;
+  context: Readonly<Context>;
+  deps?: Dependencies;
   options?: ResolverOptions;
   definitionKey?: string;
 }): Promise<{ variation: Variation; variationIndex: number; annotations: Annotations } | null> {
@@ -126,10 +122,10 @@ function toResolution(
   };
 }
 
-async function resolveKey<T extends Record<string, ContextValue> = Record<string, ContextValue>>(
+async function resolveKey(
   key: string,
   definitions: Definitions,
-  context: Readonly<Context<T>>,
+  context: Readonly<Context>,
   deps?: Dependencies,
   options?: ResolverOptions,
 ): Promise<Resolution> {
@@ -179,24 +175,21 @@ async function resolveKey<T extends Record<string, ContextValue> = Record<string
  * Each key is resolved independently — a failure for one key does not
  * affect others. Failed keys are returned as `ResolutionError` entries.
  */
-export async function resolve<
-  T extends Record<string, ContextValue> = Record<string, ContextValue>,
-  D extends Record<string, unknown> = Record<string, unknown>,
->({
+export async function resolve({
   definitions,
   context,
   deps,
   options,
 }: {
   definitions: Definitions;
-  context: Readonly<Context<T>>;
-  deps?: Dependencies<D>;
+  context: Readonly<Context>;
+  deps?: Dependencies;
   options?: ResolverOptions;
 }): Promise<Record<string, Resolution | ResolutionError>> {
   const keys = Object.keys(definitions);
   const entries = await Promise.all(
     keys.map((key) =>
-      resolveKey<T>(key, definitions, context, deps, options).catch(
+      resolveKey(key, definitions, context, deps, options).catch(
         (reason): ResolutionError => ({
           success: false,
           key,

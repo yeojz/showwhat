@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { noConditionEvaluator } from "./index.js";
+import { noConditionEvaluator, defaultCreateRegex } from "./index.js";
 
 describe("noConditionEvaluator", () => {
   it("always returns false", async () => {
@@ -9,6 +9,7 @@ describe("noConditionEvaluator", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(result).toBe(false);
   });

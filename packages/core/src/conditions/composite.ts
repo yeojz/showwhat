@@ -78,12 +78,11 @@ async function evaluateMatchAnnotationsCondition(
   conditions: Condition[],
   args: ResolvedArgs,
 ): Promise<boolean> {
-  const annotationsAsContext = args.annotations as unknown as Readonly<Context>;
-  const freshAnnotations: Annotations = {};
+  const annotationsAsContext: Readonly<Context> = args.annotations;
   return evaluateAnd(conditions, {
     ...args,
     context: annotationsAsContext,
-    annotations: freshAnnotations,
+    annotations: {},
   });
 }
 

@@ -6,10 +6,8 @@ import {
   resolve,
 } from "@showwhat/core";
 import type {
-  BuiltinCondition,
   ConditionEvaluators,
   Context,
-  ContextValue,
   Definitions,
   DefinitionReader,
   Dependencies,
@@ -48,18 +46,15 @@ async function fetchDefinitions(data: DefinitionReader, keys?: string[]): Promis
   return definitions as Definitions;
 }
 
-export async function showwhat<
-  T extends Record<string, ContextValue> = Record<string, ContextValue>,
-  D extends Record<string, unknown> = Record<string, unknown>,
->({
+export async function showwhat({
   keys,
   context,
   deps,
   options,
 }: {
   keys?: string[];
-  context: Context<T>;
-  deps?: Dependencies<D>;
+  context: Context;
+  deps?: Dependencies;
   options: ShowWhatOptions;
 }): Promise<Resolutions> {
   const contextResult = ContextSchema.safeParse(context);
@@ -72,7 +67,7 @@ export async function showwhat<
 
   return resolve({
     definitions: await fetchDefinitions(options.data, keys),
-    context: contextResult.data as Context<T>,
+    context: contextResult.data as Context,
     deps,
     options: {
       ...options,
@@ -81,11 +76,9 @@ export async function showwhat<
   });
 }
 
-const COMPOSITE_TYPES = new Set(["and", "or"]);
+const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);
 
-export function registerEvaluators<T extends string>(
-  extra: ConditionEvaluators<T>,
-): ConditionEvaluators<BuiltinCondition["type"] | T> {
+export function registerEvaluators(extra: ConditionEvaluators): ConditionEvaluators {
   for (const key of Object.keys(extra)) {
     if (COMPOSITE_TYPES.has(key)) {
       throw new Error(`Cannot register reserved condition type "${key}"`);

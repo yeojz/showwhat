@@ -1,3 +1,4 @@
+export * from "./value.js";
 export * from "./condition.js";
 export * from "./context.js";
 export * from "./variation.js";

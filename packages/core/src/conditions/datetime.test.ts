@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evaluateDatetime as evaluate, datetimeEvaluator } from "./datetime.js";
+import { defaultCreateRegex } from "./types.js";
 
 const PAST = "2020-01-01T00:00:00.000Z";
 const FUTURE = "2099-01-01T00:00:00.000Z";
@@ -116,6 +117,7 @@ describe("datetimeEvaluator", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(true);
   });

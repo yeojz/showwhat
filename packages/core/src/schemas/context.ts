@@ -1,15 +1,9 @@
 import { z } from "zod";
+import { DataValueSchema } from "./value.js";
+import type { DataValue } from "./value.js";
 
-const ContextPrimitiveSchema = z.union([z.string(), z.number(), z.boolean()]);
+export type ContextValue = DataValue;
 
-const ContextValueSchema: z.ZodType<ContextValue> = z.union([
-  ContextPrimitiveSchema,
-  z.array(ContextPrimitiveSchema),
-  z.lazy(() => z.record(z.string(), ContextValueSchema)),
-]);
+export const ContextSchema = z.record(z.string(), DataValueSchema);
 
-export const ContextSchema = z.record(z.string(), ContextValueSchema);
-
-type ContextPrimitive = string | number | boolean;
-export type ContextValue = ContextPrimitive | ContextPrimitive[] | { [key: string]: ContextValue };
-export type Context<T extends Record<string, ContextValue> = Record<string, ContextValue>> = T;
+export type Context = Record<string, ContextValue>;

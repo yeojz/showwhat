@@ -1023,7 +1023,7 @@ describe("createAnnotations", () => {
       options: {
         evaluators: builtinEvaluators,
         createAnnotations: (definitionKey) => {
-          receivedKeys.push(definitionKey);
+          if (definitionKey) receivedKeys.push(definitionKey);
           return {};
         },
       },

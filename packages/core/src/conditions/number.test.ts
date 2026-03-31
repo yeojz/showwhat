@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { evaluateNumber as evaluate, numberEvaluator } from "./number.js";
+import { defaultCreateRegex } from "./types.js";
 
 describe("number (eq op)", () => {
   it("returns true when context value equals condition value", async () => {
@@ -172,6 +173,7 @@ describe("numberEvaluator", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(true);
   });
