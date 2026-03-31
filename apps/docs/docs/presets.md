@@ -20,14 +20,10 @@ presets:
     key: tier
     overrides:
       op: eq
-      value: free
 
   age:
     type: number
     key: user_age
-    overrides:
-      op: gte
-      value: 18
 
   premium:
     type: bool
@@ -40,12 +36,11 @@ presets:
     "tier": {
       "type": "string",
       "key": "tier",
-      "overrides": { "op": "eq", "value": "free" }
+      "overrides": { "op": "eq" }
     },
     "age": {
       "type": "number",
-      "key": "user_age",
-      "overrides": { "op": "gte", "value": 18 }
+      "key": "user_age"
     },
     "premium": {
       "type": "bool",
@@ -75,7 +70,7 @@ Use `createPresetConditions` to generate evaluators from your preset map, then m
 import { showwhat, registerEvaluators, createPresetConditions } from "showwhat";
 
 const presets = {
-  tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+  tier: { type: "string", key: "tier", overrides: { op: "eq" } },
   age: { type: "number", key: "user_age" },
 };
 
@@ -95,7 +90,7 @@ if (!banner.error) {
 }
 ```
 
-Definitions can then use preset types directly. The `key` is already bound by the preset, so you only specify `op` and `value`. Any fields listed in `overrides` are forced during evaluation and cannot be changed in the Configurator UI:
+Definitions can then use preset types directly. The `key` is already bound by the preset, so you only need to specify the remaining fields. Any fields listed in `overrides` are forced during evaluation and cannot be changed in the Configurator UI:
 
 ```yaml
 definitions:
@@ -104,10 +99,16 @@ definitions:
       - value: "Welcome back, Pro!"
         conditions:
           - type: tier
-            op: eq
             value: pro
+      - value: "Upgrade to Pro"
+        conditions:
+          - type: age
+            op: gte
+            value: 18
       - value: "Upgrade today"
 ```
+
+In this example, `tier` has `overrides: { op: "eq" }` — so `op` is locked to `"eq"` and only `value` needs to be specified. The `age` preset has no overrides, so both `op` and `value` are user-specified.
 
 ## Using presets in the Configurator UI
 
