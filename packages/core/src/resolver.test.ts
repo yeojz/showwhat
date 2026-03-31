@@ -10,7 +10,7 @@ import {
   VariationNotFoundError,
 } from "./errors.js";
 import { builtinEvaluators } from "./conditions/index.js";
-import type { ConditionEvaluator } from "./conditions/index.js";
+import type { Annotations, ConditionEvaluator } from "./conditions/index.js";
 
 async function resolveOne(
   key: string,
@@ -878,6 +878,72 @@ describe("deps threading", () => {
     expect(receivedDeps).toBe(myDeps);
   });
 
+  it("matchAnnotations condition verifies annotations written by a previous evaluator", async () => {
+    const rolloutEvaluator: ConditionEvaluator = async ({ condition, annotations }) => {
+      const c = condition as { threshold: number };
+      const bucket = 42;
+      annotations.bucket = bucket;
+      annotations.threshold = c.threshold;
+      return bucket < c.threshold;
+    };
+    const evaluators = { ...builtinEvaluators, rollout: rolloutEvaluator };
+
+    const result = await resolveVariation({
+      variations: [
+        {
+          value: "treatment",
+          conditions: [
+            { type: "rollout", threshold: 80 } as never,
+            {
+              type: "matchAnnotations" as const,
+              conditions: [
+                { type: "number" as const, key: "bucket", op: "gte" as const, value: 0 },
+                { type: "number" as const, key: "threshold", op: "eq" as const, value: 80 },
+              ],
+            },
+          ],
+        },
+        { value: "control" },
+      ],
+      context: { env: "prod" },
+      options: { evaluators },
+    });
+
+    expect(result!.variation.value).toBe("treatment");
+    expect(result!.annotations.bucket).toBe(42);
+    expect(result!.annotations.threshold).toBe(80);
+  });
+
+  it("matchAnnotations condition causes variation to fail when verification fails", async () => {
+    const tagEvaluator: ConditionEvaluator = async ({ annotations }) => {
+      annotations.source = "experiment";
+      return true;
+    };
+    const evaluators = { ...builtinEvaluators, tag: tagEvaluator };
+
+    const result = await resolveVariation({
+      variations: [
+        {
+          value: "treatment",
+          conditions: [
+            { type: "tag" } as never,
+            {
+              type: "matchAnnotations" as const,
+              conditions: [
+                { type: "string" as const, key: "source", op: "eq" as const, value: "rollout" },
+              ],
+            },
+          ],
+        },
+        { value: "control" },
+      ],
+      context: { env: "prod" },
+      options: { evaluators },
+    });
+
+    expect(result!.variation.value).toBe("control");
+  });
+
   it("custom evaluator uses deps.hash and writes to annotations", async () => {
     const rolloutEvaluator: ConditionEvaluator = async ({
       condition,
@@ -909,6 +975,210 @@ describe("deps threading", () => {
     expect(result!.annotations).toEqual({
       rollout: { bucket: 70, threshold: 80 },
     });
+  });
+});
+
+describe("createAnnotations", () => {
+  it("seeds annotations from createAnnotations option via resolve", async () => {
+    const rolloutEvaluator: ConditionEvaluator = async ({ condition, annotations }) => {
+      const c = condition as { threshold: number };
+      return (annotations.bucket as number) < c.threshold;
+    };
+    const evaluators = { ...builtinEvaluators, rollout: rolloutEvaluator };
+
+    const defs: Definitions = {
+      flag: {
+        variations: [
+          { value: "treatment", conditions: [{ type: "rollout", threshold: 80 } as never] },
+          { value: "control" },
+        ],
+      },
+    };
+
+    const result = await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      options: {
+        evaluators,
+        createAnnotations: () => ({ bucket: 42 }),
+      },
+    });
+
+    expect(result["flag"].success).toBe(true);
+    expect((result["flag"] as Resolution).value).toBe("treatment");
+    expect((result["flag"] as Resolution).meta.annotations).toMatchObject({ bucket: 42 });
+  });
+
+  it("receives the definition key in the factory", async () => {
+    const receivedKeys: string[] = [];
+
+    const defs: Definitions = {
+      alpha: { variations: [{ value: "a" }] },
+      beta: { variations: [{ value: "b" }] },
+    };
+
+    await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      options: {
+        evaluators: builtinEvaluators,
+        createAnnotations: (definitionKey) => {
+          receivedKeys.push(definitionKey);
+          return {};
+        },
+      },
+    });
+
+    expect(receivedKeys).toContain("alpha");
+    expect(receivedKeys).toContain("beta");
+  });
+
+  it("varies seed annotations per definition key", async () => {
+    const defs: Definitions = {
+      alpha: { variations: [{ value: "a" }] },
+      beta: { variations: [{ value: "b" }] },
+    };
+
+    const result = await resolve({
+      definitions: defs,
+      context: { env: "prod" },
+      options: {
+        evaluators: builtinEvaluators,
+        createAnnotations: (definitionKey) =>
+          definitionKey === "alpha" ? { source: "test-a" } : { source: "test-b" },
+      },
+    });
+
+    expect((result["alpha"] as Resolution).meta.annotations).toMatchObject({ source: "test-a" });
+    expect((result["beta"] as Resolution).meta.annotations).toMatchObject({ source: "test-b" });
+  });
+
+  it("produces fresh annotations per variation (no bleed)", async () => {
+    const spy: ConditionEvaluator = async ({ annotations }) => {
+      annotations.seen = true;
+      return false; // always fail so we iterate through all variations
+    };
+
+    const seenAnnotations: Annotations[] = [];
+    const result = await resolveVariation({
+      variations: [
+        { value: "a", conditions: [{ type: "spy" } as never] },
+        { value: "b", conditions: [{ type: "spy" } as never] },
+        { value: "fallback" },
+      ],
+      context: { env: "prod" },
+      options: {
+        evaluators: { ...builtinEvaluators, spy },
+        createAnnotations: () => {
+          const a = { counter: 0 };
+          seenAnnotations.push(a);
+          return a;
+        },
+      },
+      definitionKey: "test",
+    });
+
+    // Each variation got its own fresh annotations object (2 failing + 1 catch-all)
+    expect(seenAnnotations).toHaveLength(3);
+    expect(seenAnnotations[0]).not.toBe(seenAnnotations[1]);
+    expect(seenAnnotations[1]).not.toBe(seenAnnotations[2]);
+    expect(result!.variation.value).toBe("fallback");
+  });
+
+  it("seeds annotations for catch-all variations with no conditions", async () => {
+    const result = await resolveVariation({
+      variations: [{ value: "fallback" }],
+      context: { env: "prod" },
+      options: {
+        evaluators: builtinEvaluators,
+        createAnnotations: () => ({ seeded: true }),
+      },
+      definitionKey: "test",
+    });
+
+    expect(result!.annotations).toMatchObject({ seeded: true });
+  });
+
+  it("evaluators can overwrite seeded annotation values", async () => {
+    const writer: ConditionEvaluator = async ({ annotations }) => {
+      annotations.bucket = 99;
+      return true;
+    };
+
+    const result = await resolveVariation({
+      variations: [{ value: "matched", conditions: [{ type: "writer" } as never] }],
+      context: { env: "prod" },
+      options: {
+        evaluators: { ...builtinEvaluators, writer },
+        createAnnotations: () => ({ bucket: 0 }),
+      },
+      definitionKey: "test",
+    });
+
+    expect(result!.annotations.bucket).toBe(99);
+  });
+
+  it("works with matchAnnotations to verify seeded values", async () => {
+    const result = await resolveVariation({
+      variations: [
+        {
+          value: "verified",
+          conditions: [
+            {
+              type: "matchAnnotations" as const,
+              conditions: [
+                { type: "number" as const, key: "bucket", op: "eq" as const, value: 42 },
+              ],
+            },
+          ],
+        },
+        { value: "fallback" },
+      ],
+      context: { env: "prod" },
+      options: {
+        evaluators: builtinEvaluators,
+        createAnnotations: () => ({ bucket: 42 }),
+      },
+      definitionKey: "test",
+    });
+
+    expect(result!.variation.value).toBe("verified");
+  });
+
+  it("calls createAnnotations with undefined when definitionKey is not provided", async () => {
+    let receivedKey: string | undefined = "sentinel";
+
+    await resolveVariation({
+      variations: [{ value: "fallback" }],
+      context: { env: "prod" },
+      options: {
+        evaluators: builtinEvaluators,
+        createAnnotations: (key) => {
+          receivedKey = key;
+          return {};
+        },
+      },
+    });
+
+    expect(receivedKey).toBeUndefined();
+  });
+
+  it("defaults to empty annotations when createAnnotations is not provided", async () => {
+    const spy: ConditionEvaluator = async ({ annotations }) => {
+      return Object.keys(annotations).length === 0;
+    };
+    const evaluators = { ...builtinEvaluators, spy };
+
+    const result = await resolveVariation({
+      variations: [
+        { value: "empty", conditions: [{ type: "spy" } as never] },
+        { value: "fallback" },
+      ],
+      context: { env: "prod" },
+      options: { evaluators },
+    });
+
+    expect(result!.variation.value).toBe("empty");
   });
 });
 

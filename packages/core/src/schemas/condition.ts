@@ -19,6 +19,7 @@ export const CONDITION_TYPES = {
   endAt: "endAt",
   and: "and",
   or: "or",
+  matchAnnotations: "matchAnnotations",
 } as const;
 
 export const CONTEXT_KEYS = {
@@ -145,6 +146,7 @@ export type Condition =
   | BuiltinCondition
   | { id?: string; type: "and"; conditions: Condition[] }
   | { id?: string; type: "or"; conditions: Condition[] }
+  | { id?: string; type: "matchAnnotations"; conditions: Condition[] }
   | { type: string; [key: string]: unknown };
 
 // ── Composite schemas ─────────────────────────────────────────────────────────
@@ -159,6 +161,11 @@ const AndConditionSchema = z.object({
 const OrConditionSchema = z.object({
   id: z.string().optional(),
   type: z.literal("or"),
+  conditions: z.array(z.lazy(() => ConditionSchema)).min(1),
+});
+const MatchAnnotationsConditionSchema = z.object({
+  id: z.string().optional(),
+  type: z.literal("matchAnnotations"),
   conditions: z.array(z.lazy(() => ConditionSchema)).min(1),
 });
 
@@ -176,6 +183,7 @@ export const ConditionSchema: z.ZodType<Condition> = z.union([
   BuiltinConditionSchema,
   AndConditionSchema,
   OrConditionSchema,
+  MatchAnnotationsConditionSchema,
   z.looseObject({ type: z.string() }).refine((val) => !BLOCKED_OPEN_UNION_TYPES.has(val.type), {
     message: "Reserved condition type",
   }),
@@ -185,7 +193,8 @@ export const ConditionSchema: z.ZodType<Condition> = z.union([
 
 export type AndCondition = z.infer<typeof AndConditionSchema>;
 export type OrCondition = z.infer<typeof OrConditionSchema>;
-export type CompositeCondition = AndCondition | OrCondition;
+export type MatchAnnotationsCondition = z.infer<typeof MatchAnnotationsConditionSchema>;
+export type CompositeCondition = AndCondition | OrCondition | MatchAnnotationsCondition;
 
 // ── Type guards ───────────────────────────────────────────────────────────────
 
@@ -194,4 +203,7 @@ export function isAndCondition(c: Condition): c is AndCondition {
 }
 export function isOrCondition(c: Condition): c is OrCondition {
   return c.type === CONDITION_TYPES.or;
+}
+export function isMatchAnnotationsCondition(c: Condition): c is MatchAnnotationsCondition {
+  return c.type === CONDITION_TYPES.matchAnnotations;
 }

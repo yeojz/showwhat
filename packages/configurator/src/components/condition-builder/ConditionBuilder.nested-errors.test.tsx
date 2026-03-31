@@ -62,7 +62,7 @@ describe("ConditionBuilder nested error propagation", () => {
       />,
     );
 
-    expect(screen.getByText("L1 | OR")).toBeDefined();
+    expect(screen.getByText("L1 | or")).toBeDefined();
     expect(screen.getByText("String")).toBeDefined();
 
     // Touch the nested condition to show errors

@@ -4,6 +4,7 @@ export type Annotations<T extends Record<string, unknown> = Record<string, unkno
 export type Dependencies<T extends Record<string, unknown> = Record<string, unknown>> = T;
 
 export type RegexFactory = (pattern: string) => { test: (input: string) => boolean };
+export type AnnotationsFactory = (definitionKey?: string) => Annotations;
 
 export const defaultCreateRegex: RegexFactory = (pattern) => new RegExp(pattern);
 

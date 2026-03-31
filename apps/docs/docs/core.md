@@ -113,7 +113,17 @@ results.flag_b.value; // resolved value
 | `definitions` | `Definitions`     | Map of key → Definition                          |
 | `context`     | `Context`         | The context object                               |
 | `deps`        | `Dependencies?`   | Optional runtime utilities for custom evaluators |
-| `options`     | `ResolverOptions` | Optional evaluators, fallback, logger            |
+| `options`     | `ResolverOptions` | Optional evaluators, fallback, logger, factories |
+
+**ResolverOptions:**
+
+| Field               | Type                                       | Description                                                                    |
+| ------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `evaluators`        | `ConditionEvaluators`                      | Map of condition type → evaluator function                                     |
+| `fallback`          | `ConditionEvaluator?`                      | Fallback evaluator for unknown condition types                                 |
+| `logger`            | `Logger?`                                  | Optional logger for debug/warning output                                       |
+| `createRegex`       | `RegexFactory?`                            | Factory for regex creation (default: `(p) => new RegExp(p)`)                   |
+| `createAnnotations` | `(definitionKey?: string) => Annotations?` | Factory to seed [annotations](/docs/annotations) per variation (default: `{}`) |
 
 **Returns:** `Promise<Record<string, Resolution>>`
 
@@ -137,12 +147,13 @@ if (result) {
 
 **Parameters:**
 
-| Field        | Type              | Description                                      |
-| ------------ | ----------------- | ------------------------------------------------ |
-| `variations` | `Variation[]`     | Ordered list of variations to evaluate           |
-| `context`    | `Context`         | The context object                               |
-| `deps`       | `Dependencies?`   | Optional runtime utilities for custom evaluators |
-| `options`    | `ResolverOptions` | Optional evaluators, fallback, logger            |
+| Field           | Type              | Description                                                                |
+| --------------- | ----------------- | -------------------------------------------------------------------------- |
+| `variations`    | `Variation[]`     | Ordered list of variations to evaluate                                     |
+| `context`       | `Context`         | The context object                                                         |
+| `deps`          | `Dependencies?`   | Optional runtime utilities for custom evaluators                           |
+| `options`       | `ResolverOptions` | Optional evaluators, fallback, logger, factories                           |
+| `definitionKey` | `string?`         | Passed to `createAnnotations` if provided (set automatically by `resolve`) |
 
 **Returns:** `Promise<{ variation: Variation; variationIndex: number; annotations: Record<string, unknown> } | null>`
 

@@ -18,7 +18,7 @@ describe("ConditionGroup", () => {
         onRemove={vi.fn()}
       />,
     );
-    expect(screen.getByText("L0 | AND")).toBeDefined();
+    expect(screen.getByText("L0 | and")).toBeDefined();
     expect(screen.getByText("2 conditions")).toBeDefined();
   });
 
@@ -26,7 +26,7 @@ describe("ConditionGroup", () => {
     render(
       <ConditionGroup type="or" conditions={twoConditions} onChange={vi.fn()} onRemove={vi.fn()} />,
     );
-    expect(screen.getByText("OR")).toBeDefined();
+    expect(screen.getByText("or")).toBeDefined();
   });
 
   it("calls onRemove when remove group button is clicked", () => {

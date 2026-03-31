@@ -1,5 +1,9 @@
 import type { Condition } from "../schemas/condition.js";
-import { isAndCondition, isOrCondition } from "../schemas/condition.js";
+import {
+  isAndCondition,
+  isOrCondition,
+  isMatchAnnotationsCondition,
+} from "../schemas/condition.js";
 import type { Context } from "../schemas/context.js";
 import type {
   Annotations,
@@ -25,6 +29,64 @@ export type EvaluateConditionArgs = {
   createRegex?: RegexFactory;
 };
 
+type ResolvedArgs = Required<
+  Pick<EvaluateConditionArgs, "deps" | "depth" | "logger" | "createRegex">
+> &
+  Omit<EvaluateConditionArgs, "deps" | "depth" | "logger" | "createRegex">;
+
+async function evaluateAnd(conditions: Condition[], args: ResolvedArgs): Promise<boolean> {
+  const { depth, logger } = args;
+  for (let i = 0; i < conditions.length; i++) {
+    const childDepth = depth === "" ? `${i}` : `${depth}.${i}`;
+    const result = await evaluateCondition({
+      ...args,
+      condition: conditions[i],
+      depth: childDepth,
+    });
+    if (!result) {
+      logger.debug("and condition short-circuited (child returned false)", {
+        childType: conditions[i].type,
+        depth: childDepth,
+      });
+      return false;
+    }
+  }
+  return true;
+}
+
+async function evaluateOr(conditions: Condition[], args: ResolvedArgs): Promise<boolean> {
+  const { depth, logger } = args;
+  for (let i = 0; i < conditions.length; i++) {
+    const childDepth = depth === "" ? `${i}` : `${depth}.${i}`;
+    const result = await evaluateCondition({
+      ...args,
+      condition: conditions[i],
+      depth: childDepth,
+    });
+    if (result) {
+      logger.debug("or condition short-circuited (child returned true)", {
+        childType: conditions[i].type,
+        depth: childDepth,
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
+async function evaluateMatchAnnotationsCondition(
+  conditions: Condition[],
+  args: ResolvedArgs,
+): Promise<boolean> {
+  const annotationsAsContext = args.annotations as unknown as Readonly<Context>;
+  const freshAnnotations: Annotations = {};
+  return evaluateAnd(conditions, {
+    ...args,
+    context: annotationsAsContext,
+    annotations: freshAnnotations,
+  });
+}
+
 export async function evaluateCondition({
   condition,
   context,
@@ -36,56 +98,28 @@ export async function evaluateCondition({
   fallback,
   createRegex = defaultCreateRegex,
 }: EvaluateConditionArgs): Promise<boolean> {
-  if (isAndCondition(condition)) {
-    for (let i = 0; i < condition.conditions.length; i++) {
-      const childDepth = depth === "" ? `${i}` : `${depth}.${i}`;
-      const result = await evaluateCondition({
-        condition: condition.conditions[i],
-        context,
-        evaluators,
-        annotations,
-        deps,
-        depth: childDepth,
-        logger,
-        fallback,
-        createRegex,
-      });
+  const args: ResolvedArgs = {
+    condition,
+    context,
+    evaluators,
+    annotations,
+    deps,
+    depth,
+    logger,
+    fallback,
+    createRegex,
+  };
 
-      if (!result) {
-        logger.debug("and condition short-circuited (child returned false)", {
-          childType: condition.conditions[i].type,
-          depth: childDepth,
-        });
-        return false;
-      }
-    }
-    return true;
+  if (isAndCondition(condition)) {
+    return evaluateAnd(condition.conditions, args);
   }
 
   if (isOrCondition(condition)) {
-    for (let i = 0; i < condition.conditions.length; i++) {
-      const childDepth = depth === "" ? `${i}` : `${depth}.${i}`;
-      const result = await evaluateCondition({
-        condition: condition.conditions[i],
-        context,
-        evaluators,
-        annotations,
-        deps,
-        depth: childDepth,
-        logger,
-        fallback,
-        createRegex,
-      });
+    return evaluateOr(condition.conditions, args);
+  }
 
-      if (result) {
-        logger.debug("or condition short-circuited (child returned true)", {
-          childType: condition.conditions[i].type,
-          depth: childDepth,
-        });
-        return true;
-      }
-    }
-    return false;
+  if (isMatchAnnotationsCondition(condition)) {
+    return evaluateMatchAnnotationsCondition(condition.conditions, args);
   }
 
   const evaluator = evaluators[condition.type];

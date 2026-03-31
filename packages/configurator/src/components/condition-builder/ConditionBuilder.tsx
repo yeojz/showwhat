@@ -41,7 +41,7 @@ export function ConditionBuilder({
                         variant="outline"
                         className="select-none font-mono text-xs bg-primary/10 text-primary border-primary/20"
                       >
-                        AND
+                        and
                       </Badge>
                     </div>
                   )}

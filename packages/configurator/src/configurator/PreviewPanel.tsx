@@ -15,7 +15,7 @@ import { Separator } from "@/components/ui/separator.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { ChevronRight, Eye, Loader2, Maximize2, Play } from "lucide-react";
 import { resolve, builtinEvaluators } from "showwhat";
-import type { ConditionEvaluator } from "showwhat";
+import type { Annotations, ConditionEvaluator } from "showwhat";
 import { DefinitionInactiveError, DefinitionNotFoundError, VariationNotFoundError } from "showwhat";
 import type { Context } from "showwhat";
 import { useConfiguratorSelector } from "./useConfiguratorSelector.js";
@@ -101,6 +101,16 @@ function parseContextJson(text: string): Context {
   return context;
 }
 
+function parseAnnotationsJson(text: string): Annotations | null {
+  const trimmed = text.trim();
+  if (!trimmed) return null;
+  const parsed = JSON.parse(trimmed);
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    throw new SyntaxError("Annotations must be a JSON object");
+  }
+  return parsed as Annotations;
+}
+
 function parseEvaluatorOverrides(text: string): Record<string, boolean> {
   const overrides: Record<string, boolean> = {};
   for (const line of text.split("\n")) {
@@ -125,11 +135,17 @@ function JsonEditorDialog({
   onOpenChange,
   value,
   onSave,
+  title = "Edit Context",
+  description = "JSON object with context values for resolving the definition.",
+  placeholder = '{\n  "env": "production",\n  "region": "us-east-1"\n}',
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   value: string;
   onSave: (value: string) => void;
+  title?: string;
+  description?: string;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState(value);
   const [formatError, setFormatError] = useState<string | null>(null);
@@ -163,13 +179,11 @@ function JsonEditorDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Context</DialogTitle>
-          <DialogDescription>
-            JSON object with context values for resolving the definition.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <Textarea
-          placeholder={'{\n  "env": "production",\n  "region": "us-east-1"\n}'}
+          placeholder={placeholder}
           value={draft}
           onChange={(e) => {
             setDraft(e.target.value);
@@ -198,10 +212,12 @@ export function PreviewPanel() {
   const externalFallback = useFallbackEvaluator();
 
   const [contextText, setContextText] = useState("");
+  const [annotationsText, setAnnotationsText] = useState("");
   const [evaluatorText, setEvaluatorText] = useState("");
   const [contextError, setContextError] = useState<string | null>(null);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
+  const [annotationsEditorOpen, setAnnotationsEditorOpen] = useState(false);
   const [previewResult, setPreviewResult] = useState<PreviewResult | null>(null);
   const [isResolving, setIsResolving] = useState(false);
   const [metaDialogOpen, setMetaDialogOpen] = useState(false);
@@ -254,6 +270,15 @@ export function PreviewPanel() {
       return;
     }
 
+    let seedAnnotations: Annotations | null = null;
+    try {
+      seedAnnotations = parseAnnotationsJson(annotationsText);
+    } catch {
+      setPreviewResult({ status: "error", message: "Invalid JSON in annotations" });
+      setIsResolving(false);
+      return;
+    }
+
     try {
       const result = await resolve({
         definitions: { [selectedKey]: definitions[selectedKey] },
@@ -261,6 +286,7 @@ export function PreviewPanel() {
         options: {
           evaluators: builtinEvaluators,
           ...(fallback ? { fallback } : undefined),
+          ...(seedAnnotations ? { createAnnotations: () => ({ ...seedAnnotations }) } : undefined),
         },
       });
 
@@ -309,7 +335,7 @@ export function PreviewPanel() {
         setIsResolving(false);
       }
     }
-  }, [selectedKey, definitions, contextText, fallback]);
+  }, [selectedKey, definitions, contextText, annotationsText, fallback]);
 
   return (
     <div className="flex w-80 shrink-0 flex-col border-l border-border bg-muted/30">
@@ -385,17 +411,58 @@ export function PreviewPanel() {
               Condition Simulator
             </button>
             {simulatorOpen && (
-              <div className="mt-2">
-                <Textarea
-                  placeholder={"tier:true\ngeo:false"}
-                  value={evaluatorText}
-                  onChange={(e) => setEvaluatorText(e.target.value)}
-                  className="min-h-20 font-mono text-xs"
-                  rows={6}
-                />
-                <p className="mt-1 text-[10px] text-muted-foreground">
-                  Simulate unregistered condition types. One type:true|false per line
-                </p>
+              <div className="mt-2 space-y-3">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[10px] text-muted-foreground">Seed Annotations</Label>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => setAnnotationsEditorOpen(true)}
+                    >
+                      <Maximize2 className="h-3 w-3" />
+                      Edit
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    /* v8 ignore next */
+                    className="mt-1 w-full cursor-pointer rounded-md border border-input bg-transparent px-3 py-2 text-left transition-colors hover:border-ring"
+                    onClick={() => setAnnotationsEditorOpen(true)}
+                  >
+                    {annotationsText.trim() ? (
+                      <pre className="max-h-20 overflow-hidden font-mono text-xs text-foreground">
+                        {annotationsText}
+                      </pre>
+                    ) : (
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {'{ "bucket": 42 }'}
+                      </span>
+                    )}
+                  </button>
+                  <JsonEditorDialog
+                    open={annotationsEditorOpen}
+                    onOpenChange={setAnnotationsEditorOpen}
+                    value={annotationsText}
+                    onSave={setAnnotationsText}
+                    title="Edit Seed Annotations"
+                    description="JSON object to pre-populate annotations for matchAnnotations conditions."
+                    placeholder={'{\n  "bucket": 42,\n  "threshold": 80\n}'}
+                  />
+                </div>
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">Evaluator Overrides</Label>
+                  <Textarea
+                    placeholder={"tier:true\ngeo:false"}
+                    value={evaluatorText}
+                    onChange={(e) => setEvaluatorText(e.target.value)}
+                    className="mt-1 min-h-20 font-mono text-xs"
+                    rows={4}
+                  />
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    Simulate unregistered condition types. One type:true|false per line
+                  </p>
+                </div>
               </div>
             )}
           </div>

@@ -73,7 +73,7 @@ export type ConditionBlockProps = {
 };
 
 export type ConditionGroupProps = {
-  type: "and" | "or";
+  type: "and" | "or" | "matchAnnotations";
   conditions: Condition[];
   onChange: (conditions: Condition[]) => void;
   onRemove: () => void;

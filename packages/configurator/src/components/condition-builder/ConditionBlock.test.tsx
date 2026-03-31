@@ -20,7 +20,7 @@ describe("ConditionBlock", () => {
     };
     const onChange = vi.fn();
     render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
-    expect(screen.getByText(/AND/)).toBeDefined();
+    expect(screen.getByText(/and/)).toBeDefined();
   });
 
   it("renders an OR group via ConditionGroup", () => {
@@ -30,7 +30,7 @@ describe("ConditionBlock", () => {
     };
     const onChange = vi.fn();
     render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
-    expect(screen.getByText(/OR/)).toBeDefined();
+    expect(screen.getByText(/\bor\b/)).toBeDefined();
   });
 
   it("calls onChange with buildAndCondition when AND group children change", () => {
@@ -70,6 +70,35 @@ describe("ConditionBlock", () => {
     const result = onChange.mock.calls[0][0];
     expect(result.type).toBe("or");
     expect(result.id).toBe("grp-2");
+  });
+
+  it("renders a matchAnnotations group via ConditionGroup", () => {
+    const condition: Condition = {
+      type: "matchAnnotations",
+      conditions: [{ id: "c1", type: "number", key: "bucket", op: "eq", value: 42 }],
+    };
+    const onChange = vi.fn();
+    render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
+    expect(screen.getByText(/matchAnnotations/)).toBeDefined();
+  });
+
+  it("calls onChange with buildMatchAnnotationsCondition when matchAnnotations children change", () => {
+    const condition: Condition = {
+      type: "matchAnnotations",
+      id: "grp-3",
+      conditions: [
+        { id: "c1", type: "number", key: "bucket", op: "eq", value: 42 },
+        { id: "c2", type: "number", key: "threshold", op: "eq", value: 80 },
+      ],
+    };
+    const onChange = vi.fn();
+    render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
+    const removeButtons = screen.getAllByLabelText("Remove condition");
+    removeButtons[0].click();
+    expect(onChange).toHaveBeenCalled();
+    const result = onChange.mock.calls[0][0];
+    expect(result.type).toBe("matchAnnotations");
+    expect(result.id).toBe("grp-3");
   });
 
   it("falls back to condition.type as label when meta is not found", () => {

@@ -35,7 +35,11 @@ export const ConditionGroup = memo(function ConditionGroup({
     <div
       className={cn(
         "border-l-3 pl-3 pr-2 py-2 rounded-r-md",
-        type === "and" ? "border-primary/30" : "border-amber-500/30",
+        type === "and"
+          ? "border-primary/30"
+          : type === "or"
+            ? "border-amber-500/30"
+            : "border-violet-500/30",
       )}
       style={{
         backgroundColor: `oklch(from var(--color-muted) l c h / ${Math.min(0.2 + depth * 0.1, 0.5)})`,
@@ -46,7 +50,7 @@ export const ConditionGroup = memo(function ConditionGroup({
           variant="outline"
           className="select-none font-mono text-xs bg-muted/50 text-muted-foreground border-border"
         >
-          L{depth} | {type.toUpperCase()}
+          L{depth} | {type}
         </Badge>
         <span className="text-sm text-muted-foreground">
           {conditions.length} condition{conditions.length !== 1 ? "s" : ""}
@@ -76,10 +80,12 @@ export const ConditionGroup = memo(function ConditionGroup({
                     "select-none font-mono text-xs",
                     type === "and"
                       ? "bg-primary/10 text-primary border-primary/20"
-                      : "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400",
+                      : type === "or"
+                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400"
+                        : "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400",
                   )}
                 >
-                  {type.toUpperCase()}
+                  {type === "matchAnnotations" ? "and" : type}
                 </Badge>
               </div>
             )}

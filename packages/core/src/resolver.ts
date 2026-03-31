@@ -9,6 +9,7 @@ import type {
 import { evaluateCondition } from "./conditions/index.js";
 import type {
   Annotations,
+  AnnotationsFactory,
   ConditionEvaluator,
   ConditionEvaluators,
   Dependencies,
@@ -28,6 +29,7 @@ export type ResolverOptions = {
   fallback?: ConditionEvaluator;
   logger?: Logger;
   createRegex?: RegexFactory;
+  createAnnotations?: AnnotationsFactory;
 };
 
 function getEvaluators(options?: ResolverOptions): ConditionEvaluators {
@@ -49,11 +51,13 @@ export async function resolveVariation<
   context,
   deps,
   options,
+  definitionKey,
 }: {
   variations: Variation[];
   context: Readonly<Context<T>>;
   deps?: Dependencies<D>;
   options?: ResolverOptions;
+  definitionKey?: string;
 }): Promise<{ variation: Variation; variationIndex: number; annotations: Annotations } | null> {
   const evaluators = getEvaluators(options);
   const logger = getLogger(options);
@@ -61,13 +65,13 @@ export async function resolveVariation<
   for (let i = 0; i < variations.length; i++) {
     const variation = variations[i];
     const conditionList = Array.isArray(variation.conditions) ? variation.conditions : [];
+    const annotations: Annotations = options?.createAnnotations?.(definitionKey) ?? {};
 
     if (conditionList.length === 0) {
       logger.debug("variation matched (no conditions)", { variationIndex: i });
-      return { variation, variationIndex: i, annotations: {} };
+      return { variation, variationIndex: i, annotations };
     }
 
-    const annotations: Annotations = {};
     const rulesMatch = await evaluateCondition({
       condition: { type: "and", conditions: conditionList },
       context,
@@ -152,6 +156,7 @@ async function resolveKey<T extends Record<string, ContextValue> = Record<string
     context,
     deps,
     options,
+    definitionKey: key,
   });
 
   if (!result) {

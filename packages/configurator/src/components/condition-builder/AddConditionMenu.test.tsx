@@ -28,12 +28,13 @@ describe("AddConditionMenu", () => {
     expect(screen.getByText("End At")).toBeDefined();
   });
 
-  it("opens dropdown and shows group types and custom", async () => {
+  it("opens dropdown and shows group types, match annotations, and custom", async () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
     expect(screen.getByText("AND Group")).toBeDefined();
     expect(screen.getByText("OR Group")).toBeDefined();
+    expect(screen.getByText("Match Annotations")).toBeDefined();
     expect(screen.getByText("Custom")).toBeDefined();
   });
 
@@ -53,6 +54,15 @@ describe("AddConditionMenu", () => {
     await user.click(screen.getByText("Add condition"));
     await user.click(screen.getByText("OR Group"));
     expect(onAdd).toHaveBeenCalledWith("or");
+  });
+
+  it("calls onAdd with 'matchAnnotations' when Match Annotations is clicked", async () => {
+    const onAdd = vi.fn();
+    const user = userEvent.setup();
+    render(<AddConditionMenu onAdd={onAdd} />);
+    await user.click(screen.getByText("Add condition"));
+    await user.click(screen.getByText("Match Annotations"));
+    expect(onAdd).toHaveBeenCalledWith("matchAnnotations");
   });
 
   it("calls onAdd with '__custom' when Custom is clicked", async () => {
