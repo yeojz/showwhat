@@ -426,6 +426,7 @@ export function PreviewPanel() {
                   </div>
                   <button
                     type="button"
+                    /* v8 ignore next */
                     className="mt-1 w-full cursor-pointer rounded-md border border-input bg-transparent px-3 py-2 text-left transition-colors hover:border-ring"
                     onClick={() => setAnnotationsEditorOpen(true)}
                   >

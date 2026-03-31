@@ -322,6 +322,28 @@ describe("PreviewPanel", () => {
     });
   });
 
+  it("should show error result for generic resolution error", async () => {
+    renderWithStore(makeStore());
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          success: false,
+          key: "flag-a",
+          error: new Error("custom evaluator failed"),
+        },
+      });
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Error")).toBeDefined();
+      expect(screen.getByText("custom evaluator failed")).toBeDefined();
+    });
+  });
+
   it("should show error result for unknown errors", async () => {
     renderWithStore(makeStore());
 
@@ -597,6 +619,13 @@ describe("PreviewPanel", () => {
     expect(screen.queryByText("Invalid JSON")).toBeNull();
   });
 
+  it("should open context editor when clicking the context preview box", () => {
+    renderWithStore(makeStore());
+    // Click the context placeholder text to open the editor
+    fireEvent.click(screen.getByText('{ "env": "production" }'));
+    expect(screen.getByPlaceholderText(/env/i)).toBeDefined();
+  });
+
   it("should apply draft value and close the editor dialog", () => {
     renderWithStore(makeStore());
     openJsonEditor();
@@ -853,6 +882,129 @@ describe("PreviewPanel", () => {
 
     // No meta button for no-match
     expect(screen.queryByRole("button", { name: /view evaluation meta/i })).toBeNull();
+  });
+
+  // --- Seed annotations ---
+
+  it("should show seed annotations editor when simulator is expanded", () => {
+    renderWithStore(makeStore());
+    openSimulator();
+    expect(screen.getByText("Seed Annotations")).toBeDefined();
+  });
+
+  it("should open annotations editor dialog when clicking preview box", () => {
+    renderWithStore(makeStore());
+    openSimulator();
+    // Click the annotations preview box (the button containing the placeholder text)
+    fireEvent.click(screen.getByText('{ "bucket": 42 }'));
+    expect(screen.getByText("Edit Seed Annotations")).toBeDefined();
+  });
+
+  it("should open annotations editor dialog when clicking Edit", () => {
+    renderWithStore(makeStore());
+    openSimulator();
+    // There are two "Edit" buttons — context and annotations. Click the second one (inside simulator).
+    const editButtons = screen.getAllByText("Edit");
+    fireEvent.click(editButtons[editButtons.length - 1]);
+    expect(screen.getByText("Edit Seed Annotations")).toBeDefined();
+  });
+
+  it("should show annotations preview text after applying", () => {
+    renderWithStore(makeStore());
+    openSimulator();
+    const editButtons = screen.getAllByText("Edit");
+    fireEvent.click(editButtons[editButtons.length - 1]);
+
+    const textarea = screen.getByPlaceholderText(/bucket.*42.*threshold/s) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '{ "bucket": 42 }' } });
+    fireEvent.click(screen.getByRole("button", { name: /apply/i }));
+
+    expect(screen.getByText(/bucket/)).toBeDefined();
+  });
+
+  it("should show error for invalid JSON in annotations", () => {
+    renderWithStore(makeStore());
+    openSimulator();
+    const editButtons = screen.getAllByText("Edit");
+    fireEvent.click(editButtons[editButtons.length - 1]);
+
+    const textarea = screen.getByPlaceholderText(/bucket.*42.*threshold/s) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "not valid json" } });
+    fireEvent.click(screen.getByRole("button", { name: /apply/i }));
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    expect(screen.getByText("Invalid JSON in annotations")).toBeDefined();
+  });
+
+  it("should show error for JSON array annotations", () => {
+    renderWithStore(makeStore());
+    openSimulator();
+    const editButtons = screen.getAllByText("Edit");
+    fireEvent.click(editButtons[editButtons.length - 1]);
+
+    const textarea = screen.getByPlaceholderText(/bucket.*42.*threshold/s) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: "[1, 2]" } });
+    fireEvent.click(screen.getByRole("button", { name: /apply/i }));
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    expect(screen.getByText("Invalid JSON in annotations")).toBeDefined();
+  });
+
+  it("should pass createAnnotations to resolve when seed annotations are provided", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    renderWithStore(makeStore());
+    openSimulator();
+
+    const editButtons = screen.getAllByText("Edit");
+    fireEvent.click(editButtons[editButtons.length - 1]);
+
+    const textarea = screen.getByPlaceholderText(/bucket.*42.*threshold/s) as HTMLTextAreaElement;
+    fireEvent.change(textarea, { target: { value: '{ "bucket": 42 }' } });
+    fireEvent.click(screen.getByRole("button", { name: /apply/i }));
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          success: true,
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 1 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    expect(typeof lastCall.options.createAnnotations).toBe("function");
+    expect(lastCall.options.createAnnotations()).toEqual({ bucket: 42 });
+  });
+
+  it("should not pass createAnnotations when seed annotations are empty", async () => {
+    const { resolve: mockResolve } = await import("showwhat");
+    renderWithStore(makeStore());
+
+    const button = screen.getByRole("button", { name: /resolve/i });
+    fireEvent.click(button);
+
+    await act(async () => {
+      resolvePromise({
+        "flag-a": {
+          success: true,
+          value: true,
+          meta: { variation: { index: 0, conditionCount: 0 }, annotations: {} },
+        },
+      });
+    });
+
+    const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
+    const lastCall = calls[calls.length - 1][0];
+    expect(lastCall.options.createAnnotations).toBeUndefined();
   });
 
   // --- Abort controller cleanup on unmount ---
