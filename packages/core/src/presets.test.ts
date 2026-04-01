@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createPresetConditions } from "./presets.js";
 import { PresetsSchema } from "./schemas/index.js";
-import { builtinEvaluators, evaluateCondition } from "./conditions/index.js";
+import { builtinEvaluators, evaluateCondition, defaultCreateRegex } from "./conditions/index.js";
 import type { Context } from "./schemas/context.js";
 
 describe("PresetsSchema", () => {
@@ -69,6 +69,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(result).toBe(true);
 
@@ -80,6 +81,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(resultOverridden).toBe(true);
 
@@ -90,6 +92,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(resultNoMatch).toBe(false);
   });
@@ -104,6 +107,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(result).toBe(true);
 
@@ -113,6 +117,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(resultFalse).toBe(false);
   });
@@ -127,6 +132,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(result).toBe(true);
   });
@@ -143,6 +149,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(true);
     expect(
@@ -152,6 +159,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(false);
     expect(
@@ -161,6 +169,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(true);
   });
@@ -177,6 +186,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(true);
     expect(
@@ -186,6 +196,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(false);
   });
@@ -203,6 +214,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(true);
     expect(
@@ -212,6 +224,7 @@ describe("createPresetConditions", () => {
         annotations: {},
         deps: {},
         depth: "",
+        createRegex: defaultCreateRegex,
       }),
     ).toBe(false);
   });
@@ -226,6 +239,7 @@ describe("createPresetConditions", () => {
       annotations: {},
       deps: {},
       depth: "",
+      createRegex: defaultCreateRegex,
     });
     expect(result).toBe(false);
   });

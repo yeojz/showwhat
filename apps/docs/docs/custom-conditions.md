@@ -25,21 +25,21 @@ Every condition evaluator is a single async function:
 
 Each evaluator receives a single args object and returns `Promise<boolean>`.
 
-| Parameter     | Type                      | Description                                            |
-| ------------- | ------------------------- | ------------------------------------------------------ |
-| `condition`   | `unknown`                 | Raw condition object from your definition              |
-| `context`     | `Readonly<Context>`       | Resolution context                                     |
-| `annotations` | `Record<string, unknown>` | Mutable record — write metadata here during evaluation |
-| `deps`        | `Readonly<Dependencies>`  | Injected runtime utilities (hash functions, fetchers)  |
-| `depth`       | `string`                  | Depth tracking string for nested conditions            |
+| Parameter     | Type                              | Description                                            |
+| ------------- | --------------------------------- | ------------------------------------------------------ |
+| `condition`   | `unknown`                         | Raw condition object from your definition              |
+| `context`     | `Readonly<Context>`               | Resolution context                                     |
+| `annotations` | `Record<string, AnnotationValue>` | Mutable record — write metadata here during evaluation |
+| `deps`        | `Readonly<Dependencies>`          | Injected runtime utilities (hash functions, fetchers)  |
+| `depth`       | `string`                          | Depth tracking string for nested conditions            |
 
 Return `true` to match, `false` to skip the variation.
 
-### `ConditionEvaluators<T>`
+### `ConditionEvaluators`
 
-`ConditionEvaluators<T>` is a `Record<T, ConditionEvaluator>` mapping condition type strings to evaluator functions.
+`ConditionEvaluators` is a `Record<string, ConditionEvaluator>` mapping condition type strings to evaluator functions.
 
-`registerEvaluators` is generic — it preserves type information about your custom condition keys.
+`registerEvaluators` infers the condition key union from the input, so you get type-safe registration without an explicit key generic.
 
 ## Writing and registering custom conditions
 
@@ -151,16 +151,12 @@ const result = await showwhat({
 
 ### Typed deps with evaluator contracts
 
-Each evaluator can export an interface describing the deps it requires:
+Each evaluator can define an interface for the deps it requires and cast internally:
 
 ```ts
 // rollout-evaluator.ts
-export interface RolloutDeps {
+interface RolloutDeps {
   hash: (id: string) => number;
-}
-
-export interface RolloutAnnotations {
-  bucketId: number;
 }
 
 const rolloutEvaluator: ConditionEvaluator = async ({ condition, context, deps, annotations }) => {
@@ -168,24 +164,27 @@ const rolloutEvaluator: ConditionEvaluator = async ({ condition, context, deps, 
   const { hash } = deps as RolloutDeps;
   const userId = String(context.userId);
   const bucket = hash(userId) % 100;
-  (annotations as RolloutAnnotations).bucketId = bucket;
+  annotations.bucketId = bucket;
   return bucket < value;
 };
 ```
 
-Users compose deps types by intersection:
+Users can type-check their deps at the call site by annotating the variable:
 
 ```ts
 import type { RolloutDeps } from "./rollout-evaluator";
 import type { SegmentDeps } from "./segment-evaluator";
-import type { Dependencies } from "showwhat";
 
-type MyDeps = RolloutDeps & SegmentDeps;
+// TypeScript validates the shape here
+const deps: RolloutDeps & SegmentDeps = {
+  hash: murmurhash.v3,
+  fetchSegments: mySegmentFetcher,
+};
 
-const result = await showwhat<MyContext, MyDeps>({
+const result = await showwhat({
   keys: ["feature"],
   context: myContext,
-  deps: { hash: murmurhash.v3, fetchSegments: mySegmentFetcher },
+  deps,
   options: { data, evaluators },
 });
 ```
@@ -204,9 +203,9 @@ const result = await showwhat<MyContext, MyDeps>({
 | API                         | Purpose                                               |
 | --------------------------- | ----------------------------------------------------- |
 | `ConditionEvaluator`        | Type signature for evaluator functions                |
-| `ConditionEvaluators<T>`    | Evaluators map type — `Record<T, ConditionEvaluator>` |
-| `Annotations<T>`            | Generic type for evaluator-written metadata           |
-| `Dependencies<T>`           | Generic type for injected runtime utilities           |
+| `ConditionEvaluators`       | Evaluators map — `Record<string, ConditionEvaluator>` |
+| `Annotations`               | Type for evaluator-written metadata                   |
+| `Dependencies`              | Type for injected runtime utilities                   |
 | `registerEvaluators(extra)` | Merge custom evaluators with built-ins                |
 | `options.evaluators`        | Pass your evaluators to `showwhat()` or `resolve()`   |
 | `deps`                      | Pass runtime utilities to `showwhat()` or `resolve()` |
@@ -220,7 +219,7 @@ Percentage rollouts assign users to buckets deterministically. Inject the hash f
 ```ts
 import type { ConditionEvaluator } from "showwhat";
 
-export interface RolloutDeps {
+interface RolloutDeps {
   hash: (id: string) => number;
 }
 

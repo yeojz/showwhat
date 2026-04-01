@@ -24,10 +24,13 @@ import {
   builtinEvaluators,
   noConditionEvaluator,
   defaultCreateRegex,
+  AnnotationValueSchema,
+  AnnotationsSchema,
 } from "./conditions/index.js";
 import type {
   Annotations,
   AnnotationsFactory,
+  AnnotationValue,
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,
@@ -42,10 +45,18 @@ import type { Logger } from "./logger.js";
 export * from "./schemas/index.js";
 
 // evaluators
-export { evaluateCondition, builtinEvaluators, noConditionEvaluator, defaultCreateRegex };
+export {
+  evaluateCondition,
+  builtinEvaluators,
+  noConditionEvaluator,
+  defaultCreateRegex,
+  AnnotationValueSchema,
+  AnnotationsSchema,
+};
 export type {
   Annotations,
   AnnotationsFactory,
+  AnnotationValue,
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,

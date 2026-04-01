@@ -5,12 +5,12 @@ import { boolEvaluator } from "./bool.js";
 import { envEvaluator } from "./env.js";
 import { startAtEvaluator } from "./start-at.js";
 import { endAtEvaluator } from "./end-at.js";
-import type { BuiltinCondition } from "../schemas/condition.js";
 import type { ConditionEvaluators } from "./types.js";
-export { noConditionEvaluator } from "./types.js";
+export { noConditionEvaluator, AnnotationValueSchema, AnnotationsSchema } from "./types.js";
 export type {
   Annotations,
   AnnotationsFactory,
+  AnnotationValue,
   ConditionEvaluator,
   ConditionEvaluatorArgs,
   ConditionEvaluators,
@@ -21,7 +21,7 @@ export { defaultCreateRegex } from "./types.js";
 export { evaluateCondition } from "./composite.js";
 export type { EvaluateConditionArgs } from "./composite.js";
 
-export const builtinEvaluators: ConditionEvaluators<BuiltinCondition["type"]> = {
+export const builtinEvaluators: ConditionEvaluators = {
   string: stringEvaluator,
   number: numberEvaluator,
   datetime: datetimeEvaluator,

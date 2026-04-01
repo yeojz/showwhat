@@ -70,7 +70,8 @@ export class MemoryData implements DefinitionReader, PresetReader {
     return Object.keys(this.#flags);
   }
 
-  async getPresets(): Promise<Presets> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getPresets(_key?: string): Promise<Presets> {
     return structuredClone(this.#presets);
   }
 }
