@@ -242,27 +242,6 @@ describe("evaluateCondition", () => {
       expect(depths).toEqual(["0.0", "1"]);
     });
 
-    it("passes depth to fallback evaluator", async () => {
-      let receivedDepth = "";
-      const fallback: ConditionEvaluator = async ({ depth }) => {
-        receivedDepth = depth;
-        return true;
-      };
-
-      await evaluateCondition({
-        condition: {
-          type: "and",
-          conditions: [{ type: "env", op: "eq", value: "prod" }, { type: "custom-fallback" }],
-        },
-        context: ctx,
-        evaluators: builtinEvaluators,
-        annotations: {},
-        fallback,
-      });
-
-      expect(receivedDepth).toBe("1");
-    });
-
     it("uses custom depth as root when provided", async () => {
       const depths: string[] = [];
       const tracker: ConditionEvaluator = async ({ depth }) => {
@@ -286,7 +265,8 @@ describe("evaluateCondition", () => {
     });
   });
 
-  it("throws for unknown condition types", async () => {
+  it("throws UnknownConditionTypeError for unknown condition types", async () => {
+    const { UnknownConditionTypeError } = await import("../errors.js");
     await expect(
       evaluateCondition({
         condition: { type: "unknown" },
@@ -294,44 +274,7 @@ describe("evaluateCondition", () => {
         evaluators: builtinEvaluators,
         annotations: {},
       }),
-    ).rejects.toThrow('Unknown condition type "unknown".');
-  });
-
-  it("uses fallback evaluator for unknown condition types when provided", async () => {
-    const fallback: ConditionEvaluator = async () => true;
-    const result = await evaluateCondition({
-      condition: { type: "unknown" },
-      context: ctx,
-      evaluators: builtinEvaluators,
-      annotations: {},
-      fallback,
-    });
-    expect(result).toBe(true);
-  });
-
-  it("fallback receives the condition object", async () => {
-    const fallback: ConditionEvaluator = async ({ condition }) => {
-      return (condition as { type: string }).type === "custom";
-    };
-    const result = await evaluateCondition({
-      condition: { type: "custom" },
-      context: ctx,
-      evaluators: builtinEvaluators,
-      annotations: {},
-      fallback,
-    });
-    expect(result).toBe(true);
-  });
-
-  it("throws for unknown types even with no fallback", async () => {
-    await expect(
-      evaluateCondition({
-        condition: { type: "unknown" },
-        context: ctx,
-        evaluators: builtinEvaluators,
-        annotations: {},
-      }),
-    ).rejects.toThrow('Unknown condition type "unknown"');
+    ).rejects.toThrow(UnknownConditionTypeError);
   });
 
   it("uses extended evaluators for custom condition types", async () => {
@@ -416,26 +359,6 @@ describe("evaluateCondition", () => {
       expect(received).toHaveLength(2);
       expect(received[0]).toBe(myDeps);
       expect(received[1]).toBe(myDeps);
-    });
-
-    it("passes deps to fallback evaluator", async () => {
-      let receivedDeps: unknown;
-      const fallback: ConditionEvaluator = async ({ deps }) => {
-        receivedDeps = deps;
-        return true;
-      };
-      const myDeps = { fetch: async () => [] };
-
-      await evaluateCondition({
-        condition: { type: "unknown-type" },
-        context: ctx,
-        evaluators: builtinEvaluators,
-        annotations: {},
-        deps: myDeps,
-        fallback,
-      });
-
-      expect(receivedDeps).toBe(myDeps);
     });
   });
 

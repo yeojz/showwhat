@@ -596,6 +596,20 @@ describe("custom condition evaluators", () => {
     expect(result!.variation.value).toBe("default");
   });
 
+  it("rethrows non-UnknownConditionTypeError even when fallback is provided", async () => {
+    const throwing: ConditionEvaluator = async () => {
+      throw new Error("boom");
+    };
+    const fallback: ConditionEvaluator = async () => true;
+    await expect(
+      resolveVariation({
+        variations: [{ value: "x", conditions: [{ type: "throwing" as never }] }],
+        context: { env: "prod" },
+        options: { evaluators: { ...builtinEvaluators, throwing }, fallback },
+      }),
+    ).rejects.toThrow("boom");
+  });
+
   it("custom evaluators preserve built-ins", async () => {
     const myEvaluator: ConditionEvaluator = async () => true;
     const extended = { ...builtinEvaluators, custom: myEvaluator };

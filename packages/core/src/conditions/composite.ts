@@ -5,17 +5,11 @@ import {
   isMatchAnnotationsCondition,
 } from "../schemas/condition.js";
 import type { Context } from "../schemas/context.js";
-import type {
-  Annotations,
-  ConditionEvaluator,
-  ConditionEvaluators,
-  Dependencies,
-  RegexFactory,
-} from "./types.js";
+import type { Annotations, ConditionEvaluators, Dependencies, RegexFactory } from "./types.js";
 import { defaultCreateRegex } from "./types.js";
 import type { Logger } from "../logger.js";
 import { noopLogger } from "../logger.js";
-import { ShowwhatError } from "../errors.js";
+import { UnknownConditionTypeError } from "../errors.js";
 
 export type EvaluateConditionArgs = {
   condition: Condition;
@@ -25,7 +19,6 @@ export type EvaluateConditionArgs = {
   deps?: Readonly<Dependencies>;
   depth?: string;
   logger?: Logger;
-  fallback?: ConditionEvaluator;
   createRegex?: RegexFactory;
 };
 
@@ -94,7 +87,6 @@ export async function evaluateCondition({
   deps = {},
   depth = "",
   logger = noopLogger,
-  fallback,
   createRegex = defaultCreateRegex,
 }: EvaluateConditionArgs): Promise<boolean> {
   const args: ResolvedArgs = {
@@ -105,7 +97,6 @@ export async function evaluateCondition({
     deps,
     depth,
     logger,
-    fallback,
     createRegex,
   };
 
@@ -124,17 +115,7 @@ export async function evaluateCondition({
   const evaluator = evaluators[condition.type];
 
   if (!evaluator) {
-    if (fallback) {
-      const result = await fallback({ condition, context, annotations, deps, depth, createRegex });
-      logger.debug("condition evaluated (fallback)", {
-        type: condition.type,
-        depth,
-        result,
-      });
-      return result;
-    }
-
-    throw new ShowwhatError(`Unknown condition type "${condition.type}".`);
+    throw new UnknownConditionTypeError(condition.type, condition);
   }
 
   const result = await evaluator({ condition, context, annotations, deps, depth, createRegex });
