@@ -9,6 +9,8 @@ import {
   FileFormatSchema,
   ContextSchema,
 } from "./schemas/index.js";
+import { isAndCondition, isOrCondition, isMatchAnnotationsCondition } from "./schemas/condition.js";
+import type { Condition } from "./schemas/condition.js";
 
 describe("ConditionSchema", () => {
   it("accepts valid env condition with string", () => {
@@ -451,6 +453,49 @@ describe("ContextSchema", () => {
       user: { profile: { tier: "pro" } },
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("condition type guards", () => {
+  const and: Condition = {
+    type: "and",
+    conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
+  };
+  const or: Condition = {
+    type: "or",
+    conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
+  };
+  const matchAnnotations: Condition = {
+    type: "matchAnnotations",
+    conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
+  };
+  const string: Condition = { type: "string", key: "k", op: "eq", value: "v" };
+
+  it("isAndCondition returns true for and conditions", () => {
+    expect(isAndCondition(and)).toBe(true);
+  });
+
+  it("isAndCondition returns false for non-and conditions", () => {
+    expect(isAndCondition(or)).toBe(false);
+    expect(isAndCondition(string)).toBe(false);
+  });
+
+  it("isOrCondition returns true for or conditions", () => {
+    expect(isOrCondition(or)).toBe(true);
+  });
+
+  it("isOrCondition returns false for non-or conditions", () => {
+    expect(isOrCondition(and)).toBe(false);
+    expect(isOrCondition(string)).toBe(false);
+  });
+
+  it("isMatchAnnotationsCondition returns true for matchAnnotations conditions", () => {
+    expect(isMatchAnnotationsCondition(matchAnnotations)).toBe(true);
+  });
+
+  it("isMatchAnnotationsCondition returns false for non-matchAnnotations conditions", () => {
+    expect(isMatchAnnotationsCondition(and)).toBe(false);
+    expect(isMatchAnnotationsCondition(string)).toBe(false);
   });
 });
 

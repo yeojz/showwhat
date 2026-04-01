@@ -98,6 +98,7 @@ export async function resolveVariation({
         ...commonArgs,
         condition: error.condition,
         depth: "",
+        evaluators,
       });
 
       logger.debug("condition evaluated (fallback)", {

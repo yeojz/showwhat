@@ -3,7 +3,7 @@ import { resolve } from "./resolver.js";
 import type { Definitions } from "./schemas/index.js";
 import type { Logger } from "./logger.js";
 import { noopLogger } from "./logger.js";
-import { evaluateCondition } from "./conditions/composite.js";
+import { evaluateCondition } from "./conditions/evaluate.js";
 import { builtinEvaluators } from "./conditions/index.js";
 
 function createSpyLogger(): Logger & {
