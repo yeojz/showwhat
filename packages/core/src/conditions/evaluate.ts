@@ -1,7 +1,7 @@
 import type { Condition } from "../schemas/condition.js";
 import type { Context } from "../schemas/context.js";
 import type { Annotations, ConditionEvaluators, Dependencies, RegexFactory } from "./types.js";
-import { defaultCreateRegex } from "./types.js";
+import { defaultCreateRegex, FALLBACK_EVALUATOR_KEY } from "./types.js";
 import type { Logger } from "../logger.js";
 import { noopLogger } from "../logger.js";
 import { UnknownConditionTypeError } from "../errors.js";
@@ -27,7 +27,7 @@ export async function evaluateCondition({
   logger = noopLogger,
   createRegex = defaultCreateRegex,
 }: EvaluateConditionArgs): Promise<boolean> {
-  const evaluator = evaluators[condition.type];
+  const evaluator = evaluators[condition.type] ?? evaluators[FALLBACK_EVALUATOR_KEY];
 
   if (!evaluator) {
     throw new UnknownConditionTypeError(condition.type, condition);

@@ -5,7 +5,7 @@ import type {
   Variation,
   Context,
 } from "./schemas/index.js";
-import { evaluateCondition } from "./conditions/index.js";
+import { evaluateCondition, FALLBACK_EVALUATOR_KEY } from "./conditions/index.js";
 import type {
   Annotations,
   AnnotationsFactory,
@@ -19,7 +19,6 @@ import {
   DefinitionInactiveError,
   DefinitionNotFoundError,
   ShowwhatError,
-  UnknownConditionTypeError,
   VariationNotFoundError,
 } from "./errors.js";
 import type { Logger } from "./logger.js";
@@ -36,6 +35,9 @@ export type ResolverOptions = {
 function getEvaluators(options?: ResolverOptions): ConditionEvaluators {
   if (!options?.evaluators) {
     throw new ShowwhatError("No evaluators registered. Pass evaluators via options.");
+  }
+  if (options.fallback) {
+    return { ...options.evaluators, [FALLBACK_EVALUATOR_KEY]: options.fallback };
   }
   return options.evaluators;
 }
@@ -70,44 +72,15 @@ export async function resolveVariation({
       return { variation, variationIndex: i, annotations };
     }
 
-    let rulesMatch: boolean = false;
-    const commonArgs = {
+    const rulesMatch = await evaluateCondition({
+      condition: { type: "and", conditions },
       context,
+      evaluators,
       annotations,
       deps: deps ?? {},
       logger,
       createRegex: options?.createRegex ?? defaultCreateRegex,
-    };
-
-    try {
-      rulesMatch = await evaluateCondition({
-        ...commonArgs,
-        condition: { type: "and", conditions },
-        evaluators,
-      });
-    } catch (error) {
-      if (!options?.fallback) {
-        throw error;
-      }
-
-      if (!(error instanceof UnknownConditionTypeError)) {
-        throw error;
-      }
-
-      const result = await options.fallback({
-        ...commonArgs,
-        condition: error.condition,
-        depth: "",
-        evaluators,
-      });
-
-      logger.debug("condition evaluated (fallback)", {
-        type: error.conditionType,
-        result,
-      });
-
-      rulesMatch = result;
-    }
+    });
 
     if (!rulesMatch) {
       logger.debug("variation did not match", {

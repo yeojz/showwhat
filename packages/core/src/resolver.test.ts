@@ -610,6 +610,25 @@ describe("custom condition evaluators", () => {
     ).rejects.toThrow("boom");
   });
 
+  it("fallback does not skip remaining AND children", async () => {
+    const fallback: ConditionEvaluator = async () => true;
+    const result = await resolveVariation({
+      variations: [
+        {
+          value: "guarded",
+          conditions: [
+            { type: "unknown_custom" as never, value: "anything" },
+            { type: "env", op: "eq", value: "staging" },
+          ],
+        },
+        { value: "default" },
+      ],
+      context: { env: "prod" },
+      options: { evaluators: builtinEvaluators, fallback },
+    });
+    expect(result!.variation.value).toBe("default");
+  });
+
   it("custom evaluators preserve built-ins", async () => {
     const myEvaluator: ConditionEvaluator = async () => true;
     const extended = { ...builtinEvaluators, custom: myEvaluator };
