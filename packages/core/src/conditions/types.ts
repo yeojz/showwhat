@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Context } from "../schemas/context.js";
 import { DataValueSchema } from "../schemas/value.js";
 import type { DataValue } from "../schemas/value.js";
+import type { Logger } from "../logger.js";
 
 export const AnnotationValueSchema = DataValueSchema;
 
@@ -28,7 +29,11 @@ export type ConditionEvaluatorArgs = {
   annotations: Annotations;
   deps: Readonly<Dependencies>;
   depth: string;
+
+  // Functions
   createRegex: RegexFactory;
+  evaluators: ConditionEvaluators;
+  logger?: Logger;
 };
 
 export type ConditionEvaluator = (args: ConditionEvaluatorArgs) => Promise<boolean>;

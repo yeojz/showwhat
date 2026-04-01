@@ -9,6 +9,7 @@ import {
   InvalidContextError,
   DataError,
   ConditionError,
+  UnknownConditionTypeError,
 } from "./errors.js";
 import { resolve, resolveVariation, ResolverOptions } from "./resolver.js";
 import {
@@ -80,6 +81,7 @@ export {
   InvalidContextError,
   DataError,
   ConditionError,
+  UnknownConditionTypeError,
 };
 
 // data

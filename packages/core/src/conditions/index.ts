@@ -5,6 +5,9 @@ import { boolEvaluator } from "./bool.js";
 import { envEvaluator } from "./env.js";
 import { startAtEvaluator } from "./start-at.js";
 import { endAtEvaluator } from "./end-at.js";
+import { andEvaluator } from "./and.js";
+import { orEvaluator } from "./or.js";
+import { matchAnnotationsEvaluator } from "./match-annotations.js";
 import type { ConditionEvaluators } from "./types.js";
 export { noConditionEvaluator, AnnotationValueSchema, AnnotationsSchema } from "./types.js";
 export type {
@@ -18,8 +21,8 @@ export type {
   RegexFactory,
 } from "./types.js";
 export { defaultCreateRegex } from "./types.js";
-export { evaluateCondition } from "./composite.js";
-export type { EvaluateConditionArgs } from "./composite.js";
+export { evaluateCondition } from "./evaluate.js";
+export type { EvaluateConditionArgs } from "./evaluate.js";
 
 export const builtinEvaluators: ConditionEvaluators = {
   string: stringEvaluator,
@@ -29,4 +32,7 @@ export const builtinEvaluators: ConditionEvaluators = {
   env: envEvaluator,
   startAt: startAtEvaluator,
   endAt: endAtEvaluator,
+  and: andEvaluator,
+  or: orEvaluator,
+  matchAnnotations: matchAnnotationsEvaluator,
 };

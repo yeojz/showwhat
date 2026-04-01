@@ -89,3 +89,13 @@ export class ConditionError extends ShowwhatError {
     this.name = "ConditionError";
   }
 }
+
+export class UnknownConditionTypeError extends ShowwhatError {
+  constructor(
+    public readonly conditionType: string,
+    public readonly condition: unknown,
+  ) {
+    super(`Unknown condition type "${conditionType}".`);
+    this.name = "UnknownConditionTypeError";
+  }
+}

@@ -9,6 +9,7 @@ export default defineConfig({
       exclude: [
         "**/*.test.{ts,tsx}",
         "**/dist/**",
+        "packages/core/src/index.ts",
         "packages/core/src/schemas/index.ts",
         "packages/openfeature/src/index.ts",
         "packages/configurator/src/index.ts",

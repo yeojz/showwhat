@@ -14,10 +14,12 @@ import type {
   Dependencies,
   RegexFactory,
 } from "./conditions/index.js";
+import { defaultCreateRegex } from "./conditions/index.js";
 import {
   DefinitionInactiveError,
   DefinitionNotFoundError,
   ShowwhatError,
+  UnknownConditionTypeError,
   VariationNotFoundError,
 } from "./errors.js";
 import type { Logger } from "./logger.js";
@@ -60,66 +62,70 @@ export async function resolveVariation({
 
   for (let i = 0; i < variations.length; i++) {
     const variation = variations[i];
-    const conditionList = Array.isArray(variation.conditions) ? variation.conditions : [];
+    const conditions = Array.isArray(variation.conditions) ? variation.conditions : [];
     const annotations: Annotations = options?.createAnnotations?.(definitionKey) ?? {};
 
-    if (conditionList.length === 0) {
+    if (conditions.length === 0) {
       logger.debug("variation matched (no conditions)", { variationIndex: i });
       return { variation, variationIndex: i, annotations };
     }
 
-    const rulesMatch = await evaluateCondition({
-      condition: { type: "and", conditions: conditionList },
+    let rulesMatch: boolean = false;
+    const commonArgs = {
       context,
-      evaluators,
       annotations,
       deps: deps ?? {},
       logger,
-      fallback: options?.fallback,
-      createRegex: options?.createRegex,
-    });
+      createRegex: options?.createRegex ?? defaultCreateRegex,
+    };
+
+    try {
+      rulesMatch = await evaluateCondition({
+        ...commonArgs,
+        condition: { type: "and", conditions },
+        evaluators,
+      });
+    } catch (error) {
+      if (!options?.fallback) {
+        throw error;
+      }
+
+      if (!(error instanceof UnknownConditionTypeError)) {
+        throw error;
+      }
+
+      const result = await options.fallback({
+        ...commonArgs,
+        condition: error.condition,
+        depth: "",
+        evaluators,
+      });
+
+      logger.debug("condition evaluated (fallback)", {
+        type: error.conditionType,
+        result,
+      });
+
+      rulesMatch = result;
+    }
 
     if (!rulesMatch) {
       logger.debug("variation did not match", {
         variationIndex: i,
-        conditionCount: conditionList.length,
+        conditionCount: conditions.length,
       });
       continue;
     }
 
     logger.debug("variation matched", {
       variationIndex: i,
-      conditionCount: conditionList.length,
+      conditionCount: conditions.length,
     });
     return { variation, variationIndex: i, annotations };
   }
 
   logger.debug("no variation matched", { variationCount: variations.length });
   return null;
-}
-
-function toResolution(
-  key: string,
-  result: { variation: Variation; variationIndex: number; annotations: Annotations },
-): Resolution {
-  const conditionCount = Array.isArray(result.variation.conditions)
-    ? result.variation.conditions.length
-    : 0;
-
-  return {
-    success: true,
-    key,
-    value: result.variation.value,
-    meta: {
-      variation: {
-        index: result.variationIndex,
-        id: result.variation.id,
-        description: result.variation.description,
-        conditionCount,
-      },
-      annotations: result.annotations,
-    },
-  };
 }
 
 async function resolveKey(
@@ -166,7 +172,24 @@ async function resolveKey(
     value: result.variation.value,
   });
 
-  return toResolution(key, result);
+  const conditionCount = Array.isArray(result.variation.conditions)
+    ? result.variation.conditions.length
+    : 0;
+
+  return {
+    success: true,
+    key,
+    value: result.variation.value,
+    meta: {
+      variation: {
+        index: result.variationIndex,
+        id: result.variation.id,
+        description: result.variation.description,
+        conditionCount,
+      },
+      annotations: result.annotations,
+    },
+  };
 }
 
 /**

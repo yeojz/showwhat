@@ -45,6 +45,8 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
       deps,
       depth,
       createRegex,
+      evaluators,
+      logger,
     }) => {
       const rec = condition as Record<string, unknown>;
       return delegateEvaluator({
@@ -54,6 +56,8 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
         deps,
         depth,
         createRegex,
+        evaluators,
+        logger,
       });
     };
 

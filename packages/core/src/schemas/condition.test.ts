@@ -1,14 +1,14 @@
 import { describe, it, expect } from "vitest";
 import {
-  DefinitionSchema,
-  ResolutionSchema,
   ConditionSchema,
   BuiltinConditionSchema,
   StringConditionSchema,
   NumberConditionSchema,
-  FileFormatSchema,
-  ContextSchema,
-} from "./schemas/index.js";
+  isAndCondition,
+  isOrCondition,
+  isMatchAnnotationsCondition,
+} from "./condition.js";
+import type { Condition } from "./condition.js";
 
 describe("ConditionSchema", () => {
   it("accepts valid env condition with string", () => {
@@ -340,188 +340,45 @@ describe("NumberConditionSchema", () => {
   });
 });
 
-describe("DefinitionSchema", () => {
-  it("accepts variations array with conditions", () => {
-    expect(
-      DefinitionSchema.safeParse({
-        variations: [
-          { value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] },
-          { value: false },
-        ],
-      }).success,
-    ).toBe(true);
+describe("condition type guards", () => {
+  const and: Condition = {
+    type: "and",
+    conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
+  };
+  const or: Condition = {
+    type: "or",
+    conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
+  };
+  const matchAnnotations: Condition = {
+    type: "matchAnnotations",
+    conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
+  };
+  const string: Condition = { type: "string", key: "k", op: "eq", value: "v" };
+
+  it("isAndCondition returns true for and conditions", () => {
+    expect(isAndCondition(and)).toBe(true);
   });
 
-  it("accepts variations entry with no conditions (catch-all)", () => {
-    expect(DefinitionSchema.safeParse({ variations: [{ value: 42 }] }).success).toBe(true);
+  it("isAndCondition returns false for non-and conditions", () => {
+    expect(isAndCondition(or)).toBe(false);
+    expect(isAndCondition(string)).toBe(false);
   });
 
-  it("accepts explicitly empty conditions array", () => {
-    expect(
-      DefinitionSchema.safeParse({ variations: [{ value: 42, conditions: [] }] }).success,
-    ).toBe(true);
+  it("isOrCondition returns true for or conditions", () => {
+    expect(isOrCondition(or)).toBe(true);
   });
 
-  it("rejects empty variations array", () => {
-    expect(DefinitionSchema.safeParse({ variations: [] }).success).toBe(false);
+  it("isOrCondition returns false for non-or conditions", () => {
+    expect(isOrCondition(and)).toBe(false);
+    expect(isOrCondition(string)).toBe(false);
   });
 
-  it("rejects missing variations key", () => {
-    expect(DefinitionSchema.safeParse({}).success).toBe(false);
+  it("isMatchAnnotationsCondition returns true for matchAnnotations conditions", () => {
+    expect(isMatchAnnotationsCondition(matchAnnotations)).toBe(true);
   });
 
-  it("comment field is optional", () => {
-    expect(DefinitionSchema.safeParse({ variations: [{ value: true }] }).success).toBe(true);
-  });
-
-  it("comment accepts any string", () => {
-    expect(
-      DefinitionSchema.safeParse({
-        description: "Shown during planned downtime windows",
-        variations: [{ value: true }],
-      }).success,
-    ).toBe(true);
-  });
-
-  it("rejects plain array (object wrapper required)", () => {
-    expect(
-      DefinitionSchema.safeParse([
-        { value: true, conditions: [{ type: "env", op: "eq", value: "prod" }] },
-        { value: false },
-      ]).success,
-    ).toBe(false);
-  });
-});
-
-describe("FileFormatSchema", () => {
-  it("accepts valid definitions with presets", () => {
-    const result = FileFormatSchema.safeParse({
-      definitions: {
-        my_flag: { variations: [{ value: true }] },
-      },
-      presets: {
-        tier: { type: "string", key: "tier" },
-      },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts definitions without presets", () => {
-    const result = FileFormatSchema.safeParse({
-      definitions: {
-        my_flag: { variations: [{ value: true }] },
-      },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing definitions key", () => {
-    const result = FileFormatSchema.safeParse({
-      presets: { tier: { type: "string", key: "tier" } },
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts empty definitions", () => {
-    const result = FileFormatSchema.safeParse({
-      definitions: {},
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects unknown top-level keys", () => {
-    const result = FileFormatSchema.safeParse({
-      definitions: { my_flag: { variations: [{ value: true }] } },
-      extra: "not allowed",
-    });
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("ContextSchema", () => {
-  it("accepts nested record values", () => {
-    const result = ContextSchema.safeParse({
-      user: { name: "alice", age: 30, active: true },
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("accepts deeply nested record values", () => {
-    const result = ContextSchema.safeParse({
-      user: { profile: { tier: "pro" } },
-    });
-    expect(result.success).toBe(true);
-  });
-});
-
-describe("ResolutionSchema", () => {
-  it("accepts resolution with nested variation and annotations", () => {
-    expect(
-      ResolutionSchema.safeParse({
-        key: "checkout_v2",
-        value: true,
-        meta: {
-          variation: {
-            index: 0,
-            conditionCount: 1,
-          },
-          annotations: {},
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("accepts variation with optional id and description", () => {
-    expect(
-      ResolutionSchema.safeParse({
-        key: "checkout_v2",
-        value: true,
-        meta: {
-          variation: {
-            index: 0,
-            id: "var-1",
-            description: "Production variant",
-            conditionCount: 1,
-          },
-          annotations: { rollout: { bucket: 42 } },
-        },
-      }).success,
-    ).toBe(true);
-  });
-
-  it("requires variation.conditionCount", () => {
-    expect(
-      ResolutionSchema.safeParse({
-        key: "checkout_v2",
-        value: false,
-        meta: {
-          variation: {
-            index: 1,
-          },
-          annotations: {},
-        },
-      }).success,
-    ).toBe(false);
-  });
-
-  it("drops top-level source", () => {
-    const result = ResolutionSchema.safeParse({
-      key: "checkout_v2",
-      source: "condition",
-      value: true,
-      meta: {
-        context: { env: "prod" },
-        variation: {
-          index: 0,
-          conditionCount: 1,
-        },
-        annotations: {},
-      },
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect("source" in result.data).toBe(false);
-    }
+  it("isMatchAnnotationsCondition returns false for non-matchAnnotations conditions", () => {
+    expect(isMatchAnnotationsCondition(and)).toBe(false);
+    expect(isMatchAnnotationsCondition(string)).toBe(false);
   });
 });
