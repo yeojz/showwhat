@@ -38,6 +38,10 @@ export type ConditionEvaluatorArgs = {
 
 export type ConditionEvaluator = (args: ConditionEvaluatorArgs) => Promise<boolean>;
 
-export type ConditionEvaluators = Record<string, ConditionEvaluator>;
+export const FALLBACK_EVALUATOR_KEY: unique symbol = Symbol("fallback");
+
+export type ConditionEvaluators = Record<string, ConditionEvaluator> & {
+  [FALLBACK_EVALUATOR_KEY]?: ConditionEvaluator;
+};
 
 export const noConditionEvaluator: ConditionEvaluator = async () => false;

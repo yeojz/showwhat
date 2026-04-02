@@ -9,7 +9,12 @@ import { andEvaluator } from "./and.js";
 import { orEvaluator } from "./or.js";
 import { matchAnnotationsEvaluator } from "./match-annotations.js";
 import type { ConditionEvaluators } from "./types.js";
-export { noConditionEvaluator, AnnotationValueSchema, AnnotationsSchema } from "./types.js";
+export {
+  noConditionEvaluator,
+  AnnotationValueSchema,
+  AnnotationsSchema,
+  FALLBACK_EVALUATOR_KEY,
+} from "./types.js";
 export type {
   Annotations,
   AnnotationsFactory,

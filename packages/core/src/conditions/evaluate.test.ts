@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ConditionSchema } from "../schemas/condition.js";
-import { builtinEvaluators } from "./index.js";
-import type { ConditionEvaluator } from "./index.js";
+import { builtinEvaluators, FALLBACK_EVALUATOR_KEY } from "./index.js";
+import type { ConditionEvaluator, ConditionEvaluators } from "./index.js";
 import { evaluateCondition } from "./evaluate.js";
 
 describe("composite condition schema validation", () => {
@@ -219,6 +219,111 @@ describe("evaluateCondition", () => {
       expect(received).toHaveLength(2);
       expect(received[0]).toBe(myDeps);
       expect(received[1]).toBe(myDeps);
+    });
+  });
+
+  describe("FALLBACK_EVALUATOR_KEY", () => {
+    it("uses fallback when condition type is not in evaluators", async () => {
+      const fallback: ConditionEvaluator = async () => true;
+      const evaluators: ConditionEvaluators = {
+        ...builtinEvaluators,
+        [FALLBACK_EVALUATOR_KEY]: fallback,
+      };
+
+      const result = await evaluateCondition({
+        condition: { type: "nonexistent" },
+        context: ctx,
+        evaluators,
+        annotations: {},
+      });
+      expect(result).toBe(true);
+    });
+
+    it("named evaluator takes precedence over fallback", async () => {
+      const calls: string[] = [];
+      const named: ConditionEvaluator = async () => {
+        calls.push("named");
+        return true;
+      };
+      const fallback: ConditionEvaluator = async () => {
+        calls.push("fallback");
+        return false;
+      };
+      const evaluators: ConditionEvaluators = {
+        ...builtinEvaluators,
+        custom: named,
+        [FALLBACK_EVALUATOR_KEY]: fallback,
+      };
+
+      await evaluateCondition({
+        condition: { type: "custom" },
+        context: ctx,
+        evaluators,
+        annotations: {},
+      });
+      expect(calls).toEqual(["named"]);
+    });
+
+    it("fallback receives the original condition object", async () => {
+      let received: unknown;
+      const fallback: ConditionEvaluator = async ({ condition }) => {
+        received = condition;
+        return true;
+      };
+      const evaluators: ConditionEvaluators = {
+        ...builtinEvaluators,
+        [FALLBACK_EVALUATOR_KEY]: fallback,
+      };
+      const condition = { type: "custom_type", extra: "data" };
+
+      await evaluateCondition({
+        condition,
+        context: ctx,
+        evaluators,
+        annotations: {},
+      });
+      expect(received).toBe(condition);
+    });
+
+    it("fallback integrates with AND — all children evaluated", async () => {
+      const depths: string[] = [];
+      const tracker: ConditionEvaluator = async ({ depth }) => {
+        depths.push(depth);
+        return true;
+      };
+      const fallback: ConditionEvaluator = async ({ depth }) => {
+        depths.push(`fallback:${depth}`);
+        return true;
+      };
+      const evaluators: ConditionEvaluators = {
+        ...builtinEvaluators,
+        tracker,
+        [FALLBACK_EVALUATOR_KEY]: fallback,
+      };
+
+      await evaluateCondition({
+        condition: {
+          type: "and",
+          conditions: [{ type: "unknown_custom" }, { type: "tracker" }],
+        },
+        context: ctx,
+        evaluators,
+        annotations: {},
+      });
+
+      expect(depths).toEqual(["fallback:0", "1"]);
+    });
+
+    it("throws when no fallback and unknown type", async () => {
+      const { UnknownConditionTypeError } = await import("../errors.js");
+      await expect(
+        evaluateCondition({
+          condition: { type: "nonexistent" },
+          context: ctx,
+          evaluators: builtinEvaluators,
+          annotations: {},
+        }),
+      ).rejects.toThrow(UnknownConditionTypeError);
     });
   });
 });

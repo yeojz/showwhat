@@ -27,6 +27,7 @@ import {
   defaultCreateRegex,
   AnnotationValueSchema,
   AnnotationsSchema,
+  FALLBACK_EVALUATOR_KEY,
 } from "./conditions/index.js";
 import type {
   Annotations,
@@ -53,6 +54,7 @@ export {
   defaultCreateRegex,
   AnnotationValueSchema,
   AnnotationsSchema,
+  FALLBACK_EVALUATOR_KEY,
 };
 export type {
   Annotations,
