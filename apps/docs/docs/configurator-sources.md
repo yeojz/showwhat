@@ -22,10 +22,10 @@ If you already have definitions loaded, a confirmation dialog warns that importi
 Click the **+** button and choose **From URL**. A dialog appears with the following fields:
 
 - **Label** -- a friendly name for this source (e.g. "Production", "Staging").
-- **Mode** -- choose between **Bundled file** or **Split (per-definition)**.
+- **Mode** -- choose between **Bundled** or **Split (per-definition)**.
 - **Format** -- YAML or JSON.
 
-### Bundled file mode
+### Bundled mode
 
 A single URL returns a complete definitions file -- the same format as a local YAML/JSON file.
 

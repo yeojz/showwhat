@@ -108,7 +108,7 @@ describe("SourceFormDialog", () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
     expect(screen.getByText("Add hosted source")).toBeDefined();
     expect(screen.getByText("Label")).toBeDefined();
-    expect(screen.getByText("Bundled file")).toBeDefined();
+    expect(screen.getByText("Bundled")).toBeDefined();
     expect(screen.getByText("Add source")).toBeDefined();
   });
 
@@ -273,7 +273,7 @@ describe("SourceFormDialog", () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
     await userEvent.click(screen.getByText("Split (per-definition)"));
     expect(screen.getByText("List URL (optional)")).toBeDefined();
-    await userEvent.click(screen.getByText("Bundled file"));
+    await userEvent.click(screen.getByText("Bundled"));
     expect(screen.queryByText("List URL (optional)")).toBeNull();
     expect(screen.getByText("URL")).toBeDefined();
   });

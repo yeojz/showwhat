@@ -131,7 +131,7 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
                   onChange={() => setMode("bundled")}
                   className="accent-primary"
                 />
-                Bundled file
+                Bundled
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input

@@ -91,7 +91,7 @@ const result = await showwhat({
 
 The examples below are starting points. Adapt them to your needs.
 
-### Bundled-file reader (Node.js)
+### Bundled reader (Node.js)
 
 Read all definitions from one YAML or JSON file on disk:
 
