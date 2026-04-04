@@ -30,7 +30,7 @@ export function Toolbar({
 
   return (
     <div className="flex h-12 items-center border-b border-border px-4">
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <img
           src={`${import.meta.env.BASE_URL}logo-v2-b.svg`}
           alt="showwhat"
@@ -52,7 +52,7 @@ export function Toolbar({
         )}
       </div>
 
-      <nav className="flex flex-1 justify-center gap-1" role="tablist">
+      <nav className="flex shrink-0 justify-center gap-1" role="tablist">
         {tabs.map(({ value, label }) => (
           <Button
             key={value}
@@ -73,7 +73,9 @@ export function Toolbar({
         ))}
       </nav>
 
-      <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+      <div className="flex flex-1 justify-end">
+        <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+      </div>
     </div>
   );
 }

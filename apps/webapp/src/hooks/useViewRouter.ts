@@ -16,8 +16,9 @@ function parseTab(search: string): AppTab {
 }
 
 function buildUrl(tab: AppTab): string {
-  if (tab === "definitions") return "/";
-  return `?tab=${tab}`;
+  const base = import.meta.env.BASE_URL ?? "/";
+  if (tab === "definitions") return base;
+  return `${base}?tab=${tab}`;
 }
 
 export function useViewRouter(): ViewRouter {
