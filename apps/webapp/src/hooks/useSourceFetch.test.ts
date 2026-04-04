@@ -277,6 +277,24 @@ describe("useSourceFetch", () => {
       expect(presets).toEqual({ tier: { type: "string", key: "tier" } });
     });
 
+    it("returns null when fetchPresets returns undefined", async () => {
+      const presetsResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () => Promise.resolve(JSON.stringify({})),
+      };
+      fetchMock.mockResolvedValueOnce(presetsResponse);
+      mockPresetsSafeParse.mockReturnValue({ success: false });
+
+      const { result } = renderHook(() => useSourceFetch());
+      let presets: Presets | null = null;
+      await act(async () => {
+        presets = await result.current.reloadPresets("https://r2.example.com/presets.json", "json");
+      });
+
+      expect(presets).toBeNull();
+    });
+
     it("sets error and returns null on failure", async () => {
       fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -41,9 +41,32 @@ vi.mock("@showwhat/configurator", () => ({
   cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
+let definitionStoreState: Record<string, unknown> = {};
+
+vi.mock("../store/definition-store.js", () => {
+  const useDefinitionStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector(definitionStoreState);
+  };
+  return { useDefinitionStore };
+});
+
+let sourceStoreState: Record<string, unknown> = {};
+
+vi.mock("../store/source-store.js", () => {
+  const useSourceStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector(sourceStoreState);
+  };
+  return { useSourceStore };
+});
+
 const { Toolbar } = await import("./Toolbar.js");
 
 describe("Toolbar", () => {
+  beforeEach(() => {
+    definitionStoreState = { sourceFileName: null };
+    sourceStoreState = { activeSourceId: null, sources: [] };
+  });
+
   afterEach(() => {
     cleanup();
   });
@@ -109,5 +132,43 @@ describe("Toolbar", () => {
   it("does not render settings button", () => {
     renderToolbar();
     expect(screen.queryByTitle("Settings")).toBeNull();
+  });
+
+  it("does not show source label when nothing is loaded", () => {
+    renderToolbar();
+    // Only branding text should be present, no source label
+    const brandingSpan = screen.getByText("showwhat");
+    expect(brandingSpan).toBeDefined();
+  });
+
+  it("shows source file name when a file source is loaded", () => {
+    definitionStoreState = { sourceFileName: "flags.yaml" };
+    renderToolbar();
+    expect(screen.getByText("flags.yaml")).toBeDefined();
+  });
+
+  it("shows active URL source label instead of file name", () => {
+    definitionStoreState = { sourceFileName: "Production" };
+    sourceStoreState = {
+      activeSourceId: "src-1",
+      sources: [
+        {
+          id: "src-1",
+          mode: "single",
+          label: "Production API",
+          format: "yaml",
+          url: "https://example.com/flags.yaml",
+        },
+      ],
+    };
+    renderToolbar();
+    expect(screen.getByText("Production API")).toBeDefined();
+  });
+
+  it("falls back to sourceFileName when active source is not found", () => {
+    definitionStoreState = { sourceFileName: "flags.yaml" };
+    sourceStoreState = { activeSourceId: "missing-id", sources: [] };
+    renderToolbar();
+    expect(screen.getByText("flags.yaml")).toBeDefined();
   });
 });

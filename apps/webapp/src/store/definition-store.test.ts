@@ -581,6 +581,68 @@ describe("definition-store", () => {
       expect(store2.getState().filePresets).toEqual({});
       expect(store2.getState().sourcePresets).toEqual({});
     });
+
+    it("returns persisted state as-is for unrecognised migration versions", async () => {
+      const storage = createTestStorage();
+      const persisted = {
+        state: {
+          savedDefinitions: { "feature-a": { variations: [{ value: true }] } },
+          filePresets: { tier: { type: "string", key: "tier" } },
+          sourcePresets: {},
+          definitionPresets: {},
+          selectedKey: null,
+          sourceFileName: "flags.yaml",
+          sourceFormat: "yaml",
+        },
+        version: 0,
+      };
+      storage.setItem("showwhat-configurator", JSON.stringify(persisted));
+
+      const store2 = createDefinitionStore({ storage });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(store2.getState().filePresets).toEqual({ tier: { type: "string", key: "tier" } });
+      expect(store2.getState().sourceFileName).toBe("flags.yaml");
+    });
+
+    it("defaults definitionPresets to empty object on rehydrate when null", async () => {
+      const storage = createTestStorage();
+      const persisted = {
+        state: {
+          savedDefinitions: { "feature-a": { variations: [{ value: true }] } },
+          filePresets: {},
+          sourcePresets: {},
+          definitionPresets: null,
+          selectedKey: null,
+          sourceFileName: null,
+          sourceFormat: null,
+        },
+        version: 3,
+      };
+      storage.setItem("showwhat-configurator", JSON.stringify(persisted));
+
+      const store2 = createDefinitionStore({ storage });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(store2.getState().definitionPresets).toEqual({});
+    });
+
+    it("defaults filePresets to empty on v1 migration when inlinePresets is null", async () => {
+      const storage = createTestStorage();
+      const persisted = {
+        state: {
+          savedDefinitions: {},
+          inlinePresets: null,
+          selectedKey: null,
+          sourceFileName: null,
+          sourceFormat: null,
+        },
+        version: 1,
+      };
+      storage.setItem("showwhat-configurator", JSON.stringify(persisted));
+
+      const store2 = createDefinitionStore({ storage });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(store2.getState().filePresets).toEqual({});
+    });
   });
 
   describe("isKeyDirty", () => {

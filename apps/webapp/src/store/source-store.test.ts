@@ -175,6 +175,14 @@ describe("source-store", () => {
   });
 
   describe("setDefinitionKeys", () => {
+    it("does not modify a single source", () => {
+      const id = getState().addSource(sampleSingleSource);
+      getState().setDefinitionKeys(id, ["flag-a"]);
+      const source = getState().sources[0];
+      expect(source.mode).toBe("single");
+      expect((source as Record<string, unknown>).definitionKeys).toBeUndefined();
+    });
+
     it("replaces the entire key list on a keyed source", () => {
       const id = getState().addSource(sampleKeyedSource);
       getState().setDefinitionKeys(id, ["flag-a", "flag-b"]);
@@ -197,6 +205,14 @@ describe("source-store", () => {
   });
 
   describe("addDefinitionKey", () => {
+    it("does not modify a single source", () => {
+      const id = getState().addSource(sampleSingleSource);
+      getState().addDefinitionKey(id, "flag-a");
+      const source = getState().sources[0];
+      expect(source.mode).toBe("single");
+      expect((source as Record<string, unknown>).definitionKeys).toBeUndefined();
+    });
+
     it("adds a key to an empty list", () => {
       const id = getState().addSource(sampleKeyedSource);
       getState().addDefinitionKey(id, "flag-a");
@@ -228,6 +244,14 @@ describe("source-store", () => {
   });
 
   describe("removeDefinitionKey", () => {
+    it("does not modify a single source", () => {
+      const id = getState().addSource(sampleSingleSource);
+      getState().removeDefinitionKey(id, "flag-a");
+      const source = getState().sources[0];
+      expect(source.mode).toBe("single");
+      expect((source as Record<string, unknown>).definitionKeys).toBeUndefined();
+    });
+
     it("removes an existing key", () => {
       const id = getState().addSource(sampleKeyedSource);
       getState().setDefinitionKeys(id, ["flag-a", "flag-b", "flag-c"]);
@@ -245,6 +269,76 @@ describe("source-store", () => {
       const source = getState().sources.find((s) => s.id === id);
       if (source!.mode === "keyed") {
         expect(source!.definitionKeys).toEqual(["flag-a"]);
+      }
+    });
+  });
+
+  describe("markListFetched", () => {
+    it("sets listLastFetched on a keyed source", () => {
+      const id = getState().addSource(sampleKeyedSource);
+      const before = Date.now();
+      getState().markListFetched(id);
+      const source = getState().sources[0];
+      expect(source.mode).toBe("keyed");
+      if (source.mode === "keyed") {
+        expect(source.listLastFetched).toBeGreaterThanOrEqual(before);
+        expect(source.listLastFetched).toBeLessThanOrEqual(Date.now());
+      }
+    });
+
+    it("does not modify a single source", () => {
+      const id = getState().addSource(sampleSingleSource);
+      getState().markListFetched(id);
+      const source = getState().sources[0];
+      expect(source.mode).toBe("single");
+      expect((source as Record<string, unknown>).listLastFetched).toBeUndefined();
+    });
+
+    it("does not modify unrelated sources", () => {
+      const id1 = getState().addSource(sampleKeyedSource);
+      const id2 = getState().addSource({
+        ...sampleKeyedSource,
+        label: "Other",
+      });
+      getState().markListFetched(id1);
+      const source2 = getState().sources.find((s) => s.id === id2);
+      if (source2!.mode === "keyed") {
+        expect(source2!.listLastFetched).toBeUndefined();
+      }
+    });
+  });
+
+  describe("markPresetsFetched", () => {
+    it("sets presetsLastFetched on a keyed source", () => {
+      const id = getState().addSource(sampleKeyedSource);
+      const before = Date.now();
+      getState().markPresetsFetched(id);
+      const source = getState().sources[0];
+      expect(source.mode).toBe("keyed");
+      if (source.mode === "keyed") {
+        expect(source.presetsLastFetched).toBeGreaterThanOrEqual(before);
+        expect(source.presetsLastFetched).toBeLessThanOrEqual(Date.now());
+      }
+    });
+
+    it("does not modify a single source", () => {
+      const id = getState().addSource(sampleSingleSource);
+      getState().markPresetsFetched(id);
+      const source = getState().sources[0];
+      expect(source.mode).toBe("single");
+      expect((source as Record<string, unknown>).presetsLastFetched).toBeUndefined();
+    });
+
+    it("does not modify unrelated sources", () => {
+      const id1 = getState().addSource(sampleKeyedSource);
+      const id2 = getState().addSource({
+        ...sampleKeyedSource,
+        label: "Other",
+      });
+      getState().markPresetsFetched(id1);
+      const source2 = getState().sources.find((s) => s.id === id2);
+      if (source2!.mode === "keyed") {
+        expect(source2!.presetsLastFetched).toBeUndefined();
       }
     });
   });

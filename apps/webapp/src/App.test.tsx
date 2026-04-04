@@ -29,20 +29,24 @@ const mockCreatePresetUI = vi.fn(() => ({ extraConditionTypes: [], editorOverrid
 let capturedOnExportDefinition:
   | ((key: string, def: unknown, format: "yaml" | "json") => void)
   | null = null;
+let capturedConditionExtensionsResolver: ((key: string) => unknown) | null = null;
 
 vi.mock("@showwhat/configurator", () => ({
   Configurator: ({
     store,
     emptyState,
     onExportDefinition,
+    conditionExtensionsResolver,
   }: {
     store: unknown;
     emptyState?: React.ReactNode;
     onExportDefinition?: (key: string, def: unknown) => void;
+    conditionExtensionsResolver?: (key: string) => unknown;
   }) => {
     capturedStore = store;
     capturedEmptyState = emptyState;
     capturedOnExportDefinition = onExportDefinition ?? null;
+    capturedConditionExtensionsResolver = conditionExtensionsResolver ?? null;
     return <div data-testid="configurator">{emptyState}</div>;
   },
   createPresetUI: (...args: unknown[]) => mockCreatePresetUI(...args),
@@ -194,6 +198,7 @@ describe("App", () => {
     capturedOnCreateNew = null;
     capturedOnGoToSources = null;
     capturedOnExportDefinition = null;
+    capturedConditionExtensionsResolver = null;
     sourceStoreOverrides = {};
     matchMediaListeners.length = 0;
     subscribers.length = 0;
@@ -514,5 +519,41 @@ describe("App", () => {
     act(() => {
       capturedOnExportDefinition!("test-key", { variations: [{ value: true }] }, "json");
     });
+  });
+
+  // -----------------------------------------------------------------------
+  // Condition extensions resolver (keyed mode)
+  // -----------------------------------------------------------------------
+
+  it("does not pass conditionExtensionsResolver when not in keyed mode", () => {
+    render(<App />);
+    expect(capturedConditionExtensionsResolver).toBeNull();
+  });
+
+  it("passes conditionExtensionsResolver in keyed mode that returns preset UI", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+    };
+    render(<App />);
+
+    expect(capturedConditionExtensionsResolver).not.toBeNull();
+    mockCreatePresetUI.mockClear();
+    const result = capturedConditionExtensionsResolver!("some-key");
+    expect(result).toBeDefined();
+    expect(mockCreatePresetUI).toHaveBeenCalled();
+  });
+
+  it("resolves different keys independently", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+    };
+    render(<App />);
+
+    mockCreatePresetUI.mockClear();
+    capturedConditionExtensionsResolver!("key-a");
+    capturedConditionExtensionsResolver!("key-b");
+    expect(mockCreatePresetUI).toHaveBeenCalledTimes(2);
   });
 });

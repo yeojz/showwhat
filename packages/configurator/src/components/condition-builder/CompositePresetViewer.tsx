@@ -1,7 +1,14 @@
 import { useState } from "react";
 import { Eye } from "lucide-react";
 import { Button } from "../ui/button.js";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog.js";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../ui/dialog.js";
 import type { ConditionValueEditorProps } from "../../types.js";
 import type { ComponentType } from "react";
 
@@ -32,6 +39,7 @@ export function createCompositePresetEditor(
           <DialogContent>
             <DialogHeader>
               <DialogTitle>{presetName}</DialogTitle>
+              <DialogDescription>Read-only view of the preset conditions.</DialogDescription>
             </DialogHeader>
             <pre className="max-h-80 overflow-auto rounded bg-muted p-3 text-xs font-mono">
               {JSON.stringify(conditions, null, 2)}
