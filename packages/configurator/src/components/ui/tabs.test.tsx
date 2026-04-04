@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs.js";
 
@@ -118,7 +118,9 @@ describe("Tabs components", () => {
         <TabsContent value="two">Content Two</TabsContent>
       </Tabs>,
     );
-    screen.getByText("Tab One").focus();
+    await act(async () => {
+      screen.getByText("Tab One").focus();
+    });
     await user.keyboard("{ArrowRight}");
     expect(document.activeElement?.textContent).toBe("Tab Two");
   });
@@ -135,7 +137,9 @@ describe("Tabs components", () => {
         <TabsContent value="two">Content Two</TabsContent>
       </Tabs>,
     );
-    screen.getByText("Tab One").focus();
+    await act(async () => {
+      screen.getByText("Tab One").focus();
+    });
     await user.keyboard("{ArrowDown}");
     expect(document.activeElement?.textContent).toBe("Tab Two");
   });

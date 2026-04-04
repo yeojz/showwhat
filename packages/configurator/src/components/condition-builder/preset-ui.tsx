@@ -1,7 +1,9 @@
 import { useCallback, useMemo } from "react";
 import type { ComponentType } from "react";
 import type { Presets } from "showwhat";
-import { PRIMITIVE_TYPES } from "showwhat";
+
+const PRIMITIVE_TYPES = new Set(["string", "number", "bool", "datetime"]);
+const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);
 import type { ConditionTypeMeta } from "./condition-registry.js";
 import type { ConditionValueEditorProps } from "../../types.js";
 import type { ConditionExtensions } from "./ConditionExtensionsContext.js";
@@ -14,6 +16,7 @@ import { Input } from "../ui/input.js";
 import { DateTimeInput } from "../common/DateTimeInput.js";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.js";
 import { buildCustomCondition } from "./condition-builders.js";
+import { createCompositePresetEditor } from "./CompositePresetViewer.js";
 import { OP_OPTIONS as STRING_OPS } from "./StringConditionEditor.js";
 import { OP_OPTIONS as NUMBER_OPS } from "./NumberConditionEditor.js";
 import { OP_OPTIONS as DATETIME_OPS } from "./DatetimeConditionEditor.js";
@@ -37,9 +40,13 @@ function capitalize(s: string): string {
 export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[] {
   return Object.entries(presets).map(([name, preset]) => {
     const isBuiltin = PRIMITIVE_TYPES.has(preset.type);
-    const description = isBuiltin
-      ? `Match the ${preset.key} key (${preset.type})`
-      : `Custom ${preset.type} condition`;
+    const isComposite = COMPOSITE_TYPES.has(preset.type);
+
+    const description = isComposite
+      ? `Composite ${preset.type} preset`
+      : isBuiltin
+        ? `Match the ${preset.key} key (${preset.type})`
+        : `Custom ${preset.type} condition`;
 
     const baseDefaults = isBuiltin ? { ...TYPE_DEFAULTS[preset.type], key: preset.key } : {};
 
@@ -259,7 +266,10 @@ export function createPresetUI(presets: Presets): ConditionExtensions {
   const editorOverrides = new Map<string, ComponentType<ConditionValueEditorProps>>();
 
   for (const [name, preset] of Object.entries(presets)) {
-    if (PRIMITIVE_TYPES.has(preset.type) && preset.key) {
+    if (COMPOSITE_TYPES.has(preset.type)) {
+      const conditions = (preset.overrides?.conditions ?? []) as unknown[];
+      editorOverrides.set(name, createCompositePresetEditor(name, preset.type, conditions));
+    } else if (PRIMITIVE_TYPES.has(preset.type) && preset.key) {
       editorOverrides.set(
         name,
         createPresetEditor(name, preset.type, preset.key, preset.overrides),

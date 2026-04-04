@@ -1,4 +1,4 @@
-import { FilePlus2, Upload } from "lucide-react";
+import { ArrowRight, FilePlus2, Globe } from "lucide-react";
 
 function ActionCard({
   icon: Icon,
@@ -33,10 +33,10 @@ function ActionCard({
 
 export function EmptyState({
   onCreateNew,
-  onImportClick,
+  onGoToSources,
 }: {
   onCreateNew: () => void;
-  onImportClick: () => void;
+  onGoToSources: () => void;
 }) {
   return (
     <div className="relative flex h-full items-center justify-center overflow-hidden">
@@ -75,20 +75,34 @@ export function EmptyState({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <ActionCard
+            icon={Globe}
+            label="Load from source"
+            description="Connect to a remote source"
+            animationDelay="200ms"
+            onClick={onGoToSources}
+          />
+          <ActionCard
             icon={FilePlus2}
             label="Create new"
             description="Start from scratch"
-            animationDelay="200ms"
+            animationDelay="300ms"
             onClick={onCreateNew}
           />
-          <ActionCard
-            icon={Upload}
-            label="Import existing"
-            description="Load from YAML or JSON"
-            animationDelay="300ms"
-            onClick={onImportClick}
-          />
         </div>
+        <p
+          className="text-center text-xs text-muted-foreground animate-fade-up"
+          style={{ animationDelay: "400ms" }}
+        >
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 text-primary hover:underline"
+            onClick={onGoToSources}
+          >
+            Go to Sources
+            <ArrowRight className="h-3 w-3" />
+          </button>{" "}
+          to configure and load definitions
+        </p>
       </div>
     </div>
   );

@@ -1,0 +1,10 @@
+{
+  "description": "API rate limiting thresholds",
+  "variations": [
+    {
+      "value": 1000,
+      "conditions": [{ "type": "string", "key": "tier", "op": "eq", "value": "enterprise" }]
+    },
+    { "value": 100 }
+  ]
+}

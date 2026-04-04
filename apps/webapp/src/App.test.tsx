@@ -26,10 +26,27 @@ let capturedEmptyState: React.ReactNode = null;
 
 const mockCreatePresetUI = vi.fn(() => ({ extraConditionTypes: [], editorOverrides: new Map() }));
 
+let capturedOnExportDefinition:
+  | ((key: string, def: unknown, format: "yaml" | "json") => void)
+  | null = null;
+let capturedConditionExtensionsResolver: ((key: string) => unknown) | null = null;
+
 vi.mock("@showwhat/configurator", () => ({
-  Configurator: ({ store, emptyState }: { store: unknown; emptyState?: React.ReactNode }) => {
+  Configurator: ({
+    store,
+    emptyState,
+    onExportDefinition,
+    conditionExtensionsResolver,
+  }: {
+    store: unknown;
+    emptyState?: React.ReactNode;
+    onExportDefinition?: (key: string, def: unknown) => void;
+    conditionExtensionsResolver?: (key: string) => unknown;
+  }) => {
     capturedStore = store;
     capturedEmptyState = emptyState;
+    capturedOnExportDefinition = onExportDefinition ?? null;
+    capturedConditionExtensionsResolver = conditionExtensionsResolver ?? null;
     return <div data-testid="configurator">{emptyState}</div>;
   },
   createPresetUI: (...args: unknown[]) => mockCreatePresetUI(...args),
@@ -38,65 +55,59 @@ vi.mock("@showwhat/configurator", () => ({
 // Mock the Toolbar — capture props to verify theme wiring
 let capturedTheme: string | null = null;
 let capturedOnThemeToggle: ((theme: string) => void) | null = null;
-let capturedOnOpenSettings: (() => void) | null = null;
-let capturedFileInputRef: React.RefObject<HTMLInputElement | null> | null = null;
+let capturedOnTabChange: ((tab: string) => void) | null = null;
 
 vi.mock("./components/Toolbar.js", () => ({
   Toolbar: ({
-    fileInputRef,
+    onTabChange,
     theme,
     onThemeToggle,
-    onOpenSettings,
   }: {
-    fileInputRef: React.RefObject<HTMLInputElement | null>;
+    tab: string;
+    onTabChange: (t: string) => void;
     theme: string;
     onThemeToggle: (t: string) => void;
-    onOpenSettings: () => void;
   }) => {
     capturedTheme = theme;
     capturedOnThemeToggle = onThemeToggle;
-    capturedOnOpenSettings = onOpenSettings;
-    capturedFileInputRef = fileInputRef;
+    capturedOnTabChange = onTabChange;
     return <div data-testid="toolbar" />;
   },
 }));
 
 // Mock the EmptyState — capture callbacks to verify wiring
 let capturedOnCreateNew: (() => void) | null = null;
-let capturedOnImportClick: (() => void) | null = null;
+let capturedOnGoToSources: (() => void) | null = null;
 vi.mock("./components/EmptyState.js", () => ({
   EmptyState: ({
     onCreateNew,
-    onImportClick,
+    onGoToSources,
   }: {
     onCreateNew: () => void;
-    onImportClick: () => void;
+    onGoToSources: () => void;
   }) => {
     capturedOnCreateNew = onCreateNew;
-    capturedOnImportClick = onImportClick;
+    capturedOnGoToSources = onGoToSources;
     return <div data-testid="empty-state" />;
   },
 }));
 
-// Mock the SettingsPage — capture onBack, tab, and onTabChange
-let capturedOnBack: (() => void) | null = null;
-let capturedTab: string | null = null;
-let capturedOnTabChange: ((tab: string) => void) | null = null;
-vi.mock("./components/SettingsPage.js", () => ({
-  SettingsPage: ({
-    tab,
-    onTabChange,
-    onBack,
-  }: {
-    tab: string;
-    onTabChange: (tab: string) => void;
-    onBack: () => void;
-  }) => {
-    capturedTab = tab;
-    capturedOnTabChange = onTabChange;
-    capturedOnBack = onBack;
-    return <div data-testid="settings-page" />;
+// Mock SidebarActions
+vi.mock("./components/SidebarActions.js", () => ({
+  SidebarActions: () => <div data-testid="sidebar-actions" />,
+}));
+
+// Mock SourceSettings
+vi.mock("./components/SourceSettings.js", () => ({
+  SourceSettings: () => {
+    return <div data-testid="source-settings" />;
   },
+}));
+
+// Mock PresetSettings
+vi.mock("./components/PresetSettings.js", () => ({
+  PresetEditor: () => <div data-testid="preset-editor" />,
+  InlinePresetList: () => <div data-testid="inline-preset-list" />,
 }));
 
 // Minimal store state
@@ -106,12 +117,18 @@ const defaultState: Record<string, unknown> = {
   addDefinition: mockAddDefinition,
   definitions: {},
   savedDefinitions: {},
-  inlinePresets: {},
+  filePresets: {},
+  sourcePresets: {},
+  definitionPresets: {},
   sourceFileName: null,
   sourceFormat: null,
   selectedKey: null,
   validationErrors: {},
   importDefinitions: vi.fn(),
+  upsertDefinition: vi.fn(),
+  setSourcePresets: vi.fn(),
+  setDefinitionPresets: vi.fn(),
+  upsertDefinitionPresets: vi.fn(),
   revertAll: vi.fn(),
   clearAll: vi.fn(),
 };
@@ -128,6 +145,23 @@ const mockSubscribe = vi.fn((listener: () => void) => {
     if (idx >= 0) subscribers.splice(idx, 1);
   };
 });
+
+let sourceStoreOverrides: Record<string, unknown> = {};
+vi.mock("./store/source-store.js", () => {
+  const useSourceStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector({ activeSourceId: null, sources: [], ...sourceStoreOverrides });
+  };
+  return { useSourceStore };
+});
+
+vi.mock("./hooks/useFileExport.js", () => ({
+  useFileExport: () => ({
+    exportYaml: vi.fn(),
+    exportJson: vi.fn(),
+    exportDefinitionYaml: vi.fn(),
+    exportDefinitionJson: vi.fn(),
+  }),
+}));
 
 vi.mock("./store/preset-store.js", () => {
   const usePresetStore = (selector: (s: Record<string, unknown>) => unknown) => {
@@ -160,13 +194,12 @@ describe("App", () => {
     capturedEmptyState = null;
     capturedTheme = null;
     capturedOnThemeToggle = null;
-    capturedOnOpenSettings = null;
-    capturedFileInputRef = null;
-    capturedOnCreateNew = null;
-    capturedOnImportClick = null;
-    capturedOnBack = null;
-    capturedTab = null;
     capturedOnTabChange = null;
+    capturedOnCreateNew = null;
+    capturedOnGoToSources = null;
+    capturedOnExportDefinition = null;
+    capturedConditionExtensionsResolver = null;
+    sourceStoreOverrides = {};
     matchMediaListeners.length = 0;
     subscribers.length = 0;
     mockAddDefinition.mockReset();
@@ -336,7 +369,7 @@ describe("App", () => {
   // Rendering Configurator with EmptyState
   // -----------------------------------------------------------------------
 
-  it("renders the Configurator component", () => {
+  it("renders the Configurator component on definitions tab", () => {
     const { getByTestId } = render(<App />);
     expect(getByTestId("configurator")).toBeDefined();
   });
@@ -358,101 +391,169 @@ describe("App", () => {
     expect(mockAddDefinition).toHaveBeenCalledWith("untitled");
   });
 
+  it("EmptyState onGoToSources switches to sources tab", () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    expect(capturedOnGoToSources).not.toBeNull();
+    act(() => {
+      capturedOnGoToSources!();
+    });
+    expect(getByTestId("source-settings")).toBeDefined();
+    expect(queryByTestId("configurator")).toBeNull();
+  });
+
   // -----------------------------------------------------------------------
-  // View routing: configurator ↔ settings
+  // Tab switching
   // -----------------------------------------------------------------------
 
-  it("starts in configurator view by default", () => {
+  it("starts on definitions tab by default", () => {
     const { getByTestId, queryByTestId } = render(<App />);
     expect(getByTestId("configurator")).toBeDefined();
     expect(getByTestId("toolbar")).toBeDefined();
-    expect(queryByTestId("settings-page")).toBeNull();
+    expect(queryByTestId("source-settings")).toBeNull();
+    expect(queryByTestId("preset-editor")).toBeNull();
   });
 
-  it("switches to settings view when onOpenSettings is called", () => {
+  it("switches to sources tab when onTabChange is called with sources", () => {
     const { getByTestId, queryByTestId } = render(<App />);
 
-    expect(capturedOnOpenSettings).not.toBeNull();
+    expect(capturedOnTabChange).not.toBeNull();
     act(() => {
-      capturedOnOpenSettings!();
+      capturedOnTabChange!("sources");
     });
 
-    expect(getByTestId("settings-page")).toBeDefined();
+    expect(getByTestId("source-settings")).toBeDefined();
     expect(queryByTestId("configurator")).toBeNull();
-    expect(capturedTab).toBe("sources");
-    expect(capturedOnTabChange).not.toBeNull();
   });
 
-  it("returns to configurator view when settings onBack is called", () => {
+  it("switches to presets tab when onTabChange is called with presets", () => {
     const { getByTestId, queryByTestId } = render(<App />);
 
-    // Go to settings
-    act(() => {
-      capturedOnOpenSettings!();
-    });
-    expect(getByTestId("settings-page")).toBeDefined();
-
-    // Go back
-    act(() => {
-      capturedOnBack!();
-    });
-    expect(getByTestId("configurator")).toBeDefined();
-    expect(queryByTestId("settings-page")).toBeNull();
-  });
-
-  it("calls navigate with the new tab when settings onTabChange is invoked", () => {
-    const { getByTestId } = render(<App />);
-
-    // Go to settings first
-    act(() => {
-      capturedOnOpenSettings!();
-    });
-    expect(getByTestId("settings-page")).toBeDefined();
-    expect(capturedOnTabChange).not.toBeNull();
-
-    // Invoke onTabChange — this covers the arrow function at line 103
     act(() => {
       capturedOnTabChange!("presets");
     });
 
-    // The tab should be forwarded to SettingsPage
-    expect(capturedTab).toBe("presets");
+    expect(getByTestId("preset-editor")).toBeDefined();
+    expect(getByTestId("inline-preset-list")).toBeDefined();
+    expect(queryByTestId("configurator")).toBeNull();
+  });
+
+  it("switches back to definitions tab", () => {
+    const { getByTestId, queryByTestId } = render(<App />);
+
+    // Switch away
+    act(() => {
+      capturedOnTabChange!("sources");
+    });
+    expect(queryByTestId("configurator")).toBeNull();
+
+    // Switch back
+    act(() => {
+      capturedOnTabChange!("definitions");
+    });
+    expect(getByTestId("configurator")).toBeDefined();
+  });
+
+  it("toolbar is always rendered regardless of tab", () => {
+    const { getByTestId } = render(<App />);
+    expect(getByTestId("toolbar")).toBeDefined();
+
+    act(() => {
+      capturedOnTabChange!("sources");
+    });
+    expect(getByTestId("toolbar")).toBeDefined();
+
+    act(() => {
+      capturedOnTabChange!("presets");
+    });
+    expect(getByTestId("toolbar")).toBeDefined();
   });
 
   // -----------------------------------------------------------------------
   // Preset merging
   // -----------------------------------------------------------------------
 
-  it("merges configurator presets with inline presets for createPresetUI", () => {
+  it("merges custom, file, and source presets for createPresetUI", () => {
     stateOverrides = {
-      inlinePresets: { inline: { type: "string", key: "inline" } },
+      filePresets: { file: { type: "string", key: "file" } },
+      sourcePresets: { source: { type: "string", key: "source" } },
     };
     render(<App />);
 
     expect(mockCreatePresetUI).toHaveBeenCalledWith({
-      inline: { type: "string", key: "inline" },
+      file: { type: "string", key: "file" },
+      source: { type: "string", key: "source" },
     });
   });
 
   // -----------------------------------------------------------------------
-  // handleImportClick
+  // Export definition (keyed mode)
   // -----------------------------------------------------------------------
 
-  it("handleImportClick calls click on file input ref", () => {
+  it("does not pass onExportDefinition when not in keyed mode", () => {
+    render(<App />);
+    expect(capturedOnExportDefinition).toBeNull();
+  });
+
+  it("passes onExportDefinition in keyed mode and it calls the correct export function", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+    };
     render(<App />);
 
-    expect(capturedOnImportClick).not.toBeNull();
-    expect(capturedFileInputRef).not.toBeNull();
-
-    // Simulate the ref having a real input element
-    const mockClick = vi.fn();
-    const mockInput = { click: mockClick } as unknown as HTMLInputElement;
-    (capturedFileInputRef as { current: HTMLInputElement | null }).current = mockInput;
-
+    expect(capturedOnExportDefinition).not.toBeNull();
     act(() => {
-      capturedOnImportClick!();
+      capturedOnExportDefinition!("test-key", { variations: [{ value: true }] }, "yaml");
     });
+  });
 
-    expect(mockClick).toHaveBeenCalledOnce();
+  it("exports as JSON when format=json is passed", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "json" }],
+    };
+    render(<App />);
+
+    expect(capturedOnExportDefinition).not.toBeNull();
+    act(() => {
+      capturedOnExportDefinition!("test-key", { variations: [{ value: true }] }, "json");
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // Condition extensions resolver (keyed mode)
+  // -----------------------------------------------------------------------
+
+  it("does not pass conditionExtensionsResolver when not in keyed mode", () => {
+    render(<App />);
+    expect(capturedConditionExtensionsResolver).toBeNull();
+  });
+
+  it("passes conditionExtensionsResolver in keyed mode that returns preset UI", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+    };
+    render(<App />);
+
+    expect(capturedConditionExtensionsResolver).not.toBeNull();
+    mockCreatePresetUI.mockClear();
+    const result = capturedConditionExtensionsResolver!("some-key");
+    expect(result).toBeDefined();
+    expect(mockCreatePresetUI).toHaveBeenCalled();
+  });
+
+  it("resolves different keys independently", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+    };
+    render(<App />);
+
+    mockCreatePresetUI.mockClear();
+    capturedConditionExtensionsResolver!("key-a");
+    capturedConditionExtensionsResolver!("key-b");
+    expect(mockCreatePresetUI).toHaveBeenCalledTimes(2);
   });
 });

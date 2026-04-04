@@ -1,0 +1,43 @@
+definitions:
+  dark-mode:
+    description: Enable dark mode across the application
+    active: true
+    variations:
+      - value: true
+        conditions:
+          - type: env
+            op: eq
+            value: production
+      - value: false
+
+  signup-flow:
+    description: New multi-step signup flow
+    variations:
+      - value: "v2"
+        conditions:
+          - type: string
+            key: tier
+            op: in
+            value:
+              - enterprise
+              - pro
+      - value: "v1"
+
+  max-upload-size:
+    description: Maximum file upload size in MB
+    variations:
+      - value: 100
+        conditions:
+          - type: number
+            key: tier_level
+            op: gte
+            value: 2
+      - value: 25
+
+presets:
+  tier:
+    type: string
+    key: tier
+  tier_level:
+    type: number
+    key: tier_level

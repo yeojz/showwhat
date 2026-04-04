@@ -1,24 +1,14 @@
-import { stringEvaluator } from "./conditions/string.js";
-import { numberEvaluator } from "./conditions/number.js";
-import { boolEvaluator } from "./conditions/bool.js";
-import { datetimeEvaluator } from "./conditions/datetime.js";
+import { evaluateCondition } from "./conditions/evaluate.js";
 import type { ConditionEvaluator, ConditionEvaluators } from "./conditions/types.js";
-import { CONDITION_TYPES, type PrimitiveConditionType } from "./schemas/condition.js";
-import { PRIMITIVE_TYPES } from "./schemas/preset.js";
+import { CONDITION_TYPES } from "./schemas/condition.js";
+import type { Condition } from "./schemas/condition.js";
 import type { Presets } from "./schemas/preset.js";
 
-// ── Reserved names ───────────────────────────────────────────────────────────
+// ── Reserved names ────────────────────────────────────────────────────────────
 
 const RESERVED_CONDITION_TYPES = new Set([...Object.values(CONDITION_TYPES), "__custom"]);
 
-const BUILTIN_EVALUATORS: Record<PrimitiveConditionType, ConditionEvaluator> = {
-  string: stringEvaluator,
-  number: numberEvaluator,
-  bool: boolEvaluator,
-  datetime: datetimeEvaluator,
-};
-
-// ── Factory ──────────────────────────────────────────────────────────────────
+// ── Factory ───────────────────────────────────────────────────────────────────
 
 export function createPresetConditions(presets: Presets): ConditionEvaluators {
   const result: ConditionEvaluators = {};
@@ -28,17 +18,9 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
       throw new Error(`Preset name "${name}" collides with a built-in or reserved condition type`);
     }
 
-    if (!PRIMITIVE_TYPES.has(preset.type)) {
-      continue;
-    }
-
-    const primitiveType = preset.type as PrimitiveConditionType;
-    const delegateEvaluator = BUILTIN_EVALUATORS[primitiveType];
-    const presetKey = preset.key!;
-
     const overrides = preset.overrides ?? {};
 
-    const evaluator: ConditionEvaluator = ({
+    const evaluator: ConditionEvaluator = async ({
       condition,
       context,
       annotations,
@@ -49,15 +31,19 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
       logger,
     }) => {
       const rec = condition as Record<string, unknown>;
-      return delegateEvaluator({
-        condition: { ...rec, ...overrides, type: primitiveType, key: presetKey },
+      const rewritten: Record<string, unknown> = { ...rec, ...overrides, type: preset.type };
+      if (preset.key) {
+        rewritten.key = preset.key;
+      }
+      return evaluateCondition({
+        condition: rewritten as Condition,
         context,
+        evaluators,
         annotations,
         deps,
         depth,
-        createRegex,
-        evaluators,
         logger,
+        createRegex,
       });
     };
 

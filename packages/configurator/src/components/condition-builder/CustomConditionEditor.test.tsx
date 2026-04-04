@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import "@testing-library/jest-dom/vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CustomConditionEditor } from "./CustomConditionEditor.js";
@@ -138,5 +139,26 @@ describe("CustomConditionEditor", () => {
     rerender(<CustomConditionEditor condition={condition2} onChange={vi.fn()} />);
     // Text should remain the same since derived === text
     expect(textarea.value).toBe(textBefore);
+  });
+
+  it("shows preset override footnote when isPresetBacked is true", () => {
+    render(
+      <CustomConditionEditor
+        condition={{ type: "segment", region: "us" } as never}
+        onChange={vi.fn()}
+        isPresetBacked
+      />,
+    );
+    expect(screen.getByText(/overridden by the preset/i)).toBeInTheDocument();
+  });
+
+  it("does not show preset override footnote by default", () => {
+    render(
+      <CustomConditionEditor
+        condition={{ type: "segment", region: "us" } as never}
+        onChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/overridden by the preset/i)).not.toBeInTheDocument();
   });
 });

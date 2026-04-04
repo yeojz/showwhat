@@ -16,3 +16,11 @@ services:
       - "4173:4173"
     volumes:
       - .:/app:ro
+
+  test-server:
+    image: python:3-slim
+    command: python /app/internal/test-server/server.py
+    ports:
+      - "9100:9100"
+    volumes:
+      - .:/app:ro

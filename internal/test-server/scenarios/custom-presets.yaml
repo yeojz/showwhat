@@ -1,0 +1,46 @@
+definitions:
+  geo-content:
+    description: Content variant served to US visitors
+    active: true
+    variations:
+      - value: "us_content"
+        conditions:
+          - type: geo
+      - value: "global_content"
+
+  power-user-tools:
+    description: Advanced tooling for power-user audience segment
+    active: true
+    variations:
+      - value: "advanced"
+        conditions:
+          - type: segment
+      - value: "standard"
+
+  gradual-rollout:
+    description: New checkout flow rolled out to 50% of traffic
+    active: true
+    variations:
+      - value: "new_checkout"
+        conditions:
+          - type: percentage
+      - value: "legacy_checkout"
+
+presets:
+  # Custom type delegated to a user-registered "geo_match" evaluator
+  geo:
+    type: geo_match
+    overrides:
+      region: us
+
+  # Custom type delegated to a user-registered "segment_match" evaluator
+  segment:
+    type: segment_match
+    overrides:
+      audience: power_users
+
+  # Custom type delegated to a user-registered "rollout_percentage" evaluator
+  percentage:
+    type: rollout_percentage
+    overrides:
+      threshold: 50

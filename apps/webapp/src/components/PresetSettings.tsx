@@ -33,7 +33,7 @@ export function PresetEditor() {
 
   return (
     <section>
-      <h2 className="text-sm font-medium text-muted-foreground">Custom Presets</h2>
+      <h2 className="text-base font-semibold text-foreground">Custom Presets</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Define named condition presets in YAML or JSON format.
       </p>
@@ -106,7 +106,7 @@ function InlinePresetRow({
           <span className="text-xs text-muted-foreground">{preset.type}</span>
         </div>
         {overridesCustom ? (
-          <span title="Overrides custom preset">
+          <span title="Overrides a custom preset with the same name">
             <ArrowUpCircle className="h-4 w-4 shrink-0 text-amber-500" />
           </span>
         ) : (
@@ -124,28 +124,25 @@ function InlinePresetRow({
   );
 }
 
-export function InlinePresetList({
-  inlinePresets,
+function PresetGroup({
+  label,
+  description,
+  entries,
   customPresets,
 }: {
-  inlinePresets: Presets;
+  label: string;
+  description: string;
+  entries: [string, Presets[string]][];
   customPresets: Presets;
 }) {
-  const entries = Object.entries(inlinePresets);
-
-  if (entries.length === 0) {
-    return (
-      <section>
-        <h2 className="text-sm font-medium text-muted-foreground">From Source</h2>
-        <p className="mt-3 text-sm text-muted-foreground">No presets from source.</p>
-      </section>
-    );
-  }
-
+  if (entries.length === 0) return null;
   return (
-    <section>
-      <h2 className="text-sm font-medium text-muted-foreground">From Source</h2>
-      <div className="mt-3 space-y-2">
+    <div className="space-y-2">
+      <div>
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <p className="text-[11px] text-muted-foreground/70">{description}</p>
+      </div>
+      <div className="space-y-1.5">
         {entries.map(([name, preset]) => (
           <InlinePresetRow
             key={name}
@@ -155,6 +152,84 @@ export function InlinePresetList({
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+export function InlinePresetList({
+  filePresets,
+  sourcePresets,
+  definitionPresets,
+  customPresets,
+}: {
+  filePresets: Presets;
+  sourcePresets: Presets;
+  definitionPresets: Record<string, Presets>;
+  customPresets: Presets;
+}) {
+  const fileEntries = Object.entries(filePresets);
+  const sourceEntries = Object.entries(sourcePresets);
+  const definitionEntries = Object.entries(definitionPresets);
+  const allDefinitionPresetEntries = definitionEntries.flatMap(([, presets]) =>
+    Object.entries(presets),
+  );
+  const hasAny =
+    fileEntries.length > 0 || sourceEntries.length > 0 || allDefinitionPresetEntries.length > 0;
+  const hasOverrides =
+    hasAny &&
+    Object.keys(customPresets).length > 0 &&
+    [...fileEntries, ...sourceEntries, ...allDefinitionPresetEntries].some(
+      ([name]) => name in customPresets,
+    );
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-base font-semibold text-foreground">From Source</h2>
+        <p className="mt-1 text-xs text-muted-foreground">Presets provided by the active source.</p>
+      </div>
+
+      {!hasAny && (
+        <div className="rounded-md border border-dashed border-border px-4 py-6 text-center">
+          <p className="text-sm text-muted-foreground">No presets loaded from source.</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Load a source that includes presets to see them here.
+          </p>
+        </div>
+      )}
+
+      {hasAny && (
+        <div className="space-y-4">
+          <PresetGroup
+            label="Presets URL"
+            description="Fetched from the source's dedicated presets endpoint."
+            entries={sourceEntries}
+            customPresets={customPresets}
+          />
+          <PresetGroup
+            label="Definition file"
+            description="Embedded within the loaded definition file."
+            entries={fileEntries}
+            customPresets={customPresets}
+          />
+          {definitionEntries.map(([defKey, presets]) => (
+            <PresetGroup
+              key={defKey}
+              label={defKey}
+              description={`Embedded in the "${defKey}" definition file.`}
+              entries={Object.entries(presets)}
+              customPresets={customPresets}
+            />
+          ))}
+        </div>
+      )}
+
+      {hasOverrides && (
+        <p className="text-xs text-muted-foreground">
+          <ArrowUpCircle className="mr-1 inline h-3 w-3 text-amber-500" />
+          Amber icon indicates the source preset overrides a custom preset with the same name.
+        </p>
+      )}
     </section>
   );
 }

@@ -129,8 +129,9 @@ describe("Configurator editor interactions", () => {
     const user = userEvent.setup();
     const store = createMockStore();
     render(<Configurator store={store} />);
-    const removeButton = screen.getByLabelText("Remove flag-a");
-    await user.click(removeButton);
+    // The Delete button is now in the editor action bar
+    const deleteButton = screen.getByRole("button", { name: /delete/i });
+    await user.click(deleteButton);
     // Confirm the deletion
     const confirmButton = await screen.findByRole("button", { name: "Delete" });
     await user.click(confirmButton);
@@ -297,8 +298,9 @@ describe("Configurator async action handling", () => {
       }),
     });
     render(<Configurator store={store} />);
-    const removeButton = screen.getByLabelText("Remove flag-a");
-    await user.click(removeButton);
+    // The Delete button is now in the editor action bar
+    const deleteButton = screen.getByRole("button", { name: /delete/i });
+    await user.click(deleteButton);
     const confirmButton = await screen.findByRole("button", { name: "Delete" });
     await user.click(confirmButton);
     // The .catch(() => {}) swallows the rejection; component does not crash

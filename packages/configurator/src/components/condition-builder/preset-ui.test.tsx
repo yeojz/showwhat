@@ -31,6 +31,19 @@ const SAMPLE_PRESETS: Presets = {
   },
 };
 
+const COMPOSITE_PRESETS: Presets = {
+  ...SAMPLE_PRESETS,
+  us_free: {
+    type: "and",
+    overrides: {
+      conditions: [
+        { type: "string", key: "region", op: "eq", value: "us" },
+        { type: "string", key: "tier", op: "eq", value: "free" },
+      ],
+    },
+  },
+};
+
 describe("createPresetConditionMeta", () => {
   it("produces correct meta entries for built-in types", () => {
     const metas = createPresetConditionMeta(SAMPLE_PRESETS);
@@ -414,6 +427,17 @@ describe("createPresetEditor with unknown type", () => {
     const Editor = createPresetEditor("test", "unknown_type", "key");
     const { container } = render(<Editor condition={{ type: "test" }} onChange={vi.fn()} />);
     expect(container.innerHTML).toBe("");
+  });
+});
+
+describe("createPresetUI composite preset fallbacks", () => {
+  it("handles composite preset with missing overrides.conditions gracefully", () => {
+    // This shouldn't normally happen due to schema validation, but the fallback path exists
+    const presets: Presets = {
+      combo: { type: "and", overrides: {} } as Presets[string],
+    };
+    const { editorOverrides } = createPresetUI(presets);
+    expect(editorOverrides.has("combo")).toBe(true);
   });
 });
 
@@ -862,5 +886,47 @@ describe("Preset overrides disable fields", () => {
     // Op select should be disabled
     const comboboxes = screen.getAllByRole("combobox");
     expect(comboboxes[0]).toBeDisabled();
+  });
+});
+
+describe("createPresetConditionMeta composite presets", () => {
+  it("produces meta for composite presets", () => {
+    const metas = createPresetConditionMeta(COMPOSITE_PRESETS);
+    const usFree = metas.find((m) => m.type === "us_free");
+    expect(usFree).toBeDefined();
+    expect(usFree!.label).toBe("Us_free");
+    expect(usFree!.description).toContain("and");
+  });
+
+  it("bakes overrides into composite meta defaults", () => {
+    const metas = createPresetConditionMeta(COMPOSITE_PRESETS);
+    const usFree = metas.find((m) => m.type === "us_free");
+    expect(usFree!.defaults).toMatchObject({
+      type: "us_free",
+      conditions: expect.any(Array),
+    });
+  });
+});
+
+describe("createPresetUI composite presets", () => {
+  it("returns editor overrides for composite presets", () => {
+    const { editorOverrides } = createPresetUI(COMPOSITE_PRESETS);
+    expect(editorOverrides.has("us_free")).toBe(true);
+  });
+});
+
+describe("Composite preset editor override", () => {
+  it("renders read-only label for composite preset", () => {
+    const extensions = createPresetUI(COMPOSITE_PRESETS);
+    const UsFreeEditor = extensions.editorOverrides.get("us_free")!;
+    render(<UsFreeEditor condition={{ type: "us_free" }} onChange={vi.fn()} />);
+    expect(screen.getByText(/composite/i)).toBeInTheDocument();
+  });
+
+  it("shows view button for composite preset", () => {
+    const extensions = createPresetUI(COMPOSITE_PRESETS);
+    const UsFreeEditor = extensions.editorOverrides.get("us_free")!;
+    render(<UsFreeEditor condition={{ type: "us_free" }} onChange={vi.fn()} />);
+    expect(screen.getByRole("button", { name: /view/i })).toBeInTheDocument();
   });
 });

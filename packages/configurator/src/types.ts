@@ -35,6 +35,8 @@ export type DefinitionEditorProps = {
   onRename: (newKey: string) => void | Promise<void>;
   onSave?: () => void;
   onDiscard?: () => void;
+  onRemove?: () => void;
+  onExport?: (format: "yaml" | "json") => void;
 };
 
 // ── VariationEditor ─────────────────────────────────────────────────────────

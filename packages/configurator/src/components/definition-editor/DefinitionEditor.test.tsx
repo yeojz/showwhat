@@ -428,4 +428,51 @@ describe("DefinitionEditor", () => {
     );
     expect(screen.getByText("new-key")).toBeDefined();
   });
+
+  it("renders Export dropdown when onExport is provided", () => {
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onExport={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("Export")).toBeDefined();
+  });
+
+  it("calls onExport with 'yaml' when Export as YAML is clicked", async () => {
+    const user = userEvent.setup();
+    const onExport = vi.fn();
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onExport={onExport}
+      />,
+    );
+    await user.click(screen.getByText("Export"));
+    await user.click(screen.getByText("Export as YAML"));
+    expect(onExport).toHaveBeenCalledWith("yaml");
+  });
+
+  it("calls onExport with 'json' when Export as JSON is clicked", async () => {
+    const user = userEvent.setup();
+    const onExport = vi.fn();
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onExport={onExport}
+      />,
+    );
+    await user.click(screen.getByText("Export"));
+    await user.click(screen.getByText("Export as JSON"));
+    expect(onExport).toHaveBeenCalledWith("json");
+  });
 });

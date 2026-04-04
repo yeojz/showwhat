@@ -91,7 +91,17 @@ function ErrorBanner() {
   );
 }
 
-function EditorLayout({ emptyState }: { emptyState?: React.ReactNode }) {
+function EditorLayout({
+  emptyState,
+  sidebarHeader,
+  conditionExtensionsResolver,
+  onExportDefinition,
+}: {
+  emptyState?: React.ReactNode;
+  sidebarHeader?: React.ReactNode;
+  conditionExtensionsResolver?: (key: string) => ConditionExtensions;
+  onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
+}) {
   const definitions = useConfiguratorSelector(selectDefinitions);
   const selectedKey = useConfiguratorSelector(selectSelectedKey);
   const validationErrors = useConfiguratorSelector(selectValidationErrors);
@@ -102,9 +112,55 @@ function EditorLayout({ emptyState }: { emptyState?: React.ReactNode }) {
 
   const selectedDefinition = selectedKey ? definitions[selectedKey] : null;
 
+  const resolvedExtensions = useMemo(
+    () =>
+      conditionExtensionsResolver && selectedKey ? conditionExtensionsResolver(selectedKey) : null,
+    [conditionExtensionsResolver, selectedKey],
+  );
+
   if (Object.keys(definitions).length === 0 && emptyState) {
     return <>{emptyState}</>;
   }
+
+  const editorContent =
+    selectedDefinition && selectedKey ? (
+      <div key={`anim-${selectedKey}-${revision}`} className="h-full animate-fade-up">
+        <DefinitionEditor
+          key={`${selectedKey}-${revision}`}
+          definitionKey={selectedKey}
+          definition={selectedDefinition}
+          validationErrors={validationErrors[selectedKey]}
+          isDirty={dirtyKeys.includes(selectedKey)}
+          isPending={actionState.pending}
+          onUpdate={(def: Definition) => {
+            getStore()
+              .updateDefinition(selectedKey, def)
+              .catch(() => {});
+          }}
+          onRename={(newKey: string) =>
+            runAction(() => getStore().renameDefinition(selectedKey, newKey))
+          }
+          onSave={() => {
+            runAction(() => getStore().saveDefinition(selectedKey)).catch(() => {});
+          }}
+          onDiscard={() => {
+            runAction(() => getStore().discardDefinition(selectedKey)).catch(() => {});
+          }}
+          onRemove={() => {
+            runAction(() => getStore().removeDefinition(selectedKey)).catch(() => {});
+          }}
+          onExport={
+            onExportDefinition && selectedDefinition
+              ? (fmt: "yaml" | "json") => onExportDefinition(selectedKey, selectedDefinition, fmt)
+              : undefined
+          }
+        />
+      </div>
+    ) : (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        Select a definition to edit
+      </div>
+    );
 
   return (
     <div className="flex h-full flex-col">
@@ -113,6 +169,7 @@ function EditorLayout({ emptyState }: { emptyState?: React.ReactNode }) {
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <div className="w-72 shrink-0 border-r border-border bg-muted/30">
+          {sidebarHeader}
           <DefinitionList
             definitions={definitions}
             selectedKey={selectedKey}
@@ -131,35 +188,12 @@ function EditorLayout({ emptyState }: { emptyState?: React.ReactNode }) {
         {/* Editor */}
         <div className="flex-1 overflow-hidden bg-background">
           <ErrorBoundary>
-            {selectedDefinition && selectedKey ? (
-              <div key={`anim-${selectedKey}-${revision}`} className="h-full animate-fade-up">
-                <DefinitionEditor
-                  key={`${selectedKey}-${revision}`}
-                  definitionKey={selectedKey}
-                  definition={selectedDefinition}
-                  validationErrors={validationErrors[selectedKey]}
-                  isDirty={dirtyKeys.includes(selectedKey)}
-                  isPending={actionState.pending}
-                  onUpdate={(def: Definition) => {
-                    getStore()
-                      .updateDefinition(selectedKey, def)
-                      .catch(() => {});
-                  }}
-                  onRename={(newKey: string) =>
-                    runAction(() => getStore().renameDefinition(selectedKey, newKey))
-                  }
-                  onSave={() => {
-                    runAction(() => getStore().saveDefinition(selectedKey)).catch(() => {});
-                  }}
-                  onDiscard={() => {
-                    runAction(() => getStore().discardDefinition(selectedKey)).catch(() => {});
-                  }}
-                />
-              </div>
+            {resolvedExtensions ? (
+              <ConditionExtensionsProvider value={resolvedExtensions}>
+                {editorContent}
+              </ConditionExtensionsProvider>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                Select a definition to edit
-              </div>
+              editorContent
             )}
           </ErrorBoundary>
         </div>
@@ -177,14 +211,20 @@ export function Configurator({
   store,
   className,
   emptyState,
+  sidebarHeader,
   conditionExtensions,
+  conditionExtensionsResolver,
   fallbackEvaluator,
+  onExportDefinition,
 }: {
   store: ConfiguratorStore | ConfiguratorStoreSource;
   className?: string;
   emptyState?: React.ReactNode;
+  sidebarHeader?: React.ReactNode;
   conditionExtensions?: ConditionExtensions;
+  conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   fallbackEvaluator?: ConditionEvaluator;
+  onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
   const runner = useActionRunner();
   const storeSource = useNormalizedSource(store);
@@ -195,7 +235,12 @@ export function Configurator({
         <ConditionExtensionsProvider value={conditionExtensions ?? null}>
           <FallbackEvaluatorProvider value={fallbackEvaluator ?? null}>
             <div className={className}>
-              <EditorLayout emptyState={emptyState} />
+              <EditorLayout
+                emptyState={emptyState}
+                sidebarHeader={sidebarHeader}
+                conditionExtensionsResolver={conditionExtensionsResolver}
+                onExportDefinition={onExportDefinition}
+              />
             </div>
           </FallbackEvaluatorProvider>
         </ConditionExtensionsProvider>

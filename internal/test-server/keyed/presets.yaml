@@ -1,0 +1,10 @@
+presets:
+  tier:
+    type: string
+    key: tier
+  tier_level:
+    type: number
+    key: tier_level
+  mobile:
+    type: boolean
+    key: mobile

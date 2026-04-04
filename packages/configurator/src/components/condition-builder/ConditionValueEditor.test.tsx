@@ -3,6 +3,8 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConditionValueEditor } from "./ConditionValueEditor.js";
+import { ConditionExtensionsProvider } from "./ConditionExtensionsContext.js";
+import type { ConditionExtensions } from "./ConditionExtensionsContext.js";
 
 describe("ConditionValueEditor", () => {
   it("renders string-array values as chips", () => {
@@ -197,5 +199,28 @@ describe("ConditionValueEditor", () => {
       />,
     );
     expect(screen.getByDisplayValue("at")).toBeInTheDocument();
+  });
+
+  it("shows preset footnote for custom type in extensions context", () => {
+    const extensions: ConditionExtensions = {
+      extraConditionTypes: [
+        {
+          type: "segment",
+          label: "Segment",
+          description: "Custom segment",
+          defaults: { type: "segment" },
+        },
+      ],
+      editorOverrides: new Map(),
+    };
+    render(
+      <ConditionExtensionsProvider value={extensions}>
+        <ConditionValueEditor
+          condition={{ type: "segment", region: "us" } as never}
+          onChange={vi.fn()}
+        />
+      </ConditionExtensionsProvider>,
+    );
+    expect(screen.getByText(/overridden by the preset/i)).toBeInTheDocument();
   });
 });

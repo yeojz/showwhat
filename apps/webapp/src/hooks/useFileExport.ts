@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import yaml from "js-yaml";
 import type { Presets } from "showwhat";
-import type { Definitions } from "showwhat";
+import type { Definitions, Definition } from "showwhat";
 import { stripAutoIds } from "@showwhat/configurator";
 
 function buildFileContent(definitions: Definitions, presets?: Presets): Record<string, unknown> {
@@ -13,26 +13,12 @@ function buildFileContent(definitions: Definitions, presets?: Presets): Record<s
   return output;
 }
 
-export function useFileExport() {
-  const exportYaml = useCallback(
-    (definitions: Definitions, presets?: Presets, fileName?: string) => {
-      const output = buildFileContent(definitions, presets);
-      const content = yaml.dump(output, { indent: 2, lineWidth: 120, noRefs: true });
-      download(content, fileName ?? "flags.yaml", "text/yaml");
-    },
-    [],
-  );
+function dumpYaml(obj: unknown): string {
+  return yaml.dump(obj, { indent: 2, lineWidth: 120, noRefs: true });
+}
 
-  const exportJson = useCallback(
-    (definitions: Definitions, presets?: Presets, fileName?: string) => {
-      const output = buildFileContent(definitions, presets);
-      const content = JSON.stringify(output, null, 2);
-      download(content, fileName ?? "flags.json", "application/json");
-    },
-    [],
-  );
-
-  return { exportYaml, exportJson };
+function dumpJson(obj: unknown): string {
+  return JSON.stringify(obj, null, 2);
 }
 
 function download(content: string, fileName: string, mimeType: string) {
@@ -43,4 +29,34 @@ function download(content: string, fileName: string, mimeType: string) {
   link.download = fileName;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 100);
+}
+
+export function useFileExport() {
+  const exportYaml = useCallback(
+    (definitions: Definitions, presets?: Presets, fileName?: string) => {
+      const output = buildFileContent(definitions, presets);
+      download(dumpYaml(output), fileName ?? "flags.yaml", "text/yaml");
+    },
+    [],
+  );
+
+  const exportJson = useCallback(
+    (definitions: Definitions, presets?: Presets, fileName?: string) => {
+      const output = buildFileContent(definitions, presets);
+      download(dumpJson(output), fileName ?? "flags.json", "application/json");
+    },
+    [],
+  );
+
+  const exportDefinitionYaml = useCallback((key: string, definition: Definition) => {
+    const clean = stripAutoIds({ [key]: definition });
+    download(dumpYaml(clean[key]), `${key}.yaml`, "text/yaml");
+  }, []);
+
+  const exportDefinitionJson = useCallback((key: string, definition: Definition) => {
+    const clean = stripAutoIds({ [key]: definition });
+    download(dumpJson(clean[key]), `${key}.json`, "application/json");
+  }, []);
+
+  return { exportYaml, exportJson, exportDefinitionYaml, exportDefinitionJson };
 }

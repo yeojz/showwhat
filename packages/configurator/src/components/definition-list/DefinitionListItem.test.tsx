@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { DefinitionListItem } from "./DefinitionListItem.js";
 
 describe("DefinitionListItem", () => {
@@ -79,27 +78,6 @@ describe("DefinitionListItem", () => {
     render(<DefinitionListItem {...baseProps} isSelected={true} />);
     const item = screen.getByText("my-flag").closest("[tabindex]")!;
     expect(item.className).toContain("border-l-primary");
-  });
-
-  it("opens confirm dialog and calls onRemove on confirm", async () => {
-    const user = userEvent.setup();
-    const onRemove = vi.fn();
-    render(<DefinitionListItem {...baseProps} onRemove={onRemove} />);
-    const removeButton = screen.getByLabelText("Remove my-flag");
-    await user.click(removeButton);
-    // Confirm dialog should appear
-    const confirmButton = await screen.findByRole("button", { name: "Delete" });
-    await user.click(confirmButton);
-    expect(onRemove).toHaveBeenCalledOnce();
-  });
-
-  it("stops propagation when remove button is clicked", () => {
-    const onSelect = vi.fn();
-    render(<DefinitionListItem {...baseProps} onSelect={onSelect} />);
-    const removeButton = screen.getByLabelText("Remove my-flag");
-    fireEvent.click(removeButton);
-    // onSelect should NOT have been called because stopPropagation was called
-    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("shows dirty + error state", () => {

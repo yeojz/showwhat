@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PRIMITIVE_CONDITION_TYPES } from "./condition.js";
+import { PRIMITIVE_CONDITION_TYPES, ConditionSchema } from "./condition.js";
 
 export type PresetDefinition = {
   type: string;
@@ -9,7 +9,8 @@ export type PresetDefinition = {
 
 export type Presets = Record<string, PresetDefinition>;
 
-export const PRIMITIVE_TYPES = new Set<string>(Object.values(PRIMITIVE_CONDITION_TYPES));
+const PRIMITIVE_TYPES = new Set<string>(Object.values(PRIMITIVE_CONDITION_TYPES));
+const COMPOSITE_TYPES = new Set<string>(["and", "or", "matchAnnotations"]);
 
 const PresetDefinitionSchema = z
   .object({
@@ -24,6 +25,28 @@ const PresetDefinitionSchema = z
         message: `"key" is required when type is a built-in preset type ("${val.type}")`,
         path: ["key"],
       });
+    }
+    if (COMPOSITE_TYPES.has(val.type)) {
+      const conditions = val.overrides?.conditions;
+      if (!Array.isArray(conditions) || conditions.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          message: `"overrides.conditions" must be a non-empty array for composite type ("${val.type}")`,
+          path: ["overrides", "conditions"],
+        });
+      } else {
+        for (let i = 0; i < conditions.length; i++) {
+          const result = ConditionSchema.safeParse(conditions[i]);
+          if (!result.success) {
+            for (const issue of result.error.issues) {
+              ctx.addIssue({
+                ...issue,
+                path: ["overrides", "conditions", i, ...issue.path],
+              });
+            }
+          }
+        }
+      }
     }
   });
 
