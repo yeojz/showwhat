@@ -430,6 +430,17 @@ describe("createPresetEditor with unknown type", () => {
   });
 });
 
+describe("createPresetUI composite preset fallbacks", () => {
+  it("handles composite preset with missing overrides.conditions gracefully", () => {
+    // This shouldn't normally happen due to schema validation, but the fallback path exists
+    const presets: Presets = {
+      combo: { type: "and", overrides: {} } as Presets[string],
+    };
+    const { editorOverrides } = createPresetUI(presets);
+    expect(editorOverrides.has("combo")).toBe(true);
+  });
+});
+
 describe("PresetConditionEditor with missing values", () => {
   it("string preset handles missing op gracefully", () => {
     const extensions = createPresetUI(SAMPLE_PRESETS);

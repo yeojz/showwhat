@@ -1,0 +1,121 @@
+definitions:
+  tiered-access:
+    description: Access level driven by region-or-tier composite logic
+    active: true
+    variations:
+      - value: "full_access"
+        conditions:
+          - type: us_or_eu_premium
+      - value: "limited_access"
+        conditions:
+          - type: any_paid_tier
+      - value: "no_access"
+
+  annotated-beta:
+    description: Beta feature gated on annotations and region
+    active: true
+    variations:
+      - value: true
+        conditions:
+          - type: annotated_us_beta
+      - value: false
+
+  deep-rollout:
+    description: Feature behind a deeply nested eligibility check
+    active: true
+    variations:
+      - value: "v2"
+        conditions:
+          - type: deep_eligible
+      - value: "v1"
+
+presets:
+  # OR containing two AND branches
+  # (region=us AND tier=pro) OR (region=eu AND tier=enterprise)
+  us_or_eu_premium:
+    type: or
+    overrides:
+      conditions:
+        - type: and
+          overrides:
+            conditions:
+              - type: string
+                key: region
+                op: eq
+                value: us
+              - type: string
+                key: tier
+                op: eq
+                value: pro
+        - type: and
+          overrides:
+            conditions:
+              - type: string
+                key: region
+                op: eq
+                value: eu
+              - type: string
+                key: tier
+                op: eq
+                value: enterprise
+
+  # OR of two tier strings — any paid tier
+  any_paid_tier:
+    type: or
+    overrides:
+      conditions:
+        - type: string
+          key: tier
+          op: eq
+          value: pro
+        - type: string
+          key: tier
+          op: eq
+          value: enterprise
+
+  # AND combining matchAnnotations with a region string check
+  annotated_us_beta:
+    type: and
+    overrides:
+      conditions:
+        - type: string
+          key: region
+          op: eq
+          value: us
+        - type: matchAnnotations
+          overrides:
+            annotations:
+              beta: "true"
+
+  # Three-level nesting: AND > OR > AND
+  # Must be in an allowed region AND
+  #   (an annotated power user OR (on pro tier AND opted-in flag is true))
+  deep_eligible:
+    type: and
+    overrides:
+      conditions:
+        - type: string
+          key: region
+          op: in
+          value:
+            - us
+            - ca
+            - gb
+        - type: or
+          overrides:
+            conditions:
+              - type: matchAnnotations
+                overrides:
+                  annotations:
+                    segment: power_user
+              - type: and
+                overrides:
+                  conditions:
+                    - type: string
+                      key: tier
+                      op: eq
+                      value: pro
+                    - type: boolean
+                      key: opted_in
+                      op: eq
+                      value: true

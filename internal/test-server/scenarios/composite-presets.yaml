@@ -1,0 +1,80 @@
+definitions:
+  regional-discount:
+    description: Discount banner for US free-tier users
+    active: true
+    variations:
+      - value: "upgrade_offer"
+        conditions:
+          - type: us_free_user
+      - value: null
+
+  premium-dashboard:
+    description: Enhanced dashboard layout for premium subscribers
+    active: true
+    variations:
+      - value: "premium"
+        conditions:
+          - type: premium_user
+      - value: "standard"
+
+  beta-feature:
+    description: Beta feature gated on eligibility criteria
+    active: true
+    variations:
+      - value: true
+        conditions:
+          - type: beta_eligible
+      - value: false
+
+presets:
+  # Composite AND preset — user must be in the "us" region AND on the "free" tier
+  us_free_user:
+    type: and
+    overrides:
+      conditions:
+        - type: string
+          key: region
+          op: eq
+          value: us
+        - type: string
+          key: tier
+          op: eq
+          value: free
+
+  # Composite OR preset — user is on the "pro" OR "enterprise" tier
+  premium_user:
+    type: or
+    overrides:
+      conditions:
+        - type: string
+          key: tier
+          op: eq
+          value: pro
+        - type: string
+          key: tier
+          op: eq
+          value: enterprise
+
+  # Nested composite: AND wrapping an OR
+  # User must be in an early-access region AND (on pro OR enterprise tier)
+  beta_eligible:
+    type: and
+    overrides:
+      conditions:
+        - type: string
+          key: region
+          op: in
+          value:
+            - us
+            - eu
+        - type: or
+          overrides:
+            conditions:
+              - type: string
+                key: tier
+                op: eq
+                value: pro
+              - type: string
+                key: tier
+                op: eq
+                value: enterprise

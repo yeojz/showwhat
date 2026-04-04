@@ -1,0 +1,123 @@
+definitions:
+  upload-limit:
+    description: File upload limit driven by numeric tier level
+    active: true
+    variations:
+      - value: 500
+        conditions:
+          - type: tier_level
+            op: gte
+            value: 3
+      - value: 100
+        conditions:
+          - type: tier_level
+            op: gte
+            value: 2
+      - value: 25
+
+  mobile-banner:
+    description: Promotional banner shown to mobile users on free tier
+    active: true
+    variations:
+      - value: "show_banner"
+        conditions:
+          - type: is_mobile
+          - type: string
+            key: tier
+            op: eq
+            value: free
+      - value: "hide_banner"
+
+  experimental-ui:
+    description: Experimental UI enabled for power users inside a rollout window
+    active: true
+    variations:
+      - value: true
+        conditions:
+          - type: power_user_rollout
+      - value: false
+
+  scheduled-maintenance:
+    description: Maintenance mode active only during a scheduled window
+    active: true
+    variations:
+      - value: true
+        conditions:
+          - type: maintenance_window
+      - value: false
+
+  regional-segment-feature:
+    description: Feature for US power users with annotation-based opt-in
+    active: true
+    variations:
+      - value: "enabled"
+        conditions:
+          - type: us_power_users
+      - value: "disabled"
+
+presets:
+  # Primitive — string
+  tier:
+    type: string
+    key: tier
+
+  # Primitive — number
+  tier_level:
+    type: number
+    key: tier_level
+
+  # Primitive — boolean
+  is_mobile:
+    type: boolean
+    key: mobile
+
+  # Primitive — datetime
+  maintenance_window:
+    type: datetime
+    key: maintenance_start
+    overrides:
+      op: between
+      value:
+        - "2025-01-01T02:00:00Z"
+        - "2025-01-01T06:00:00Z"
+
+  # Custom type — delegated to user-registered evaluator
+  geo_us:
+    type: geo_match
+    overrides:
+      region: us
+
+  segment_power:
+    type: segment_match
+    overrides:
+      audience: power_users
+
+  rollout_50:
+    type: rollout_percentage
+    overrides:
+      threshold: 50
+
+  # Composite AND — combines a custom geo preset condition and a custom segment preset condition
+  power_user_rollout:
+    type: and
+    overrides:
+      conditions:
+        - type: rollout_percentage
+          overrides:
+            threshold: 50
+        - type: segment_match
+          overrides:
+            audience: power_users
+
+  # Composite using matchAnnotations alongside a custom type
+  us_power_users:
+    type: and
+    overrides:
+      conditions:
+        - type: geo_match
+          overrides:
+            region: us
+        - type: matchAnnotations
+          overrides:
+            annotations:
+              feature-access: power

@@ -98,6 +98,18 @@ describe("PresetsSchema", () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it("rejects composite preset with invalid conditions", () => {
+    const result = PresetsSchema.safeParse({
+      bad: {
+        type: "and",
+        overrides: {
+          conditions: [{ type: "and", conditions: [] }], // invalid: and with empty conditions array
+        },
+      },
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("createPresetConditions", () => {
