@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { createPresetConditions } from "./presets.js";
 import { PresetsSchema } from "./schemas/index.js";
 import { builtinEvaluators, evaluateCondition, defaultCreateRegex } from "./conditions/index.js";
+import type { ConditionEvaluator } from "./conditions/index.js";
 import type { Context } from "./schemas/context.js";
 
 describe("PresetsSchema", () => {
@@ -111,11 +112,12 @@ describe("createPresetConditions", () => {
     );
   });
 
-  it("skips custom type presets (no evaluator generated)", () => {
+  it("generates evaluator for custom type presets", () => {
     const result = createPresetConditions({
       segment: { type: "segment_match", overrides: { region: "us" } },
     });
-    expect(Object.keys(result)).toHaveLength(0);
+    expect(Object.keys(result)).toHaveLength(1);
+    expect(result).toHaveProperty("segment");
   });
 
   it("generates evaluator for string preset", async () => {
@@ -124,6 +126,7 @@ describe("createPresetConditions", () => {
     });
     expect(presetConditions).toHaveProperty("tier");
 
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
     const ctx: Context = { tier: "free" };
     const result = await presetConditions.tier({
       condition: { type: "tier", op: "eq", value: "free" },
@@ -132,6 +135,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(result).toBe(true);
 
@@ -144,6 +148,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(resultOverridden).toBe(true);
 
@@ -155,6 +160,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(resultNoMatch).toBe(false);
   });
@@ -163,6 +169,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       tier: { type: "string", key: "tier" },
     });
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
     const result = await presetConditions.tier({
       condition: { type: "tier", op: "in", value: ["free", "basic"] },
       context: { tier: "free" },
@@ -170,6 +177,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(result).toBe(true);
 
@@ -180,6 +188,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(resultFalse).toBe(false);
   });
@@ -188,6 +197,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       tier: { type: "string", key: "tier" },
     });
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
     const result = await presetConditions.tier({
       condition: { type: "tier", op: "regex", value: "^fr" },
       context: { tier: "free" },
@@ -195,6 +205,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(result).toBe(true);
   });
@@ -203,6 +214,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       age: { type: "number", key: "user_age" },
     });
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
 
     expect(
       await presetConditions.age({
@@ -212,6 +224,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(true);
     expect(
@@ -222,6 +235,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(false);
     expect(
@@ -232,6 +246,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(true);
   });
@@ -240,6 +255,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       admin: { type: "bool", key: "is_admin" },
     });
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
 
     expect(
       await presetConditions.admin({
@@ -249,6 +265,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(true);
     expect(
@@ -259,6 +276,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(false);
   });
@@ -267,6 +285,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       cutoff: { type: "datetime", key: "event_time" },
     });
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
 
     const ts = "2025-01-01T00:00:00.000Z";
     expect(
@@ -277,6 +296,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(true);
     expect(
@@ -287,6 +307,7 @@ describe("createPresetConditions", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators,
       }),
     ).toBe(false);
   });
@@ -295,6 +316,7 @@ describe("createPresetConditions", () => {
     const presetConditions = createPresetConditions({
       tier: { type: "string", key: "tier" },
     });
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
     const result = await presetConditions.tier({
       condition: { type: "tier", op: "eq", value: "free" },
       context: {},
@@ -302,6 +324,7 @@ describe("createPresetConditions", () => {
       deps: {},
       depth: "",
       createRegex: defaultCreateRegex,
+      evaluators,
     });
     expect(result).toBe(false);
   });
@@ -337,5 +360,191 @@ describe("createPresetConditions", () => {
       annotations: {},
     });
     expect(resultFalse).toBe(false);
+  });
+
+  it("generates evaluator for custom type preset (delegates at runtime)", async () => {
+    const customEvaluator: ConditionEvaluator = async ({ condition }) => {
+      const rec = condition as Record<string, unknown>;
+      return rec.region === "us";
+    };
+
+    const presetConditions = createPresetConditions({
+      geo: { type: "segment_match", overrides: { region: "us" } },
+    });
+    expect(presetConditions).toHaveProperty("geo");
+
+    const evaluators = {
+      ...builtinEvaluators,
+      ...presetConditions,
+      segment_match: customEvaluator,
+    };
+    const result = await evaluateCondition({
+      condition: { type: "geo" },
+      context: {},
+      evaluators,
+      annotations: {},
+    });
+    expect(result).toBe(true);
+  });
+
+  it("custom type preset merges overrides with use-site fields", async () => {
+    const customEvaluator: ConditionEvaluator = async ({ condition }) => {
+      const rec = condition as Record<string, unknown>;
+      return rec.region === "us" && rec.threshold === 50;
+    };
+
+    const presetConditions = createPresetConditions({
+      geo: { type: "segment_match", overrides: { region: "us" } },
+    });
+
+    const evaluators = {
+      ...builtinEvaluators,
+      ...presetConditions,
+      segment_match: customEvaluator,
+    };
+    const result = await evaluateCondition({
+      condition: { type: "geo", threshold: 50 },
+      context: {},
+      evaluators,
+      annotations: {},
+    });
+    expect(result).toBe(true);
+  });
+
+  it("generates evaluator for composite AND preset", async () => {
+    const presetConditions = createPresetConditions({
+      us_free: {
+        type: "and",
+        overrides: {
+          conditions: [
+            { type: "string", key: "region", op: "eq", value: "us" },
+            { type: "string", key: "tier", op: "eq", value: "free" },
+          ],
+        },
+      },
+    });
+    expect(presetConditions).toHaveProperty("us_free");
+
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
+
+    const resultTrue = await evaluateCondition({
+      condition: { type: "us_free" },
+      context: { region: "us", tier: "free" },
+      evaluators,
+      annotations: {},
+    });
+    expect(resultTrue).toBe(true);
+
+    const resultFalse = await evaluateCondition({
+      condition: { type: "us_free" },
+      context: { region: "eu", tier: "free" },
+      evaluators,
+      annotations: {},
+    });
+    expect(resultFalse).toBe(false);
+  });
+
+  it("generates evaluator for composite OR preset", async () => {
+    const presetConditions = createPresetConditions({
+      premium: {
+        type: "or",
+        overrides: {
+          conditions: [
+            { type: "string", key: "tier", op: "eq", value: "pro" },
+            { type: "string", key: "tier", op: "eq", value: "enterprise" },
+          ],
+        },
+      },
+    });
+
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
+
+    expect(
+      await evaluateCondition({
+        condition: { type: "premium" },
+        context: { tier: "pro" },
+        evaluators,
+        annotations: {},
+      }),
+    ).toBe(true);
+
+    expect(
+      await evaluateCondition({
+        condition: { type: "premium" },
+        context: { tier: "free" },
+        evaluators,
+        annotations: {},
+      }),
+    ).toBe(false);
+  });
+
+  it("composite preset overrides use-site conditions", async () => {
+    const presetConditions = createPresetConditions({
+      locked: {
+        type: "and",
+        overrides: {
+          conditions: [{ type: "bool", key: "active", value: true }],
+        },
+      },
+    });
+
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
+
+    const result = await evaluateCondition({
+      condition: { type: "locked", conditions: [{ type: "bool", key: "active", value: false }] },
+      context: { active: true },
+      evaluators,
+      annotations: {},
+    });
+    expect(result).toBe(true);
+  });
+
+  it("composite preset with nested composites works", async () => {
+    const presetConditions = createPresetConditions({
+      complex: {
+        type: "or",
+        overrides: {
+          conditions: [
+            {
+              type: "and",
+              conditions: [
+                { type: "string", key: "region", op: "eq", value: "us" },
+                { type: "string", key: "tier", op: "eq", value: "free" },
+              ],
+            },
+            { type: "string", key: "tier", op: "eq", value: "enterprise" },
+          ],
+        },
+      },
+    });
+
+    const evaluators = { ...builtinEvaluators, ...presetConditions };
+
+    expect(
+      await evaluateCondition({
+        condition: { type: "complex" },
+        context: { region: "us", tier: "free" },
+        evaluators,
+        annotations: {},
+      }),
+    ).toBe(true);
+
+    expect(
+      await evaluateCondition({
+        condition: { type: "complex" },
+        context: { region: "eu", tier: "enterprise" },
+        evaluators,
+        annotations: {},
+      }),
+    ).toBe(true);
+
+    expect(
+      await evaluateCondition({
+        condition: { type: "complex" },
+        context: { region: "eu", tier: "free" },
+        evaluators,
+        annotations: {},
+      }),
+    ).toBe(false);
   });
 });
