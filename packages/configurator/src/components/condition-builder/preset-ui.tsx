@@ -1,7 +1,10 @@
 import { useCallback, useMemo } from "react";
 import type { ComponentType } from "react";
 import type { Presets } from "showwhat";
-import { PRIMITIVE_TYPES } from "showwhat";
+
+const PRIMITIVE_TYPES = new Set(["string", "number", "bool", "datetime"]);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- used in upcoming composite preset UI (Task 4)
+const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);
 import type { ConditionTypeMeta } from "./condition-registry.js";
 import type { ConditionValueEditorProps } from "../../types.js";
 import type { ConditionExtensions } from "./ConditionExtensionsContext.js";
