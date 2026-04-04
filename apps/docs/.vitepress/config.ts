@@ -121,6 +121,7 @@ export default defineConfig({
             { text: "Overview", link: "/docs/configurator" },
             {
               text: "Using the App",
+              link: "/docs/configurator-getting-started",
               items: [
                 { text: "Getting Started", link: "/docs/configurator-getting-started" },
                 { text: "Editing Definitions", link: "/docs/configurator-editing" },
