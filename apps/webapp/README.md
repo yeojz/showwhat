@@ -59,5 +59,8 @@ VITE_BASE_PATH=/your/path/ pnpm build:webapp
 ## Documentation
 
 - [Configurator overview](https://showwhat.yeojz.dev/docs/configurator)
-- [Using the App](https://showwhat.yeojz.dev/docs/configurator-using-the-app) for a step-by-step walkthrough
+- [Getting Started](https://showwhat.yeojz.dev/docs/configurator-getting-started) for a quick walkthrough
+- [Editing Definitions](https://showwhat.yeojz.dev/docs/configurator-editing) for the full editing workflow
+- [Sources](https://showwhat.yeojz.dev/docs/configurator-sources) for loading from files and remote endpoints
+- [Presets](https://showwhat.yeojz.dev/docs/configurator-presets) for reusable condition presets
 - [Using the Library](https://showwhat.yeojz.dev/docs/configurator-using-the-library) to embed the configurator in your own React app
