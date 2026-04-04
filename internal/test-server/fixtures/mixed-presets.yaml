@@ -118,6 +118,8 @@ presets:
           overrides:
             region: us
         - type: matchAnnotations
-          overrides:
-            annotations:
-              feature-access: power
+          conditions:
+            - type: string
+              key: feature-access
+              op: eq
+              value: power
