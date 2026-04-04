@@ -1,8 +1,14 @@
 import { useRef, useState } from "react";
 import type { Variation } from "showwhat";
-import { AlertTriangle, Plus, Save, Undo2 } from "lucide-react";
+import { AlertTriangle, Download, Plus, Save, Trash2, Undo2 } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConfirmDialog } from "../common/ConfirmDialog.js";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu.js";
 import { Input } from "../ui/input.js";
 import { Label } from "../ui/label.js";
 import { Switch } from "../ui/switch.js";
@@ -19,6 +25,8 @@ export function DefinitionEditor({
   onRename,
   onSave,
   onDiscard,
+  onRemove,
+  onExport,
 }: DefinitionEditorProps) {
   const [editingKey, setEditingKey] = useState(false);
   const [keyDraft, setKeyDraft] = useState(definitionKey);
@@ -55,7 +63,7 @@ export function DefinitionEditor({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       {/* Action bar */}
-      <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border bg-muted/30 px-4 py-2">
+      <div className="flex h-12 shrink-0 items-center justify-end gap-2 border-b border-border bg-muted/30 px-4">
         <Button
           variant={isDirty ? "default" : "ghost"}
           size="sm"
@@ -82,6 +90,38 @@ export function DefinitionEditor({
             <Undo2 className="mr-1.5 h-4 w-4" />
             Discard
           </Button>
+        )}
+        {onExport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={isDirty || isPending}>
+                <Download className="mr-1.5 h-4 w-4" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onExport("yaml")}>Export as YAML</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport("json")}>Export as JSON</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+        {onRemove && (
+          <ConfirmDialog
+            title="Delete definition?"
+            description={`This will permanently remove "${definitionKey}" and all its variations. This action cannot be undone.`}
+            actionLabel="Delete"
+            onConfirm={onRemove}
+          >
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive/60 hover:text-destructive"
+              disabled={isPending}
+            >
+              <Trash2 className="mr-1.5 h-4 w-4" />
+              Delete
+            </Button>
+          </ConfirmDialog>
         )}
       </div>
 

@@ -1,8 +1,5 @@
-import { memo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { memo } from "react";
 import { Badge } from "../ui/badge.js";
-import { Button } from "../ui/button.js";
-import { ConfirmDialog } from "../common/ConfirmDialog.js";
 import { cn } from "../../utils/cn.js";
 import type { DefinitionListItemProps } from "../../types.js";
 
@@ -14,10 +11,7 @@ export const DefinitionListItem = memo(function DefinitionListItem({
   isSelected,
   isDirty,
   onSelect,
-  onRemove,
 }: DefinitionListItemProps) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
   return (
     <div
       tabIndex={0}
@@ -57,32 +51,6 @@ export const DefinitionListItem = memo(function DefinitionListItem({
       <Badge variant="secondary" className="text-xs tabular-nums">
         {variationCount}
       </Badge>
-      <ConfirmDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title="Delete definition?"
-        description={
-          <>
-            This will permanently delete <strong className="font-mono">{definitionKey}</strong> and
-            all its variations. This action cannot be undone.
-          </>
-        }
-        actionLabel="Delete"
-        onConfirm={onRemove}
-      >
-        <Button
-          variant="ghost"
-          size="icon-xs"
-          className="text-destructive/60 opacity-0 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
-          aria-label={`Remove ${definitionKey}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setConfirmOpen(true);
-          }}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </ConfirmDialog>
     </div>
   );
 });

@@ -66,14 +66,20 @@ describe("definition-store", () => {
       expect(getState().selectedKey).toBeNull();
     });
 
-    it("stores inline presets when provided", () => {
+    it("stores file presets when provided", () => {
       getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml", samplePresets);
-      expect(getState().inlinePresets).toEqual(samplePresets);
+      expect(getState().filePresets).toEqual(samplePresets);
     });
 
-    it("defaults inlinePresets to empty object when not provided", () => {
+    it("defaults filePresets to empty object when not provided", () => {
       getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
-      expect(getState().inlinePresets).toEqual({});
+      expect(getState().filePresets).toEqual({});
+    });
+
+    it("clears sourcePresets on full import", () => {
+      getState().setSourcePresets(samplePresets);
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
+      expect(getState().sourcePresets).toEqual({});
     });
 
     it("does not share object references between working and saved state", () => {
@@ -374,14 +380,132 @@ describe("definition-store", () => {
     });
   });
 
+  describe("upsertDefinition", () => {
+    it("merges a single key without touching other definitions", () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
+      const updated = { variations: [{ value: 99 }] };
+      getState().upsertDefinition("feature-a", updated);
+      expect(getState().definitions["feature-a"]).toEqual(updated);
+      expect(getState().definitions["feature-b"]).toEqual(sampleDefinitions["feature-b"]);
+    });
+
+    it("updates savedDefinitions so the key is no longer dirty", () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
+      getState().upsertDefinition("feature-a", { variations: [{ value: 99 }] });
+      expect(getState().dirtyKeys).not.toContain("feature-a");
+      expect(getState().savedDefinitions["feature-a"]).toEqual({ variations: [{ value: 99 }] });
+    });
+
+    it("clears validation errors for the upserted key", async () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
+      await getState().updateDefinition("feature-a", { variations: [] });
+      await getState().saveDefinition("feature-a"); // triggers validation error
+      expect(getState().validationErrors["feature-a"]).toBeDefined();
+      getState().upsertDefinition("feature-a", { variations: [{ value: "fixed" }] });
+      expect(getState().validationErrors["feature-a"]).toBeUndefined();
+    });
+
+    it("does not touch filePresets or sourcePresets", () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml", samplePresets);
+      getState().setSourcePresets({ env: { type: "string", key: "env" } });
+      getState().upsertDefinition("feature-a", { variations: [{ value: 1 }] });
+      expect(getState().filePresets).toEqual(samplePresets);
+      expect(getState().sourcePresets).toEqual({ env: { type: "string", key: "env" } });
+    });
+
+    it("clears dirty state for the upserted key only", async () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
+      await getState().updateDefinition("feature-a", { variations: [{ value: 1 }] });
+      await getState().updateDefinition("feature-b", { variations: [{ value: 2 }] });
+      getState().upsertDefinition("feature-a", { variations: [{ value: 99 }] });
+      expect(getState().dirtyKeys).not.toContain("feature-a");
+      expect(getState().dirtyKeys).toContain("feature-b");
+    });
+
+    it("does not change selectedKey", () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml");
+      getState().upsertDefinition("feature-b", { variations: [{ value: "x" }] });
+      expect(getState().selectedKey).toBe("feature-a");
+    });
+  });
+
+  describe("setSourcePresets", () => {
+    it("sets source presets without touching definitions", () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml", samplePresets);
+      getState().setSourcePresets({ env: { type: "string", key: "env" } });
+      expect(getState().sourcePresets).toEqual({ env: { type: "string", key: "env" } });
+      expect(getState().definitions).toEqual(sampleDefinitions);
+      expect(getState().filePresets).toEqual(samplePresets);
+    });
+
+    it("can be cleared by passing an empty object", () => {
+      getState().setSourcePresets(samplePresets);
+      getState().setSourcePresets({});
+      expect(getState().sourcePresets).toEqual({});
+    });
+  });
+
+  describe("setDefinitionPresets", () => {
+    it("sets the entire definitionPresets map", () => {
+      getState().setDefinitionPresets({
+        "flag-a": { tier: { type: "string", key: "tier" } },
+        "flag-b": { env: { type: "string", key: "env" } },
+      });
+      expect(getState().definitionPresets).toEqual({
+        "flag-a": { tier: { type: "string", key: "tier" } },
+        "flag-b": { env: { type: "string", key: "env" } },
+      });
+    });
+
+    it("replaces the previous map entirely", () => {
+      getState().setDefinitionPresets({ "flag-a": { tier: { type: "string", key: "tier" } } });
+      getState().setDefinitionPresets({ "flag-b": { env: { type: "string", key: "env" } } });
+      expect(getState().definitionPresets).toEqual({
+        "flag-b": { env: { type: "string", key: "env" } },
+      });
+    });
+
+    it("does not touch definitions, filePresets, or sourcePresets", () => {
+      getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml", samplePresets);
+      getState().setSourcePresets({ env: { type: "string", key: "env" } });
+      getState().setDefinitionPresets({ "flag-a": { tier: { type: "string", key: "tier" } } });
+      expect(getState().definitions).toEqual(sampleDefinitions);
+      expect(getState().filePresets).toEqual(samplePresets);
+      expect(getState().sourcePresets).toEqual({ env: { type: "string", key: "env" } });
+    });
+  });
+
+  describe("upsertDefinitionPresets", () => {
+    it("adds presets for a new key without removing others", () => {
+      getState().setDefinitionPresets({ "flag-a": { tier: { type: "string", key: "tier" } } });
+      getState().upsertDefinitionPresets("flag-b", { env: { type: "string", key: "env" } });
+      expect(getState().definitionPresets).toEqual({
+        "flag-a": { tier: { type: "string", key: "tier" } },
+        "flag-b": { env: { type: "string", key: "env" } },
+      });
+    });
+
+    it("overwrites presets for an existing key", () => {
+      getState().setDefinitionPresets({ "flag-a": { tier: { type: "string", key: "old" } } });
+      getState().upsertDefinitionPresets("flag-a", { tier: { type: "string", key: "new" } });
+      expect(getState().definitionPresets["flag-a"]).toEqual({
+        tier: { type: "string", key: "new" },
+      });
+    });
+  });
+
   describe("clearAll", () => {
     it("should reset all state", () => {
       getState().importDefinitions(sampleDefinitions, "test.yaml", "yaml", samplePresets);
+      getState().setSourcePresets({ env: { type: "string", key: "env" } });
+      getState().setDefinitionPresets({ "flag-a": { tier: { type: "string", key: "tier" } } });
       getState().clearAll();
       const state = getState();
       expect(state.definitions).toEqual({});
       expect(state.savedDefinitions).toEqual({});
-      expect(state.inlinePresets).toEqual({});
+      expect(state.filePresets).toEqual({});
+      expect(state.sourcePresets).toEqual({});
+      expect(state.definitionPresets).toEqual({});
       expect(state.selectedKey).toBeNull();
       expect(state.sourceFileName).toBeNull();
       expect(state.sourceFormat).toBeNull();
@@ -416,15 +540,13 @@ describe("definition-store", () => {
       expect(() => createDefinitionStore({ storage })).not.toThrow();
     });
 
-    it("defaults inlinePresets to empty object when persisted state has null inlinePresets", async () => {
+    it("migrates v1 inlinePresets to filePresets and initialises sourcePresets", async () => {
       const storage = createTestStorage();
-      // Simulate a persisted state from an older version where inlinePresets was null.
-      // null is preserved by JSON.stringify, so the merge will leave state.inlinePresets
-      // as null, and onRehydrateStorage should default it to {}.
+      // Simulate persisted state from v1 where the combined field was called inlinePresets.
       const persisted = {
         state: {
           savedDefinitions: { "feature-a": { variations: [{ value: true }] } },
-          inlinePresets: null,
+          inlinePresets: { tier: { type: "string", key: "tier" } },
           selectedKey: null,
           sourceFileName: null,
           sourceFormat: null,
@@ -435,8 +557,29 @@ describe("definition-store", () => {
 
       const store2 = createDefinitionStore({ storage });
       await new Promise((resolve) => setTimeout(resolve, 50));
-      // onRehydrateStorage should default inlinePresets to {}
-      expect(store2.getState().inlinePresets).toEqual({});
+      expect(store2.getState().filePresets).toEqual({ tier: { type: "string", key: "tier" } });
+      expect(store2.getState().sourcePresets).toEqual({});
+    });
+
+    it("defaults filePresets and sourcePresets to empty objects when persisted values are null", async () => {
+      const storage = createTestStorage();
+      const persisted = {
+        state: {
+          savedDefinitions: { "feature-a": { variations: [{ value: true }] } },
+          filePresets: null,
+          sourcePresets: null,
+          selectedKey: null,
+          sourceFileName: null,
+          sourceFormat: null,
+        },
+        version: 2,
+      };
+      storage.setItem("showwhat-configurator", JSON.stringify(persisted));
+
+      const store2 = createDefinitionStore({ storage });
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(store2.getState().filePresets).toEqual({});
+      expect(store2.getState().sourcePresets).toEqual({});
     });
   });
 

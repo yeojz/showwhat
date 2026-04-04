@@ -1,0 +1,15 @@
+description: UI configuration settings
+
+presets:
+  ui:
+    type: string
+    key: ui
+
+variations:
+  - value: "compact"
+    conditions:
+      - type: bool
+        key: mobile
+        op: eq
+        value: true
+  - value: "default"

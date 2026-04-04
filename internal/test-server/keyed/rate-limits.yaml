@@ -1,0 +1,15 @@
+description: API rate limiting thresholds
+
+presets:
+  rl:
+    type: string
+    key: rl
+
+variations:
+  - value: 1000
+    conditions:
+      - type: string
+        key: tier
+        op: eq
+        value: enterprise
+  - value: 100

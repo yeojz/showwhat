@@ -23,110 +23,96 @@ describe("useViewRouter", () => {
 
   // --- Param parsing ---
 
-  it("defaults to configurator view with sources tab when no params", () => {
+  it("defaults to definitions tab when no params", () => {
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("configurator");
+    expect(result.current.tab).toBe("definitions");
+  });
+
+  it("parses tab=sources from URL", () => {
+    setLocation("?tab=sources");
+    const { result } = renderHook(() => useViewRouter());
     expect(result.current.tab).toBe("sources");
   });
 
-  it("parses view=settings from URL", () => {
-    setLocation("?view=settings");
+  it("parses tab=presets from URL", () => {
+    setLocation("?tab=presets");
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("settings");
-    expect(result.current.tab).toBe("sources");
-  });
-
-  it("parses view=settings&tab=presets from URL", () => {
-    setLocation("?view=settings&tab=presets");
-    const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("settings");
     expect(result.current.tab).toBe("presets");
+  });
+
+  it("parses tab=definitions from URL", () => {
+    setLocation("?tab=definitions");
+    const { result } = renderHook(() => useViewRouter());
+    expect(result.current.tab).toBe("definitions");
   });
 
   // --- Security: allowlist validation ---
 
-  it("falls back to configurator for unknown view values", () => {
-    setLocation("?view=<script>alert(1)</script>");
+  it("falls back to definitions for unknown tab values", () => {
+    setLocation("?tab=<script>alert(1)</script>");
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("configurator");
+    expect(result.current.tab).toBe("definitions");
   });
 
-  it("falls back to sources for unknown tab values", () => {
-    setLocation("?view=settings&tab=<img/onerror=alert(1)>");
+  it("falls back to definitions for empty tab param", () => {
+    setLocation("?tab=");
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.tab).toBe("sources");
+    expect(result.current.tab).toBe("definitions");
   });
 
-  it("falls back to configurator for empty view param", () => {
-    setLocation("?view=");
+  it("ignores extra params and only reads tab", () => {
+    setLocation("?tab=presets&malicious=payload");
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("configurator");
-  });
-
-  it("ignores extra params and only reads view and tab", () => {
-    setLocation("?view=settings&tab=presets&malicious=payload");
-    const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("settings");
     expect(result.current.tab).toBe("presets");
   });
 
-  it("falls back for case-mismatched view value", () => {
-    setLocation("?view=Settings");
+  it("falls back for case-mismatched tab value", () => {
+    setLocation("?tab=Sources");
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("configurator");
+    expect(result.current.tab).toBe("definitions");
   });
 
-  it("parses tab param even when view resolves to configurator", () => {
+  // --- setTab() ---
+
+  it("setTab to sources calls pushState with correct URL", () => {
+    const { result } = renderHook(() => useViewRouter());
+    act(() => {
+      result.current.setTab("sources");
+    });
+    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "?tab=sources");
+    expect(result.current.tab).toBe("sources");
+  });
+
+  it("setTab to presets calls pushState with correct URL", () => {
+    const { result } = renderHook(() => useViewRouter());
+    act(() => {
+      result.current.setTab("presets");
+    });
+    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "?tab=presets");
+    expect(result.current.tab).toBe("presets");
+  });
+
+  it("setTab to definitions removes all search params", () => {
     setLocation("?tab=presets");
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("configurator");
-    expect(result.current.tab).toBe("presets");
-  });
-
-  // --- navigate() ---
-
-  it("navigate to settings calls pushState with correct URL", () => {
-    const { result } = renderHook(() => useViewRouter());
     act(() => {
-      result.current.navigate({ view: "settings" });
-    });
-    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "?view=settings&tab=sources");
-    expect(result.current.view).toBe("settings");
-    expect(result.current.tab).toBe("sources");
-  });
-
-  it("navigate to settings with tab calls pushState with tab param", () => {
-    const { result } = renderHook(() => useViewRouter());
-    act(() => {
-      result.current.navigate({ view: "settings", tab: "presets" });
-    });
-    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "?view=settings&tab=presets");
-    expect(result.current.view).toBe("settings");
-    expect(result.current.tab).toBe("presets");
-  });
-
-  it("navigate to configurator removes all search params", () => {
-    setLocation("?view=settings&tab=presets");
-    const { result } = renderHook(() => useViewRouter());
-    act(() => {
-      result.current.navigate({ view: "configurator" });
+      result.current.setTab("definitions");
     });
     expect(pushStateSpy).toHaveBeenCalledWith(null, "", "/");
-    expect(result.current.view).toBe("configurator");
+    expect(result.current.tab).toBe("definitions");
   });
 
   // --- popstate (browser back/forward) ---
 
   it("updates state on popstate event", () => {
     const { result } = renderHook(() => useViewRouter());
-    expect(result.current.view).toBe("configurator");
+    expect(result.current.tab).toBe("definitions");
 
     act(() => {
-      setLocation("?view=settings&tab=presets");
+      setLocation("?tab=presets");
       window.dispatchEvent(new PopStateEvent("popstate"));
     });
 
-    expect(result.current.view).toBe("settings");
     expect(result.current.tab).toBe("presets");
   });
 

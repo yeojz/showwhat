@@ -1,0 +1,11 @@
+{
+  "description": "Core feature flags",
+  "active": true,
+  "variations": [
+    {
+      "value": true,
+      "conditions": [{ "type": "env", "op": "eq", "value": "production" }]
+    },
+    { "value": false }
+  ]
+}

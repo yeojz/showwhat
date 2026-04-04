@@ -155,4 +155,29 @@ describe("useFileExport", () => {
     expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:test-url");
     vi.useRealTimers();
   });
+
+  it("exportDefinitionYaml exports a single definition as YAML", async () => {
+    const yaml = await import("js-yaml");
+    const { result } = renderHook(() => useFileExport());
+    const def = { variations: [{ value: true }] };
+
+    result.current.exportDefinitionYaml("feature-a", def);
+
+    expect(yaml.default.dump).toHaveBeenCalledWith(def, expect.objectContaining({ indent: 2 }));
+    expect(clickedLink).not.toBeNull();
+    expect(clickedLink!.download).toBe("feature-a.yaml");
+  });
+
+  it("exportDefinitionJson exports a single definition as JSON", async () => {
+    const { result } = renderHook(() => useFileExport());
+    const def = { variations: [{ value: "hello" }] };
+
+    result.current.exportDefinitionJson("feature-b", def);
+
+    expect(clickedLink).not.toBeNull();
+    expect(clickedLink!.download).toBe("feature-b.json");
+    const blobContent = await createdBlobs[0].text();
+    const parsed = JSON.parse(blobContent);
+    expect(parsed).toEqual(def);
+  });
 });

@@ -33,16 +33,47 @@ function validateDefinition(key: string, def: Definition): ValidationIssue[] {
 
 export type FileDefinitionState = ConfiguratorStore & {
   savedDefinitions: Definitions;
-  inlinePresets: Presets;
+  /**
+   * Presets embedded within a single-mode definition file (the file contains
+   * both `definitions` and `presets` at the top level).
+   */
+  filePresets: Presets;
+  /**
+   * Presets fetched from a dedicated presets endpoint (keyed-mode sources that
+   * have a `presetsUrl` configured).
+   */
+  sourcePresets: Presets;
+  /**
+   * Per-definition-key presets for keyed-mode sources. Each entry maps a
+   * definition key (e.g. "feature-flags") to the presets embedded within that
+   * definition file. Stored separately so the UI can show provenance and so
+   * same-named presets from different files never silently overwrite each other.
+   */
+  definitionPresets: Record<string, Presets>;
   sourceFileName: string | null;
   sourceFormat: "yaml" | "json" | null;
 
+  /**
+   * Full load: replaces all definitions and file-embedded presets. Clears all
+   * preset fields — callers set sourcePresets / definitionPresets afterwards.
+   */
   importDefinitions(
     defs: Definitions,
     fileName: string,
     format: "yaml" | "json",
-    inlinePresets?: Presets,
+    filePresets?: Presets,
   ): void;
+  /**
+   * Merge a single definition key fetched from the server without disturbing
+   * any other state (presets, other definitions, dirty keys for other keys).
+   */
+  upsertDefinition(key: string, def: Definition): void;
+  /** Replace all source-endpoint presets without touching definitions. */
+  setSourcePresets(presets: Presets): void;
+  /** Replace the entire definitionPresets map (used on initial keyed load). */
+  setDefinitionPresets(presets: Record<string, Presets>): void;
+  /** Update one definition key's presets without replacing the others. */
+  upsertDefinitionPresets(key: string, presets: Presets): void;
   revertAll(): void;
   clearAll(): void;
 };
@@ -60,7 +91,9 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
       (set, get) => ({
         definitions: {},
         savedDefinitions: {},
-        inlinePresets: {},
+        filePresets: {},
+        sourcePresets: {},
+        definitionPresets: {},
         selectedKey: null,
         sourceFileName: null,
         sourceFormat: null,
@@ -72,17 +105,45 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
           return get().dirtyKeys.includes(key);
         },
 
-        importDefinitions(defs, fileName, format, inlinePresets) {
+        importDefinitions(defs, fileName, format, filePresets) {
           set((state) => ({
             definitions: structuredClone(defs),
             savedDefinitions: structuredClone(defs),
-            inlinePresets: inlinePresets ?? {},
+            filePresets: filePresets ?? {},
+            sourcePresets: {},
+            definitionPresets: {},
             sourceFileName: fileName,
             sourceFormat: format,
             dirtyKeys: [],
             revision: state.revision + 1,
             validationErrors: {},
             selectedKey: Object.keys(defs)[0] ?? null,
+          }));
+        },
+
+        upsertDefinition(key, def) {
+          set((state) => ({
+            definitions: { ...state.definitions, [key]: structuredClone(def) },
+            savedDefinitions: { ...state.savedDefinitions, [key]: structuredClone(def) },
+            dirtyKeys: state.dirtyKeys.filter((k) => k !== key),
+            validationErrors: omitKey(
+              state.validationErrors as Record<string, unknown>,
+              key,
+            ) as typeof state.validationErrors,
+          }));
+        },
+
+        setSourcePresets(presets) {
+          set({ sourcePresets: presets });
+        },
+
+        setDefinitionPresets(presets) {
+          set({ definitionPresets: presets });
+        },
+
+        upsertDefinitionPresets(key, presets) {
+          set((state) => ({
+            definitionPresets: { ...state.definitionPresets, [key]: presets },
           }));
         },
 
@@ -223,7 +284,9 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
           set((state) => ({
             definitions: {},
             savedDefinitions: {},
-            inlinePresets: {},
+            filePresets: {},
+            sourcePresets: {},
+            definitionPresets: {},
             selectedKey: null,
             sourceFileName: null,
             sourceFormat: null,
@@ -235,19 +298,38 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
       }),
       {
         name: "showwhat-configurator",
-        version: 1,
+        version: 3,
         storage,
         partialize: (state) => ({
           savedDefinitions: state.savedDefinitions,
-          inlinePresets: state.inlinePresets,
+          filePresets: state.filePresets,
+          sourcePresets: state.sourcePresets,
+          definitionPresets: state.definitionPresets,
           selectedKey: state.selectedKey,
           sourceFileName: state.sourceFileName,
           sourceFormat: state.sourceFormat,
         }),
+        migrate(persistedState, version) {
+          const s = persistedState as Record<string, unknown>;
+          if (version === 1) {
+            return {
+              ...s,
+              filePresets: (s.inlinePresets as Presets | null | undefined) ?? {},
+              sourcePresets: {},
+              definitionPresets: {},
+            };
+          }
+          if (version === 2) {
+            return { ...s, definitionPresets: {} };
+          }
+          return persistedState;
+        },
         onRehydrateStorage: () => (state) => {
           if (!state) return;
           state.definitions = structuredClone(state.savedDefinitions);
-          state.inlinePresets = state.inlinePresets ?? {};
+          state.filePresets = state.filePresets ?? {};
+          state.sourcePresets = state.sourcePresets ?? {};
+          state.definitionPresets = state.definitionPresets ?? {};
           state.dirtyKeys = [];
           state.validationErrors = {};
         },
