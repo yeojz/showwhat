@@ -148,7 +148,7 @@ If you try to close or navigate away from the browser tab while unsaved changes 
 The **Export** button in the sidebar header lets you download all saved definitions as YAML or JSON. The exported file includes any file-level [presets](/docs/presets). Export is disabled when you have unsaved changes or validation errors -- save or discard first.
 
 ::: tip
-In **keyed mode** (when a keyed source is loaded), the bulk export button is hidden. Instead, each definition has its own export option for downloading just that definition as a standalone file.
+In **split mode** (when a split source is loaded), the bulk export button is hidden. Instead, each definition has its own export option for downloading just that definition as a standalone file.
 :::
 
 ## Next steps

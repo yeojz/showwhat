@@ -91,7 +91,7 @@ const result = await showwhat({
 
 The examples below are starting points. Adapt them to your needs.
 
-### Single-file reader (Node.js)
+### Bundled-file reader (Node.js)
 
 Read all definitions from one YAML or JSON file on disk:
 
@@ -133,7 +133,7 @@ const result = await showwhat({
 });
 ```
 
-### Directory reader (one file per flag)
+### Directory reader (one file per definition)
 
 Each file in a directory contains a single definition. Scales without merge conflicts:
 
@@ -150,7 +150,7 @@ import { join, parse as parsePath } from "node:path";
 import { parseYaml, parseObject } from "showwhat";
 import type { DefinitionReader, Definition, Definitions } from "showwhat";
 
-class KeyedFileData implements DefinitionReader {
+class SplitFileData implements DefinitionReader {
   private extensions = new Set([".yaml", ".yml", ".json"]);
 
   constructor(private dir: string) {}

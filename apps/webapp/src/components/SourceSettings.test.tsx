@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import type { RemoteSource } from "../store/source-store.js";
+import type { HostedSource } from "../store/source-store.js";
 
 // Mock configurator UI components
 vi.mock("@showwhat/configurator", () => ({
@@ -217,9 +217,9 @@ vi.mock("zustand/react/shallow", () => ({
 vi.mock("./SourceForm.js", () => ({
   SourceFormDialog: (props: {
     open: boolean;
-    onSave: (data: Omit<RemoteSource, "id">) => void;
+    onSave: (data: Omit<HostedSource, "id">) => void;
     onClose: () => void;
-    initial?: RemoteSource;
+    initial?: HostedSource;
   }) => {
     return props.open ? (
       <div data-testid="source-form-dialog">
@@ -227,11 +227,11 @@ vi.mock("./SourceForm.js", () => ({
           data-testid="form-save"
           onClick={() =>
             props.onSave({
-              mode: "single",
+              mode: "bundled",
               label: "New",
               format: "yaml",
               url: "https://example.com",
-            } as Omit<RemoteSource, "id">)
+            } as Omit<HostedSource, "id">)
           }
         >
           Save
@@ -246,18 +246,18 @@ vi.mock("./SourceForm.js", () => ({
 
 const { SourceSettings } = await import("./SourceSettings.js");
 
-const sampleSingleSource: RemoteSource = {
+const sampleBundledSource: HostedSource = {
   id: "src-1",
-  mode: "single",
+  mode: "bundled",
   label: "Production",
   format: "yaml",
   url: "https://r2.example.com/flags.yaml",
   lastFetched: Date.now() - 60_000,
 };
 
-const sampleKeyedSource: RemoteSource = {
+const sampleSplitSource: HostedSource = {
   id: "src-2",
-  mode: "keyed",
+  mode: "split",
   label: "Staging",
   format: "json",
   baseUrl: "https://r2.example.com/defs/{key}.json",
@@ -265,9 +265,9 @@ const sampleKeyedSource: RemoteSource = {
   listUrl: "https://r2.example.com/keys.json",
 };
 
-const sampleKeyedSourceWithPresets: RemoteSource = {
+const sampleSplitSourceWithPresets: HostedSource = {
   id: "src-3",
-  mode: "keyed",
+  mode: "split",
   label: "WithPresets",
   format: "json",
   baseUrl: "https://r2.example.com/defs/{key}.json",
@@ -337,7 +337,7 @@ describe("SourceSettings", () => {
   it("renders source list on the left and detail panel on the right when sources exist", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -382,7 +382,7 @@ describe("SourceSettings", () => {
   it("auto-selects the first source when sources exist", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
     };
     render(<SourceSettings />);
     // Detail panel should show the first source's URL
@@ -393,7 +393,7 @@ describe("SourceSettings", () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -403,7 +403,7 @@ describe("SourceSettings", () => {
     // Click the second source (Staging) in the left pane
     await user.click(screen.getByText("Staging"));
 
-    // Detail panel should now show the keyed source's base URL
+    // Detail panel should now show the split source's base URL
     expect(screen.getByText(/r2\.example\.com\/defs/)).toBeDefined();
   });
 
@@ -412,7 +412,7 @@ describe("SourceSettings", () => {
   it("shows source label in the detail panel top bar", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     // The detail panel renders the label
@@ -423,45 +423,45 @@ describe("SourceSettings", () => {
   it("shows mode badge in sidebar and detail panel", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
-    expect(screen.getAllByText("single").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("bundled").length).toBeGreaterThanOrEqual(2);
   });
 
   it("shows format badge in sidebar and detail panel", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.getAllByText("yaml").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("shows mode and format badges for keyed source", () => {
+  it("shows mode and format badges for split source", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
-    expect(screen.getAllByText("keyed").length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByText("split").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("json").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("shows URL for single source in detail panel", () => {
+  it("shows URL for bundled source in detail panel", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.getByText(/r2\.example\.com\/flags\.yaml/)).toBeDefined();
     expect(screen.getByText("URL")).toBeDefined();
   });
 
-  it("shows base URL and list URL for keyed source in detail panel", () => {
+  it("shows base URL and list URL for split source in detail panel", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
     expect(screen.getByText("Base URL")).toBeDefined();
@@ -473,13 +473,13 @@ describe("SourceSettings", () => {
   it("shows left pane entries with mode and format text", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
     };
     render(<SourceSettings />);
-    // Left pane shows "single · yaml" and "keyed · json" under source names
+    // Left pane shows "bundled · yaml" and "split · json" under source names
     // Multiple elements may match since mode badges are also in the detail panel
-    expect(screen.getAllByText(/single/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/keyed/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/bundled/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/split/).length).toBeGreaterThanOrEqual(1);
   });
 
   // ─── Loaded state ───────────────────────────────────────────────
@@ -492,7 +492,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -504,7 +504,7 @@ describe("SourceSettings", () => {
   it("does not show 'loaded' badge when source is not active", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.queryByText("loaded")).toBeNull();
@@ -526,7 +526,7 @@ describe("SourceSettings", () => {
   it("shows Load button for an unloaded source", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.getByText("Load")).toBeDefined();
@@ -540,7 +540,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -556,7 +556,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -566,7 +566,7 @@ describe("SourceSettings", () => {
   it("does not show Unload button for unloaded source", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.queryByText("Unload")).toBeNull();
@@ -575,7 +575,7 @@ describe("SourceSettings", () => {
   it("shows Edit button in the detail panel top bar", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.getByText("Edit")).toBeDefined();
@@ -603,7 +603,7 @@ describe("SourceSettings", () => {
   it("shows per-URL last fetched timestamp", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     // Timestamp is shown inline next to the URL
@@ -613,7 +613,7 @@ describe("SourceSettings", () => {
   it("shows 'just now' for very recent timestamps", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [{ ...sampleSingleSource, lastFetched: Date.now() - 5_000 }],
+      sources: [{ ...sampleBundledSource, lastFetched: Date.now() - 5_000 }],
     };
     render(<SourceSettings />);
     expect(screen.getByText(/just now/)).toBeDefined();
@@ -624,7 +624,7 @@ describe("SourceSettings", () => {
   it("shows delete button in the source detail action bar", () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     expect(screen.getByTestId("confirm-dialog-Delete source?")).toBeDefined();
@@ -634,16 +634,16 @@ describe("SourceSettings", () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
     await user.click(screen.getByTestId("confirm-Delete source?"));
     expect(mockRemoveSource).toHaveBeenCalledWith("src-1");
   });
 
-  // ─── handleLoad: single mode ────────────────────────────────────
+  // ─── handleLoad: bundled mode ────────────────────────────────────
 
-  it("handleLoad for single source calls importDefinitions with presets inline", async () => {
+  it("handleLoad for bundled source calls importDefinitions with presets inline", async () => {
     const user = userEvent.setup();
     const fetchResult = {
       definitions: { "flag-x": { kind: "boolean" } },
@@ -653,14 +653,14 @@ describe("SourceSettings", () => {
     mockFetchSource.mockResolvedValue(fetchResult);
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
     // Click Load confirm button
     await user.click(screen.getByTestId("confirm-Load source?"));
 
-    expect(mockFetchSource).toHaveBeenCalledWith(sampleSingleSource);
+    expect(mockFetchSource).toHaveBeenCalledWith(sampleBundledSource);
     expect(mockImportDefinitions).toHaveBeenCalledWith(
       fetchResult.definitions,
       "Production",
@@ -671,12 +671,12 @@ describe("SourceSettings", () => {
     expect(mockMarkFetched).toHaveBeenCalledWith("src-1", ["flag-x"]);
   });
 
-  it("handleLoad for single source does nothing when fetchSource returns null", async () => {
+  it("handleLoad for bundled source does nothing when fetchSource returns null", async () => {
     const user = userEvent.setup();
     mockFetchSource.mockResolvedValue(null);
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -687,9 +687,9 @@ describe("SourceSettings", () => {
     expect(mockSetActiveSource).not.toHaveBeenCalled();
   });
 
-  // ─── handleLoad: keyed mode ─────────────────────────────────────
+  // ─── handleLoad: split mode ─────────────────────────────────────
 
-  it("handleLoad for keyed source calls importDefinitions without presets, then sets presets separately", async () => {
+  it("handleLoad for split source calls importDefinitions without presets, then sets presets separately", async () => {
     const user = userEvent.setup();
     const fetchResult = {
       definitions: { "flag-a": { kind: "boolean" } },
@@ -700,15 +700,15 @@ describe("SourceSettings", () => {
     mockFetchSource.mockResolvedValue(fetchResult);
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
 
-    // Select the keyed source first (it should be auto-selected as the only source)
+    // Select the split source first (it should be auto-selected as the only source)
     await user.click(screen.getByTestId("confirm-Load source?"));
 
-    expect(mockFetchSource).toHaveBeenCalledWith(sampleKeyedSource);
-    // Keyed mode: importDefinitions called WITHOUT presets (3 args)
+    expect(mockFetchSource).toHaveBeenCalledWith(sampleSplitSource);
+    // Split mode: importDefinitions called WITHOUT presets (3 args)
     expect(mockImportDefinitions).toHaveBeenCalledWith(fetchResult.definitions, "Staging", "json");
     expect(mockSetDefinitionPresets).toHaveBeenCalledWith(fetchResult.definitionPresets);
     expect(mockSetSourcePresets).toHaveBeenCalledWith(fetchResult.presets);
@@ -716,7 +716,7 @@ describe("SourceSettings", () => {
     expect(mockMarkFetched).toHaveBeenCalledWith("src-2", ["flag-a"]);
   });
 
-  it("handleLoad for keyed source without definitionPresets skips setDefinitionPresets", async () => {
+  it("handleLoad for split source without definitionPresets skips setDefinitionPresets", async () => {
     const user = userEvent.setup();
     const fetchResult = {
       definitions: { "flag-a": { kind: "boolean" } },
@@ -726,7 +726,7 @@ describe("SourceSettings", () => {
     mockFetchSource.mockResolvedValue(fetchResult);
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -747,7 +747,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -768,7 +768,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -806,7 +806,7 @@ describe("SourceSettings", () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -857,7 +857,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -875,7 +875,7 @@ describe("SourceSettings", () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -999,7 +999,7 @@ describe("SourceSettings", () => {
 
   // ─── handleReloadKeyList ────────────────────────────────────────
 
-  it("handleReloadKeyList reloads keys and updates store for keyed source", async () => {
+  it("handleReloadKeyList reloads keys and updates store for split source", async () => {
     const user = userEvent.setup();
     const newKeys = ["flag-a", "flag-b", "flag-c"];
     mockReloadKeyList.mockResolvedValue(newKeys);
@@ -1010,12 +1010,12 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
 
-    // The active keyed source detail panel should have a reload button for the list URL
+    // The active split source detail panel should have a reload button for the list URL
     const reloadButtons = screen.getAllByTitle(/reload from list url/i);
     await user.click(reloadButtons[0]);
 
@@ -1037,7 +1037,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1068,7 +1068,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1102,7 +1102,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1128,7 +1128,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1145,7 +1145,7 @@ describe("SourceSettings", () => {
 
   // ─── handleReloadPresets ────────────────────────────────────────
 
-  it("handleReloadPresets reloads presets for keyed source with presetsUrl", async () => {
+  it("handleReloadPresets reloads presets for split source with presetsUrl", async () => {
     const user = userEvent.setup();
     const newPresets = { env: { staging: {} } };
     mockReloadPresets.mockResolvedValue(newPresets);
@@ -1156,7 +1156,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSourceWithPresets],
+      sources: [sampleSplitSourceWithPresets],
       activeSourceId: "src-3",
     };
     render(<SourceSettings />);
@@ -1187,7 +1187,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSourceWithPresets],
+      sources: [sampleSplitSourceWithPresets],
       activeSourceId: "src-3",
     };
     render(<SourceSettings />);
@@ -1204,7 +1204,7 @@ describe("SourceSettings", () => {
 
   // ─── handleRefreshSingle ────────────────────────────────────────
 
-  it("handleRefreshSingle refetches single source and reimports definitions", async () => {
+  it("handleRefreshSingle refetches bundled source and reimports definitions", async () => {
     const user = userEvent.setup();
     const refreshResult = {
       definitions: { "flag-x": { kind: "boolean", defaultValue: false } },
@@ -1219,17 +1219,17 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
 
-    // The loaded single source detail should have a reload button next to the URL
+    // The loaded bundled source detail should have a reload button next to the URL
     const reloadButton = screen.getByTitle(/reload from url/i);
     await user.click(reloadButton);
 
     await vi.waitFor(() => {
-      expect(mockFetchSource).toHaveBeenCalledWith(sampleSingleSource);
+      expect(mockFetchSource).toHaveBeenCalledWith(sampleBundledSource);
     });
 
     expect(mockImportDefinitions).toHaveBeenCalledWith(
@@ -1251,7 +1251,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -1272,7 +1272,7 @@ describe("SourceSettings", () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -1342,13 +1342,13 @@ describe("SourceSettings", () => {
 
     // "No source loaded" appears in both left pane active section and right pane
     expect(screen.getAllByText("No source loaded").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Add a URL source or import a file/)).toBeDefined();
+    expect(screen.getByText(/Add a hosted source or import a file/)).toBeDefined();
   });
 
   it("renders 'Select a source from the sidebar' when selection points to missing source", async () => {
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -1364,9 +1364,9 @@ describe("SourceSettings", () => {
     // is only reachable via a race condition. We'll skip testing this specific fallback.
   });
 
-  // ─── Left pane: active section with URL source ──────────────────
+  // ─── Left pane: active section with hosted source ──────────────────
 
-  it("shows active URL source icon and badges in the left pane active section", () => {
+  it("shows active hosted source icon and badges in the left pane active section", () => {
     definitionStoreState = {
       ...definitionStoreState,
       sourceFileName: "Production",
@@ -1374,12 +1374,12 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
 
-    // Active section should show the URL source with mode and format badges
+    // Active section should show the hosted source with mode and format badges
     expect(screen.getByText("Active")).toBeDefined();
     const productionLabels = screen.getAllByText("Production");
     expect(productionLabels.length).toBeGreaterThanOrEqual(1);
@@ -1429,7 +1429,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -1458,7 +1458,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -1482,7 +1482,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -1548,7 +1548,7 @@ describe("SourceSettings", () => {
     fetchHookState = { loading: true, error: null };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -1567,7 +1567,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource, sampleKeyedSource],
+      sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
     render(<SourceSettings />);
@@ -1577,7 +1577,7 @@ describe("SourceSettings", () => {
 
     // Should show Load button (not loaded)
     expect(screen.getByText("Load")).toBeDefined();
-    // Should show base URL for keyed source
+    // Should show base URL for split source
     expect(screen.getByText(/r2\.example\.com\/defs/)).toBeDefined();
     // Should NOT show "loaded" badge for non-active source
     // (The detail panel for Staging should not have the loaded badge)
@@ -1590,7 +1590,7 @@ describe("SourceSettings", () => {
     expect(screen.getByText(/No sources configured\./)).toBeDefined();
   });
 
-  // ─── Keyed source: definition key management via SourceDetailPanel ───
+  // ─── Split source: definition key management via SourceDetailPanel ───
 
   it("definition count shown in unsaved draft left pane for 2 definitions uses plural", () => {
     definitionStoreState = {
@@ -1602,9 +1602,9 @@ describe("SourceSettings", () => {
     expect(screen.getAllByText(/2 definition/).length).toBeGreaterThanOrEqual(1);
   });
 
-  // ─── onEdit callback for active URL source ─────────────────────
+  // ─── onEdit callback for active hosted source ─────────────────────
 
-  it("Edit button on active URL source opens form dialog with the source", async () => {
+  it("Edit button on active hosted source opens form dialog with the source", async () => {
     const user = userEvent.setup();
     definitionStoreState = {
       ...definitionStoreState,
@@ -1613,7 +1613,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1623,9 +1623,9 @@ describe("SourceSettings", () => {
     expect(screen.getByTestId("source-form-dialog")).toBeDefined();
   });
 
-  // ─── onAddKey / onRemoveKey callbacks for active URL source ─────
+  // ─── onAddKey / onRemoveKey callbacks for active hosted source ─────
 
-  it("onAddKey callback for active URL source calls addDefinitionKey", async () => {
+  it("onAddKey callback for active hosted source calls addDefinitionKey", async () => {
     const user = userEvent.setup();
     definitionStoreState = {
       ...definitionStoreState,
@@ -1634,7 +1634,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1650,7 +1650,7 @@ describe("SourceSettings", () => {
     expect(mockAddDefinitionKey).toHaveBeenCalledWith("src-2", "new-key");
   });
 
-  it("onRemoveKey callback for active URL source calls removeDefinitionKey", async () => {
+  it("onRemoveKey callback for active hosted source calls removeDefinitionKey", async () => {
     const user = userEvent.setup();
     definitionStoreState = {
       ...definitionStoreState,
@@ -1659,7 +1659,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
     render(<SourceSettings />);
@@ -1679,7 +1679,7 @@ describe("SourceSettings", () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -1688,11 +1688,11 @@ describe("SourceSettings", () => {
     expect(screen.getByTestId("source-form-dialog")).toBeDefined();
   });
 
-  it("onAddKey callback for selected non-active keyed source calls addDefinitionKey", async () => {
+  it("onAddKey callback for selected non-active split source calls addDefinitionKey", async () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -1705,11 +1705,11 @@ describe("SourceSettings", () => {
     expect(mockAddDefinitionKey).toHaveBeenCalledWith("src-2", "extra-key");
   });
 
-  it("onRemoveKey callback for selected non-active keyed source calls removeDefinitionKey", async () => {
+  it("onRemoveKey callback for selected non-active split source calls removeDefinitionKey", async () => {
     const user = userEvent.setup();
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleKeyedSource],
+      sources: [sampleSplitSource],
     };
     render(<SourceSettings />);
 
@@ -1784,7 +1784,7 @@ describe("SourceSettings", () => {
     };
     sourceStoreState = {
       ...sourceStoreState,
-      sources: [sampleSingleSource],
+      sources: [sampleBundledSource],
     };
     render(<SourceSettings />);
 
@@ -1797,7 +1797,7 @@ describe("SourceSettings", () => {
 
   // ─── Guard returns for handler functions ────────────────────────
   // The guard returns at lines 201, 211, 222, 232, 241 are defensive code for
-  // impossible UI states (e.g., reloadKeyList called on a single source).
+  // impossible UI states (e.g., reloadKeyList called on a bundled source).
   // SourceDetailPanel only renders reload buttons for the appropriate source types,
   // so these guards can't be triggered through normal UI interaction.
   // Testing them would require calling the handlers directly, which isn't possible

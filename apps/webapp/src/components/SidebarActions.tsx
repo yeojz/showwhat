@@ -94,7 +94,7 @@ export function SidebarActions({
   );
 
   const activeSource = activeSourceId ? sources.find((s) => s.id === activeSourceId) : undefined;
-  const isKeyed = activeSource?.mode === "keyed";
+  const isSplit = activeSource?.mode === "split";
   const hasAnythingLoaded = !!sourceFileName;
 
   const [pendingFileImport, setPendingFileImport] = useState<{
@@ -154,7 +154,7 @@ export function SidebarActions({
 
       <div className="flex-1" />
 
-      {!isKeyed && (
+      {!isSplit && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 px-2" disabled={!canExport}>

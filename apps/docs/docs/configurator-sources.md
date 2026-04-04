@@ -7,7 +7,7 @@ outline: [2, 4]
 
 The **Sources** tab manages where your definitions come from. You can import a local file or connect to a remote HTTP endpoint. Sources are saved in your browser's localStorage, so they persist across sessions.
 
-The layout has two panes. The **left pane** shows an "Active" section at the top (the currently loaded source, imported file, or unsaved draft) and a "Sources" list below it with all your saved URL sources. The **right pane** shows details for the selected item.
+The layout has two panes. The **left pane** shows an "Active" section at the top (the currently loaded source, imported file, or unsaved draft) and a "Sources" list below it with all your saved hosted sources. The **right pane** shows details for the selected item.
 
 ![Sources tab layout](/images/configurator-sources-layout.png)
 
@@ -17,15 +17,15 @@ Click the **+** button next to the "Sources" heading and choose **From file**. T
 
 If you already have definitions loaded, a confirmation dialog warns that importing will replace them. When imported, the file appears in the "Active" section with the filename and format badge. Switch to the Definitions tab to start editing.
 
-## URL source
+## Hosted source
 
 Click the **+** button and choose **From URL**. A dialog appears with the following fields:
 
 - **Label** -- a friendly name for this source (e.g. "Production", "Staging").
-- **Mode** -- choose between **Single file** or **Keyed (per-definition)**.
+- **Mode** -- choose between **Bundled file** or **Split (per-definition)**.
 - **Format** -- YAML or JSON.
 
-### Single file mode
+### Bundled file mode
 
 A single URL returns a complete definitions file -- the same format as a local YAML/JSON file.
 
@@ -35,7 +35,7 @@ You provide one field:
 
 When loaded, the app fetches the entire file, parses all definitions at once, and loads any embedded presets automatically.
 
-### Keyed mode
+### Split mode
 
 Each definition is fetched individually from its own URL. This works well with object storage (S3, R2) or APIs that serve definitions per-key.
 
@@ -45,7 +45,7 @@ You provide:
 - **List URL** (optional) -- an endpoint that returns available definition keys, enabling automatic key discovery instead of manual entry.
 - **Presets URL** (optional) -- an endpoint that returns shared [presets](/docs/presets) for all definitions.
 
-![Add source dialog in keyed mode](/images/configurator-source-form.png)
+![Add source dialog in split mode](/images/configurator-source-form.png)
 
 ### Loading and unloading
 
@@ -55,17 +55,17 @@ To disconnect, click **Unload** in the detail panel action bar. You can also **E
 
 ### Source detail panel
 
-Once a URL source is loaded, the right pane shows its detail panel. The contents vary by mode.
+Once a hosted source is loaded, the right pane shows its detail panel. The contents vary by mode.
 
-#### Single mode
+#### Bundled mode
 
 **Endpoints** -- the URL with a **reload** button and a fetch timestamp (e.g. "2h ago"). Clicking reload fetches the latest definitions from the URL and replaces the current set.
 
 **Headers** -- see [Custom headers](#custom-headers) below.
 
-#### Keyed mode
+#### Split mode
 
-The detail panel for a keyed source has three sections:
+The detail panel for a split source has three sections:
 
 **Endpoints** -- lists the configured URLs:
 
@@ -84,7 +84,7 @@ You can add keys in two ways:
 - **Manually** -- type a key name in the text input at the bottom and click **Add**.
 - **From list endpoint** -- if a list URL is configured, click its reload button to populate the key list automatically.
 
-![Keyed source detail panel](/images/configurator-source-keyed-detail.png)
+![Split source detail panel](/images/configurator-source-keyed-detail.png)
 
 **Custom headers** {#custom-headers} -- a collapsible section for adding HTTP headers sent with every fetch request. Add key-value pairs using the inputs and click **Add**. Remove individual headers with the **x** button.
 

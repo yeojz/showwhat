@@ -32,9 +32,9 @@ Once saved, your preset types appear in the "Add condition" dropdown on the [Def
 
 Below the editor, a **From Source** section shows presets provided by the active source. Presets are grouped by where they came from:
 
-- **Presets URL** -- fetched from the source's dedicated presets endpoint (keyed mode only).
+- **Presets URL** -- fetched from the source's dedicated presets endpoint (split mode only).
 - **Definition file** -- embedded in the loaded definition file.
-- **Per-definition groups** -- presets embedded in individual definition files (keyed mode only), shown under the definition key name.
+- **Per-definition groups** -- presets embedded in individual definition files (split mode only), shown under the definition key name.
 
 Each preset row is expandable to reveal its `type`, `key`, and `overrides`. An amber icon indicates a source preset that shares the same name as one of your custom presets -- see merge order below.
 
@@ -46,9 +46,9 @@ If no source is loaded or the source has no presets, this section shows an empty
 
 When presets exist in multiple places, they are merged into a single set. In JavaScript spread semantics, later entries override earlier ones with the same name.
 
-### Non-keyed mode
+### Bundled mode
 
-When using a single-mode source or a file import, all definitions share one merged preset set:
+When using a bundled-mode source or a file import, all definitions share one merged preset set:
 
 ```
 { ...customPresets, ...filePresets, ...sourcePresets }
@@ -56,7 +56,7 @@ When using a single-mode source or a file import, all definitions share one merg
 
 **Source presets** (from the presets URL) take the highest priority, then **file presets** (embedded in the definition file), then **custom presets** (from the editor).
 
-### Keyed mode
+### Split mode
 
 Each definition sees shared presets plus its own embedded presets:
 

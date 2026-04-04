@@ -11,14 +11,14 @@ type BaseSource = {
   headers?: Record<string, string>;
 };
 
-export type SingleSource = BaseSource & {
-  mode: "single";
+export type BundledSource = BaseSource & {
+  mode: "bundled";
   url: string;
   lastFetched?: number;
 };
 
-export type KeyedSource = BaseSource & {
-  mode: "keyed";
+export type SplitSource = BaseSource & {
+  mode: "split";
   baseUrl: string;
   listUrl?: string;
   presetsUrl?: string;
@@ -28,14 +28,14 @@ export type KeyedSource = BaseSource & {
   presetsLastFetched?: number;
 };
 
-export type RemoteSource = SingleSource | KeyedSource;
+export type HostedSource = BundledSource | SplitSource;
 
 export type SourceStoreState = {
-  sources: RemoteSource[];
+  sources: HostedSource[];
   activeSourceId: string | null;
 
-  addSource(source: Omit<RemoteSource, "id">): string;
-  updateSource(id: string, updates: Partial<Omit<RemoteSource, "id">>): void;
+  addSource(source: Omit<HostedSource, "id">): string;
+  updateSource(id: string, updates: Partial<Omit<HostedSource, "id">>): void;
   removeSource(id: string): void;
   setActiveSource(id: string | null): void;
   markFetched(id: string, keys?: string[]): void;
@@ -62,7 +62,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         addSource(source) {
           const id = crypto.randomUUID();
           // Cast needed: TS can't re-narrow Omit<Union, "id"> & {id} back to Union
-          const newSource: RemoteSource = { ...source, id } as unknown as RemoteSource;
+          const newSource: HostedSource = { ...source, id } as unknown as HostedSource;
           set((state) => ({
             sources: [...state.sources, newSource],
           }));
@@ -72,7 +72,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         updateSource(id, updates) {
           set((state) => ({
             sources: state.sources.map((s) =>
-              s.id === id ? (Object.assign({}, s, updates) as RemoteSource) : s,
+              s.id === id ? (Object.assign({}, s, updates) as HostedSource) : s,
             ),
           }));
         },
@@ -92,10 +92,10 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
           set((state) => ({
             sources: state.sources.map((s) => {
               if (s.id !== id) return s;
-              if (s.mode === "single") {
+              if (s.mode === "bundled") {
                 return { ...s, lastFetched: Date.now() };
               }
-              if (s.mode === "keyed" && keys) {
+              if (s.mode === "split" && keys) {
                 const now = Date.now();
                 const updated: Record<string, number> = { ...s.keyFetchedAt };
                 for (const key of keys) {
@@ -111,7 +111,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         markListFetched(id) {
           set((state) => ({
             sources: state.sources.map((s) => {
-              if (s.id !== id || s.mode !== "keyed") return s;
+              if (s.id !== id || s.mode !== "split") return s;
               return { ...s, listLastFetched: Date.now() };
             }),
           }));
@@ -120,7 +120,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         markPresetsFetched(id) {
           set((state) => ({
             sources: state.sources.map((s) => {
-              if (s.id !== id || s.mode !== "keyed") return s;
+              if (s.id !== id || s.mode !== "split") return s;
               return { ...s, presetsLastFetched: Date.now() };
             }),
           }));
@@ -129,7 +129,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         setDefinitionKeys(id, keys) {
           set((state) => ({
             sources: state.sources.map((s) => {
-              if (s.id !== id || s.mode !== "keyed") return s;
+              if (s.id !== id || s.mode !== "split") return s;
               return { ...s, definitionKeys: keys };
             }),
           }));
@@ -138,7 +138,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         addDefinitionKey(id, key) {
           set((state) => ({
             sources: state.sources.map((s) => {
-              if (s.id !== id || s.mode !== "keyed") return s;
+              if (s.id !== id || s.mode !== "split") return s;
               if (s.definitionKeys.includes(key)) return s;
               return { ...s, definitionKeys: [...s.definitionKeys, key] };
             }),
@@ -148,7 +148,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
         removeDefinitionKey(id, key) {
           set((state) => ({
             sources: state.sources.map((s) => {
-              if (s.id !== id || s.mode !== "keyed") return s;
+              if (s.id !== id || s.mode !== "split") return s;
               return { ...s, definitionKeys: s.definitionKeys.filter((k) => k !== key) };
             }),
           }));
@@ -156,7 +156,7 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
       }),
       {
         name: "showwhat-sources",
-        version: 1,
+        version: 2,
         storage,
         partialize: (state) => ({
           sources: state.sources,

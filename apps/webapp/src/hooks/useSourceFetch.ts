@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 import type { Definition } from "showwhat";
 import type { Presets } from "showwhat";
-import type { RemoteSource, KeyedSource } from "../store/source-store.js";
+import type { HostedSource, SplitSource } from "../store/source-store.js";
 import {
-  KeyedSourceHttpReader,
+  SplitSourceHttpReader,
   createHttpReader,
   formatFetchError,
   type SourceFetchResult,
@@ -21,7 +21,7 @@ export function useSourceFetch() {
   const [error, setError] = useState<SourceFetchError | null>(null);
 
   const fetchSource = useCallback(
-    async (source: RemoteSource): Promise<SourceFetchResult | null> => {
+    async (source: HostedSource): Promise<SourceFetchResult | null> => {
       setLoading(true);
       setError(null);
 
@@ -47,12 +47,12 @@ export function useSourceFetch() {
     [],
   );
 
-  const reloadKeyList = useCallback(async (source: KeyedSource): Promise<string[] | null> => {
+  const reloadKeyList = useCallback(async (source: SplitSource): Promise<string[] | null> => {
     setLoading(true);
     setError(null);
 
     try {
-      const reader = new KeyedSourceHttpReader(source);
+      const reader = new SplitSourceHttpReader(source);
       return await reader.listKeys();
     } catch (err) {
       setError({ message: formatFetchError(err) });
@@ -64,14 +64,14 @@ export function useSourceFetch() {
 
   const reloadDefinitionKey = useCallback(
     async (
-      source: KeyedSource,
+      source: SplitSource,
       key: string,
     ): Promise<{ definition: Definition; filePresets?: Presets } | null> => {
       setLoading(true);
       setError(null);
 
       try {
-        const reader = new KeyedSourceHttpReader(source);
+        const reader = new SplitSourceHttpReader(source);
         return await reader.fetchDefinitionKey(key);
       } catch (err) {
         setError({ message: formatFetchError(err) });
@@ -93,9 +93,9 @@ export function useSourceFetch() {
       setError(null);
 
       try {
-        const reader = new KeyedSourceHttpReader({
+        const reader = new SplitSourceHttpReader({
           id: "",
-          mode: "keyed",
+          mode: "split",
           label: "",
           format,
           baseUrl: "",

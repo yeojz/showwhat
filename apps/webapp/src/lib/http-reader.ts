@@ -3,7 +3,7 @@ import { parseYaml, parseObject, DefinitionSchema, PresetsSchema } from "showwha
 import type { DefinitionReader, PresetReader } from "showwhat";
 import type { Definitions, Definition } from "showwhat";
 import type { Presets } from "showwhat";
-import type { SingleSource, KeyedSource, RemoteSource } from "../store/source-store.js";
+import type { BundledSource, SplitSource, HostedSource } from "../store/source-store.js";
 
 const MAX_RESPONSE_BYTES = 5 * 1024 * 1024; // 5 MB
 const FETCH_TIMEOUT_MS = 30_000;
@@ -12,10 +12,10 @@ const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 export type SourceFetchResult = {
   definitions: Definitions;
-  /** Presets from a dedicated presetsUrl endpoint (keyed mode) or from file (single mode). */
+  /** Presets from a dedicated presetsUrl endpoint (split mode) or from file (bundled mode). */
   presets?: Presets;
   /**
-   * Per-definition-key presets for keyed mode. Each entry maps a definition
+   * Per-definition-key presets for split mode. Each entry maps a definition
    * key to the presets found in that key's file.
    */
   definitionPresets?: Record<string, Presets>;
@@ -107,10 +107,10 @@ async function fetchPresetsFromUrl(
   return result.success ? result.data : undefined;
 }
 
-export class SingleSourceHttpReader implements DefinitionReader, PresetReader {
-  readonly #source: SingleSource;
+export class BundledSourceHttpReader implements DefinitionReader, PresetReader {
+  readonly #source: BundledSource;
 
-  constructor(source: SingleSource) {
+  constructor(source: BundledSource) {
     this.#source = source;
   }
 
@@ -150,10 +150,10 @@ export class SingleSourceHttpReader implements DefinitionReader, PresetReader {
   }
 }
 
-export class KeyedSourceHttpReader implements DefinitionReader, PresetReader {
-  readonly #source: KeyedSource;
+export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
+  readonly #source: SplitSource;
 
-  constructor(source: KeyedSource) {
+  constructor(source: SplitSource) {
     this.#source = source;
   }
 
@@ -314,10 +314,10 @@ export class KeyedSourceHttpReader implements DefinitionReader, PresetReader {
 }
 
 export function createHttpReader(
-  source: RemoteSource,
-): SingleSourceHttpReader | KeyedSourceHttpReader {
-  if (source.mode === "single") {
-    return new SingleSourceHttpReader(source);
+  source: HostedSource,
+): BundledSourceHttpReader | SplitSourceHttpReader {
+  if (source.mode === "bundled") {
+    return new BundledSourceHttpReader(source);
   }
-  return new KeyedSourceHttpReader(source);
+  return new SplitSourceHttpReader(source);
 }
