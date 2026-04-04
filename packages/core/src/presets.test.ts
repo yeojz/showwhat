@@ -35,6 +35,68 @@ describe("PresetsSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("validates composite preset with conditions in overrides", () => {
+    const input = {
+      us_free: {
+        type: "and",
+        overrides: {
+          conditions: [
+            { type: "string", key: "region", op: "eq", value: "us" },
+            { type: "string", key: "tier", op: "eq", value: "free" },
+          ],
+        },
+      },
+    };
+    const result = PresetsSchema.safeParse(input);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects composite preset without conditions in overrides", () => {
+    const result = PresetsSchema.safeParse({
+      bad: { type: "and" },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects composite preset with empty conditions array", () => {
+    const result = PresetsSchema.safeParse({
+      bad: { type: "and", overrides: { conditions: [] } },
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("validates composite preset with nested conditions", () => {
+    const input = {
+      complex: {
+        type: "or",
+        overrides: {
+          conditions: [
+            {
+              type: "and",
+              conditions: [
+                { type: "string", key: "a", op: "eq", value: "1" },
+                { type: "number", key: "b", op: "gt", value: 10 },
+              ],
+            },
+            { type: "bool", key: "c", value: true },
+          ],
+        },
+      },
+    };
+    const result = PresetsSchema.safeParse(input);
+    expect(result.success).toBe(true);
+  });
+
+  it("does not require key for composite types", () => {
+    const result = PresetsSchema.safeParse({
+      combo: {
+        type: "or",
+        overrides: { conditions: [{ type: "string", key: "x", op: "eq", value: "y" }] },
+      },
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("createPresetConditions", () => {

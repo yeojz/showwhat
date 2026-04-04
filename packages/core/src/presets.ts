@@ -3,9 +3,14 @@ import { numberEvaluator } from "./conditions/number.js";
 import { boolEvaluator } from "./conditions/bool.js";
 import { datetimeEvaluator } from "./conditions/datetime.js";
 import type { ConditionEvaluator, ConditionEvaluators } from "./conditions/types.js";
-import { CONDITION_TYPES, type PrimitiveConditionType } from "./schemas/condition.js";
-import { PRIMITIVE_TYPES } from "./schemas/preset.js";
+import {
+  CONDITION_TYPES,
+  PRIMITIVE_CONDITION_TYPES,
+  type PrimitiveConditionType,
+} from "./schemas/condition.js";
 import type { Presets } from "./schemas/preset.js";
+
+const PRIMITIVE_TYPES = new Set<string>(Object.values(PRIMITIVE_CONDITION_TYPES));
 
 // ── Reserved names ───────────────────────────────────────────────────────────
 
