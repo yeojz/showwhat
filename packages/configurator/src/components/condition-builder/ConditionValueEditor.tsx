@@ -32,7 +32,15 @@ export function ConditionValueEditor({ condition, onChange }: ConditionValueEdit
       if (OverrideEditor) {
         return <OverrideEditor condition={condition} onChange={onChange} />;
       }
-      return <CustomConditionEditor condition={condition} onChange={onChange} />;
+      const isPresetBacked =
+        extensions?.extraConditionTypes.some((m) => m.type === condition.type) ?? false;
+      return (
+        <CustomConditionEditor
+          condition={condition}
+          onChange={onChange}
+          isPresetBacked={isPresetBacked}
+        />
+      );
     }
   }
 }

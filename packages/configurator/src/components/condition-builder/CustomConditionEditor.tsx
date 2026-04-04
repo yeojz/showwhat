@@ -13,7 +13,11 @@ function argsToText(args: Record<string, unknown>): string {
   return JSON.stringify(args, null, 2);
 }
 
-export function CustomConditionEditor({ condition, onChange }: ConditionValueEditorProps) {
+export function CustomConditionEditor({
+  condition,
+  onChange,
+  isPresetBacked = false,
+}: ConditionValueEditorProps & { isPresetBacked?: boolean }) {
   const rec = condition as Record<string, unknown>;
 
   const [text, setText] = useState(() => argsToText(extractArgs(rec)));
@@ -95,6 +99,11 @@ export function CustomConditionEditor({ condition, onChange }: ConditionValueEdi
         />
         {jsonError && <p className="mt-1 text-xs text-destructive">{jsonError}</p>}
       </div>
+      {isPresetBacked && (
+        <p className="text-xs text-muted-foreground/70 italic">
+          Some fields may be overridden by the preset configuration at evaluation time.
+        </p>
+      )}
     </div>
   );
 }
