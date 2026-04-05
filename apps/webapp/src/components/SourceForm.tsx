@@ -160,64 +160,84 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
           </div>
 
           {mode === "bundled" && (
-            <div className="space-y-1.5">
-              <Label htmlFor="source-url">URL</Label>
-              <Input
-                id="source-url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://r2.example.com/flags"
-              />
-              {errors.url && <p className="text-xs text-destructive">{errors.url}</p>}
-            </div>
+            <fieldset className="space-y-4">
+              <div className="space-y-1">
+                <legend className="text-sm font-medium">URLs</legend>
+                <p className="text-xs text-muted-foreground">
+                  All endpoints must return CORS headers for this app&apos;s origin.
+                </p>
+              </div>
+
+              <div className="space-y-3 pl-3 border-l-2 border-muted">
+                <div className="space-y-1.5">
+                  <Label htmlFor="source-url">Source</Label>
+                  <Input
+                    id="source-url"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://r2.example.com/flags"
+                  />
+                  {errors.url && <p className="text-xs text-destructive">{errors.url}</p>}
+                </div>
+              </div>
+            </fieldset>
           )}
 
           {mode === "split" && (
-            <>
-              <div className="space-y-1.5">
-                <Label htmlFor="source-base-url">Base URL</Label>
-                <Input
-                  id="source-base-url"
-                  value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder="https://r2.example.com/defs/"
-                />
+            <fieldset className="space-y-4">
+              <div className="space-y-1">
+                <legend className="text-sm font-medium">URLs</legend>
                 <p className="text-xs text-muted-foreground">
-                  Definition keys are appended to this URL prefix.
+                  All endpoints must return CORS headers for this app&apos;s origin.
                 </p>
-                {errors.baseUrl && <p className="text-xs text-destructive">{errors.baseUrl}</p>}
               </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="source-list-url">List URL (optional)</Label>
-                <Input
-                  id="source-list-url"
-                  value={listUrl}
-                  onChange={(e) => setListUrl(e.target.value)}
-                  placeholder="https://r2.example.com/keys"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Endpoint that returns available definition keys. You can also add keys manually.
-                </p>
-                {errors.listUrl && <p className="text-xs text-destructive">{errors.listUrl}</p>}
-              </div>
+              <div className="space-y-3 pl-3 border-l-2 border-muted">
+                <div className="space-y-1.5">
+                  <Label htmlFor="source-base-url">Base</Label>
+                  <Input
+                    id="source-base-url"
+                    value={baseUrl}
+                    onChange={(e) => setBaseUrl(e.target.value)}
+                    placeholder="https://r2.example.com/defs/"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Definition keys are appended to this URL prefix.
+                  </p>
+                  {errors.baseUrl && <p className="text-xs text-destructive">{errors.baseUrl}</p>}
+                </div>
 
-              <div className="space-y-1.5">
-                <Label htmlFor="source-presets-url">Presets URL (optional)</Label>
-                <Input
-                  id="source-presets-url"
-                  value={presetsUrl}
-                  onChange={(e) => setPresetsUrl(e.target.value)}
-                  placeholder="https://r2.example.com/presets"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Shared presets for all definitions. Must return a presets object.
-                </p>
-                {errors.presetsUrl && (
-                  <p className="text-xs text-destructive">{errors.presetsUrl}</p>
-                )}
+                <div className="space-y-1.5">
+                  <Label htmlFor="source-list-url">List (optional)</Label>
+                  <Input
+                    id="source-list-url"
+                    value={listUrl}
+                    onChange={(e) => setListUrl(e.target.value)}
+                    placeholder="https://r2.example.com/keys"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Returns available definition keys. You can also add keys manually.
+                  </p>
+                  {errors.listUrl && <p className="text-xs text-destructive">{errors.listUrl}</p>}
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="source-presets-url">Presets (optional)</Label>
+                  <Input
+                    id="source-presets-url"
+                    value={presetsUrl}
+                    onChange={(e) => setPresetsUrl(e.target.value)}
+                    placeholder="https://r2.example.com/presets"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Shared presets for all definitions. Must return a presets object.
+                  </p>
+                  {errors.presetsUrl && (
+                    <p className="text-xs text-destructive">{errors.presetsUrl}</p>
+                  )}
+                </div>
               </div>
-            </>
+            </fieldset>
           )}
 
           <div className="flex justify-end gap-2 pt-2">
