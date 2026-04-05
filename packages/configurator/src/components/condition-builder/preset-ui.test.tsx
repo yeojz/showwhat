@@ -326,9 +326,7 @@ describe("PresetConditionEditor interactions", () => {
         onChange={onChange}
       />,
     );
-    // Switch to raw mode for easier interaction
-    const rawButton = screen.getByLabelText("Switch to raw input");
-    await user.click(rawButton);
+    // Raw mode is the default
     const rawInput = screen.getByPlaceholderText("ISO 8601 datetime");
     await user.clear(rawInput);
     await user.type(rawInput, "2025-06-01T00:00:00Z");

@@ -3,11 +3,9 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { DateTimeInput } from "./DateTimeInput.js";
 
 describe("DateTimeInput", () => {
-  it("should render with the given value in raw mode", () => {
+  it("should render with the given value in raw mode by default", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="2025-01-15T10:00:00.000Z" onChange={onChange} />);
-    // Switch to raw mode
-    fireEvent.click(screen.getByLabelText("Switch to raw input"));
     const input = screen.getByRole("textbox");
     expect((input as HTMLInputElement).value).toBe("2025-01-15T10:00:00.000Z");
   });
@@ -18,8 +16,6 @@ describe("DateTimeInput", () => {
       <DateTimeInput value="2025-01-15T10:00:00.000Z" onChange={onChange} />,
     );
 
-    // Switch to raw mode to see the raw value
-    fireEvent.click(screen.getByLabelText("Switch to raw input"));
     const input = screen.getByRole("textbox");
     expect((input as HTMLInputElement).value).toBe("2025-01-15T10:00:00.000Z");
 
@@ -32,8 +28,6 @@ describe("DateTimeInput", () => {
   it("should handle invalid date strings gracefully", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="not-a-date" onChange={onChange} />);
-    // Switch to raw to verify value is passed through
-    fireEvent.click(screen.getByLabelText("Switch to raw input"));
     const input = screen.getByRole("textbox");
     expect((input as HTMLInputElement).value).toBe("not-a-date");
   });
@@ -41,28 +35,30 @@ describe("DateTimeInput", () => {
   it("should call onChange when raw input changes", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="2025-01-15T10:00:00.000Z" onChange={onChange} />);
-    fireEvent.click(screen.getByLabelText("Switch to raw input"));
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "2025-12-25T00:00:00.000Z" } });
     expect(onChange).toHaveBeenCalledWith("2025-12-25T00:00:00.000Z");
   });
 
-  it("should switch from raw mode back to date picker", () => {
+  it("should switch from raw mode to date picker and back", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="2025-01-15T10:00:00.000Z" onChange={onChange} />);
-    // Switch to raw mode
+    // Starts in raw mode
+    expect(screen.getByRole("textbox")).toBeDefined();
+    // Switch to date picker
+    fireEvent.click(screen.getByLabelText("Switch to date picker"));
+    const dateInputs = document.querySelectorAll("input[type='datetime-local']");
+    expect(dateInputs.length).toBe(1);
+    // Switch back to raw mode
     fireEvent.click(screen.getByLabelText("Switch to raw input"));
     expect(screen.getByRole("textbox")).toBeDefined();
-    // Switch back to date picker mode
-    fireEvent.click(screen.getByLabelText("Switch to date picker"));
-    // Should now show datetime-local input instead of text input
-    expect(screen.queryByLabelText("Switch to raw input")).toBeDefined();
   });
 
   it("should call onChange when datetime-local input changes", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="2025-01-15T10:00:00.000Z" onChange={onChange} />);
-    // Find datetime-local input
+    // Switch to date picker
+    fireEvent.click(screen.getByLabelText("Switch to date picker"));
     const dateInputs = document.querySelectorAll("input[type='datetime-local']");
     expect(dateInputs.length).toBe(1);
     fireEvent.change(dateInputs[0], { target: { value: "2025-06-15T12:00" } });
@@ -71,13 +67,15 @@ describe("DateTimeInput", () => {
 
   it("should handle empty value", () => {
     render(<DateTimeInput value="" onChange={vi.fn()} />);
-    // Should render without errors
-    expect(screen.getByLabelText("Switch to raw input")).toBeDefined();
+    // Should render in raw mode without errors
+    expect(screen.getByRole("textbox")).toBeDefined();
   });
 
-  it("returns empty string for invalid date in fromLocalDatetime", () => {
+  it("returns empty string for empty datetime-local value", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="2025-01-15T10:00:00.000Z" onChange={onChange} />);
+    // Switch to date picker
+    fireEvent.click(screen.getByLabelText("Switch to date picker"));
     const dateInputs = document.querySelectorAll("input[type='datetime-local']");
     fireEvent.change(dateInputs[0], { target: { value: "" } });
     expect(onChange).toHaveBeenCalledWith("");
@@ -86,9 +84,10 @@ describe("DateTimeInput", () => {
   it("converts valid datetime-local value to ISO string", () => {
     const onChange = vi.fn();
     render(<DateTimeInput value="" onChange={onChange} />);
+    // Switch to date picker
+    fireEvent.click(screen.getByLabelText("Switch to date picker"));
     const dateInputs = document.querySelectorAll("input[type='datetime-local']");
     fireEvent.change(dateInputs[0], { target: { value: "2025-03-15T14:30" } });
-    // fromLocalDatetime("2025-03-15T14:30") should produce a valid ISO string
     expect(onChange).toHaveBeenCalled();
     const result = onChange.mock.calls[0][0];
     expect(result).toContain("2025");

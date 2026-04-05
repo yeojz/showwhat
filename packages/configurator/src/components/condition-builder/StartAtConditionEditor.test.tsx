@@ -45,8 +45,7 @@ describe("StartAtConditionEditor", () => {
     const onChange = vi.fn();
     const condition = { type: "startAt", value: null } as unknown as Condition;
     render(<StartAtConditionEditor condition={condition} onChange={onChange} />);
-    // Switch to raw mode to interact with the empty-value fallback path
-    fireEvent.click(screen.getByLabelText("Switch to raw input"));
+    // Raw mode is the default
     const rawInput = screen.getByPlaceholderText("ISO 8601 datetime");
     fireEvent.change(rawInput, { target: { value: "2025-06-01T00:00:00Z" } });
     expect(onChange).toHaveBeenCalled();
