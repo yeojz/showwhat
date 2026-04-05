@@ -111,8 +111,11 @@ export default defineConfig({
             { text: "Conditions", link: "/docs/conditions" },
             { text: "Context", link: "/docs/context" },
             { text: "Annotations", link: "/docs/annotations" },
-            { text: "Presets", link: "/docs/presets" },
-            { text: "Preset Merge Strategy", link: "/docs/preset-merge-strategy" },
+            {
+              text: "Presets",
+              link: "/docs/presets",
+              items: [{ text: "Merge Strategy", link: "/docs/preset-merge-strategy" }],
+            },
             { text: "Data Sources", link: "/docs/data-sources" },
           ],
         },
