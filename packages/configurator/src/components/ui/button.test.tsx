@@ -28,13 +28,4 @@ describe("Button", () => {
     expect(el.className).toContain("custom-class");
   });
 
-  it("renders as child element when asChild is true", () => {
-    render(
-      <Button asChild>
-        <a href="/test">Link Button</a>
-      </Button>,
-    );
-    const el = screen.getByText("Link Button");
-    expect(el.tagName).toBe("A");
-  });
 });

@@ -1,5 +1,4 @@
 import type React from "react";
-import { Slot } from "radix-ui";
 
 import { cn } from "@/utils/cn";
 
@@ -44,18 +43,14 @@ function Button({
   className,
   variant = "default",
   size = "default",
-  asChild = false,
   ref,
   ...props
 }: React.ComponentProps<"button"> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  asChild?: boolean;
 }) {
-  const Comp = asChild ? Slot.Root : "button";
-
   return (
-    <Comp
+    <button
       ref={ref}
       data-slot="button"
       data-variant={variant}

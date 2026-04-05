@@ -1,5 +1,4 @@
 import type React from "react";
-import { Slot } from "radix-ui";
 
 import { cn } from "@/utils/cn";
 
@@ -25,13 +24,10 @@ function badgeVariants(opts?: { variant?: BadgeVariant; className?: string }) {
 function Badge({
   className,
   variant = "default",
-  asChild = false,
   ...props
-}: React.ComponentProps<"span"> & { variant?: BadgeVariant; asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : "span";
-
+}: React.ComponentProps<"span"> & { variant?: BadgeVariant }) {
   return (
-    <Comp
+    <span
       data-slot="badge"
       data-variant={variant}
       className={cn(badgeVariants({ variant }), className)}
