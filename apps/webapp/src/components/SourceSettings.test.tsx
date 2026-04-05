@@ -78,14 +78,14 @@ vi.mock("@showwhat/configurator", () => ({
   ),
   DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+  Menu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  MenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
     <>{children}</>
   ),
-  DropdownMenuContent: ({ children }: { children: React.ReactNode; align?: string }) => (
+  MenuContent: ({ children }: { children: React.ReactNode; align?: string }) => (
     <div data-testid="dropdown-content">{children}</div>
   ),
-  DropdownMenuItem: ({
+  MenuItem: ({
     children,
     onClick,
   }: {
@@ -96,7 +96,7 @@ vi.mock("@showwhat/configurator", () => ({
       {children}
     </button>
   ),
-  DropdownMenuTriggerItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  MenuTriggerItem: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Input: ({ id, ...props }: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input id={id} aria-label={id} {...props} />
   ),
