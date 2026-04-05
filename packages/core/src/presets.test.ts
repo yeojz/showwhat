@@ -10,7 +10,7 @@ describe("PresetsSchema", () => {
     const input = {
       tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
       age: { type: "number", key: "dob_num", overrides: { op: "gt", value: 18 } },
-      segment: { type: "segment_match", overrides: { region: "us" } },
+      segment: { type: "segment_match", overrides: { region: "sg" } },
     };
     const result = PresetsSchema.safeParse(input);
     expect(result.success).toBe(true);
@@ -39,11 +39,11 @@ describe("PresetsSchema", () => {
 
   it("validates composite preset with conditions in overrides", () => {
     const input = {
-      us_free: {
+      sg_free: {
         type: "and",
         overrides: {
           conditions: [
-            { type: "string", key: "region", op: "eq", value: "us" },
+            { type: "string", key: "region", op: "eq", value: "sg" },
             { type: "string", key: "tier", op: "eq", value: "free" },
           ],
         },
@@ -126,7 +126,7 @@ describe("createPresetConditions", () => {
 
   it("generates evaluator for custom type presets", () => {
     const result = createPresetConditions({
-      segment: { type: "segment_match", overrides: { region: "us" } },
+      segment: { type: "segment_match", overrides: { region: "sg" } },
     });
     expect(Object.keys(result)).toHaveLength(1);
     expect(result).toHaveProperty("segment");
@@ -377,11 +377,11 @@ describe("createPresetConditions", () => {
   it("generates evaluator for custom type preset (delegates at runtime)", async () => {
     const customEvaluator: ConditionEvaluator = async ({ condition }) => {
       const rec = condition as Record<string, unknown>;
-      return rec.region === "us";
+      return rec.region === "sg";
     };
 
     const presetConditions = createPresetConditions({
-      geo: { type: "segment_match", overrides: { region: "us" } },
+      geo: { type: "segment_match", overrides: { region: "sg" } },
     });
     expect(presetConditions).toHaveProperty("geo");
 
@@ -402,11 +402,11 @@ describe("createPresetConditions", () => {
   it("custom type preset merges overrides with use-site fields", async () => {
     const customEvaluator: ConditionEvaluator = async ({ condition }) => {
       const rec = condition as Record<string, unknown>;
-      return rec.region === "us" && rec.threshold === 50;
+      return rec.region === "sg" && rec.threshold === 50;
     };
 
     const presetConditions = createPresetConditions({
-      geo: { type: "segment_match", overrides: { region: "us" } },
+      geo: { type: "segment_match", overrides: { region: "sg" } },
     });
 
     const evaluators = {
@@ -425,30 +425,30 @@ describe("createPresetConditions", () => {
 
   it("generates evaluator for composite AND preset", async () => {
     const presetConditions = createPresetConditions({
-      us_free: {
+      sg_free: {
         type: "and",
         overrides: {
           conditions: [
-            { type: "string", key: "region", op: "eq", value: "us" },
+            { type: "string", key: "region", op: "eq", value: "sg" },
             { type: "string", key: "tier", op: "eq", value: "free" },
           ],
         },
       },
     });
-    expect(presetConditions).toHaveProperty("us_free");
+    expect(presetConditions).toHaveProperty("sg_free");
 
     const evaluators = { ...builtinEvaluators, ...presetConditions };
 
     const resultTrue = await evaluateCondition({
-      condition: { type: "us_free" },
-      context: { region: "us", tier: "free" },
+      condition: { type: "sg_free" },
+      context: { region: "sg", tier: "free" },
       evaluators,
       annotations: {},
     });
     expect(resultTrue).toBe(true);
 
     const resultFalse = await evaluateCondition({
-      condition: { type: "us_free" },
+      condition: { type: "sg_free" },
       context: { region: "eu", tier: "free" },
       evaluators,
       annotations: {},
@@ -520,7 +520,7 @@ describe("createPresetConditions", () => {
             {
               type: "and",
               conditions: [
-                { type: "string", key: "region", op: "eq", value: "us" },
+                { type: "string", key: "region", op: "eq", value: "sg" },
                 { type: "string", key: "tier", op: "eq", value: "free" },
               ],
             },
@@ -535,7 +535,7 @@ describe("createPresetConditions", () => {
     expect(
       await evaluateCondition({
         condition: { type: "complex" },
-        context: { region: "us", tier: "free" },
+        context: { region: "sg", tier: "free" },
         evaluators,
         annotations: {},
       }),

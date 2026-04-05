@@ -17,7 +17,7 @@ export const OP_OPTIONS = [
 
 export const meta = {
   type: "string",
-  label: "String",
+  label: "string",
   description: "Match a context key against string value(s)",
   defaults: { type: "string", key: "", op: "eq", value: "" },
 };

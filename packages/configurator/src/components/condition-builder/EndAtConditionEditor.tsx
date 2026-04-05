@@ -10,7 +10,7 @@ const OP_OPTIONS = [{ value: "lt", label: "lt" }];
 
 export const meta = {
   type: "endAt",
-  label: "End At",
+  label: "endAt",
   description: "Active before a specific date/time",
   defaults: { type: "endAt", value: new Date().toISOString() },
 };

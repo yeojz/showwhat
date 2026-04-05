@@ -35,7 +35,10 @@ export function PresetEditor() {
     <section>
       <h2 className="text-base font-semibold text-foreground">Preset Overrides</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Define named preset overrides in YAML or JSON format. These take the highest priority.
+        Define named preset overrides in YAML or JSON format. These take the highest priority in the
+        Configurator. To match this behaviour at runtime, pass the same overrides to{" "}
+        <code className="text-[0.7rem] bg-muted px-1 py-0.5 rounded">mergePresets()</code> in your
+        application code.
       </p>
       <div className="mt-3 space-y-3">
         <Textarea

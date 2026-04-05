@@ -10,7 +10,7 @@ const OP_OPTIONS = [{ value: "eq", label: "eq" }];
 
 export const meta = {
   type: "env",
-  label: "Environment",
+  label: "env",
   description: "Match the environment name",
   defaults: { type: "env", value: "" },
 };

@@ -33,10 +33,6 @@ const TYPE_DEFAULTS: Record<string, Record<string, unknown>> = {
 
 // ── Meta generation ──────────────────────────────────────────────────────────
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[] {
   return Object.entries(presets).map(([name, preset]) => {
     const isBuiltin = PRIMITIVE_TYPES.has(preset.type);
@@ -52,7 +48,7 @@ export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[]
 
     return {
       type: name,
-      label: capitalize(name),
+      label: name,
       description,
       defaults: { ...baseDefaults, ...preset.overrides, type: name },
     };

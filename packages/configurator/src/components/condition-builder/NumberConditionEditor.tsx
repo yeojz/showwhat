@@ -20,7 +20,7 @@ export const OP_OPTIONS = [
 
 export const meta = {
   type: "number",
-  label: "Number",
+  label: "number",
   description: "Compare a context key against a number or list of numbers",
   defaults: { type: "number", key: "", op: "eq", value: 0 },
 };
