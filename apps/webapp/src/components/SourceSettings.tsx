@@ -390,7 +390,7 @@ export function SourceSettings() {
   return (
     <div className="flex h-full">
       {/* Left pane */}
-      <div className="w-64 shrink-0 border-r border-border bg-muted/30 flex flex-col">
+      <div className="w-72 shrink-0 border-r border-border bg-muted/30 flex flex-col">
         {/* Active section */}
         <div className="border-b border-border">
           <div className="px-3 pt-3 pb-1">
