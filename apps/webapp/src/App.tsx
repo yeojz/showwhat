@@ -47,7 +47,11 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dirtyCount = useDefinitionStore((s) => s.dirtyKeys.length);
   const addDefinition = useDefinitionStore((s) => s.addDefinition);
-  const definitionKeys = useDefinitionStore((s) => Object.keys(s.definitions));
+  const definitionKeys = useDefinitionStore((s) => Object.keys(s.definitions).join("\0"));
+  const definitionKeysList = useMemo(
+    () => (definitionKeys ? definitionKeys.split("\0") : []),
+    [definitionKeys],
+  );
 
   // Split mode detection (needed before preset merging)
   const activeSourceId = useSourceStore((s) => s.activeSourceId);
@@ -166,7 +170,7 @@ export function App() {
               <InlinePresetList
                 presetReader={effectiveReader}
                 overrides={overrides}
-                definitionKeys={definitionKeys}
+                definitionKeys={definitionKeysList}
                 isSplit={isSplit}
               />
             </div>
