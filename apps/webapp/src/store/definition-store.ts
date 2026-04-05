@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
 import { DefinitionsSchema } from "showwhat";
 import type { Definition, Definitions } from "showwhat";
-import type { Presets } from "showwhat";
+import type { Presets, PresetReader } from "showwhat";
 import type { ConfiguratorStore, ValidationIssue } from "@showwhat/configurator";
 
 /** Remove a key from an object, returning a new object. */
@@ -39,23 +39,16 @@ export type FileDefinitionState = ConfiguratorStore & {
    */
   filePresets: Presets;
   /**
-   * Presets fetched from a dedicated presets endpoint (keyed-mode sources that
-   * have a `presetsUrl` configured).
+   * Runtime-only preset reader that resolves presets on demand from hosted/split
+   * sources. Not serialisable — excluded from persistence and reset on rehydration.
    */
-  sourcePresets: Presets;
-  /**
-   * Per-definition-key presets for keyed-mode sources. Each entry maps a
-   * definition key (e.g. "feature-flags") to the presets embedded within that
-   * definition file. Stored separately so the UI can show provenance and so
-   * same-named presets from different files never silently overwrite each other.
-   */
-  definitionPresets: Record<string, Presets>;
+  presetReader: PresetReader | null;
   sourceFileName: string | null;
   sourceFormat: "yaml" | "json" | null;
 
   /**
-   * Full load: replaces all definitions and file-embedded presets. Clears all
-   * preset fields — callers set sourcePresets / definitionPresets afterwards.
+   * Full load: replaces all definitions and file-embedded presets. Clears the
+   * preset reader — callers set it afterwards via setPresetReader.
    */
   importDefinitions(
     defs: Definitions,
@@ -68,12 +61,8 @@ export type FileDefinitionState = ConfiguratorStore & {
    * any other state (presets, other definitions, dirty keys for other keys).
    */
   upsertDefinition(key: string, def: Definition): void;
-  /** Replace all source-endpoint presets without touching definitions. */
-  setSourcePresets(presets: Presets): void;
-  /** Replace the entire definitionPresets map (used on initial keyed load). */
-  setDefinitionPresets(presets: Record<string, Presets>): void;
-  /** Update one definition key's presets without replacing the others. */
-  upsertDefinitionPresets(key: string, presets: Presets): void;
+  /** Set (or clear) the runtime preset reader. */
+  setPresetReader(reader: PresetReader | null): void;
   revertAll(): void;
   clearAll(): void;
 };
@@ -92,8 +81,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
         definitions: {},
         savedDefinitions: {},
         filePresets: {},
-        sourcePresets: {},
-        definitionPresets: {},
+        presetReader: null,
         selectedKey: null,
         sourceFileName: null,
         sourceFormat: null,
@@ -110,8 +98,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
             definitions: structuredClone(defs),
             savedDefinitions: structuredClone(defs),
             filePresets: filePresets ?? {},
-            sourcePresets: {},
-            definitionPresets: {},
+            presetReader: null,
             sourceFileName: fileName,
             sourceFormat: format,
             dirtyKeys: [],
@@ -133,18 +120,8 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
           }));
         },
 
-        setSourcePresets(presets) {
-          set({ sourcePresets: presets });
-        },
-
-        setDefinitionPresets(presets) {
-          set({ definitionPresets: presets });
-        },
-
-        upsertDefinitionPresets(key, presets) {
-          set((state) => ({
-            definitionPresets: { ...state.definitionPresets, [key]: presets },
-          }));
+        setPresetReader(reader) {
+          set({ presetReader: reader });
         },
 
         async selectDefinition(key) {
@@ -285,8 +262,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
             definitions: {},
             savedDefinitions: {},
             filePresets: {},
-            sourcePresets: {},
-            definitionPresets: {},
+            presetReader: null,
             selectedKey: null,
             sourceFileName: null,
             sourceFormat: null,
@@ -303,8 +279,6 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
         partialize: (state) => ({
           savedDefinitions: state.savedDefinitions,
           filePresets: state.filePresets,
-          sourcePresets: state.sourcePresets,
-          definitionPresets: state.definitionPresets,
           selectedKey: state.selectedKey,
           sourceFileName: state.sourceFileName,
           sourceFormat: state.sourceFormat,
@@ -315,12 +289,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
             return {
               ...s,
               filePresets: (s.inlinePresets as Presets | null | undefined) ?? {},
-              sourcePresets: {},
-              definitionPresets: {},
             };
-          }
-          if (version === 2) {
-            return { ...s, definitionPresets: {} };
           }
           return persistedState;
         },
@@ -328,8 +297,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
           if (!state) return;
           state.definitions = structuredClone(state.savedDefinitions);
           state.filePresets = state.filePresets ?? {};
-          state.sourcePresets = state.sourcePresets ?? {};
-          state.definitionPresets = state.definitionPresets ?? {};
+          state.presetReader = null;
           state.dirtyKeys = [];
           state.validationErrors = {};
         },

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Configurator, createPresetUI } from "@showwhat/configurator";
 import type { ConfiguratorStoreSource } from "@showwhat/configurator";
-import type { Definition } from "showwhat";
+import type { Definition, Presets } from "showwhat";
 import { Toolbar } from "./components/Toolbar.js";
 import { EmptyState } from "./components/EmptyState.js";
 import { SidebarActions } from "./components/SidebarActions.js";
@@ -55,8 +55,9 @@ export function App() {
 
   const customPresets = usePresetStore((s) => s.presets);
   const filePresets = useDefinitionStore((s) => s.filePresets);
-  const sourcePresets = useDefinitionStore((s) => s.sourcePresets);
-  const definitionPresets = useDefinitionStore((s) => s.definitionPresets);
+  // TODO(task-6): replace with presetReader-based merging
+  const sourcePresets: Presets = {};
+  const definitionPresets: Record<string, Presets> = {};
 
   // Shared presets (custom + source endpoint + file-level) available to all definitions.
   const sharedPresets = useMemo(

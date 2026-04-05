@@ -29,8 +29,6 @@ export function SourceSettings() {
     dirtyKeys,
     importDefinitions,
     upsertDefinition,
-    setSourcePresets,
-    upsertDefinitionPresets,
     clearAll,
   } = useDefinitionStore(
     useShallow((s) => ({
@@ -40,11 +38,15 @@ export function SourceSettings() {
       dirtyKeys: s.dirtyKeys,
       importDefinitions: s.importDefinitions,
       upsertDefinition: s.upsertDefinition,
-      setSourcePresets: s.setSourcePresets,
-      upsertDefinitionPresets: s.upsertDefinitionPresets,
       clearAll: s.clearAll,
     })),
   );
+
+  // TODO(task-5): replace with presetReader-based approach
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const setSourcePresets = (_presets: Record<string, unknown>) => {};
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const upsertDefinitionPresets = (_key: string, _presets: Record<string, unknown>) => {};
 
   const {
     sources,
