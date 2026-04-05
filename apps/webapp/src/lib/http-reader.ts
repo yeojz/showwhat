@@ -299,17 +299,25 @@ export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
     return (keys as string[]).filter((k) => !DANGEROUS_KEYS.has(k));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getPresets(_key?: string): Promise<Presets> {
-    if (!this.#source.presetsUrl) {
-      return {};
+  async getPresets(key?: string): Promise<Presets> {
+    // Shared presets from presetsUrl
+    let sourcePresets: Presets = {};
+    if (this.#source.presetsUrl) {
+      sourcePresets =
+        (await fetchPresetsFromUrl(
+          this.#source.presetsUrl,
+          this.#source.format,
+          this.#source.headers,
+        )) ?? {};
     }
-    const presets = await fetchPresetsFromUrl(
-      this.#source.presetsUrl,
-      this.#source.format,
-      this.#source.headers,
-    );
-    return presets ?? {};
+
+    if (!key) return sourcePresets;
+
+    // Per-key file presets
+    const { filePresets } = await this.fetchDefinitionKey(key);
+    if (!filePresets) return sourcePresets;
+
+    return { ...sourcePresets, ...filePresets };
   }
 }
 
