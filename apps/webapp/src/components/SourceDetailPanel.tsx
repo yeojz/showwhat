@@ -480,7 +480,7 @@ export function SourceDetailPanel({
                       url={source.listUrl}
                       lastFetched={source.listLastFetched}
                       loading={loading}
-                      onReload={isLoaded ? onReloadKeyList : undefined}
+                      onReload={onReloadKeyList}
                     />
                   )}
                   {source.presetsUrl && (
