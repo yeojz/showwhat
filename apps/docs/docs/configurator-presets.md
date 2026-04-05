@@ -32,9 +32,9 @@ Once saved, your preset types appear in the "Add condition" dropdown on the [Def
 
 Below the editor, a **From Source** section shows presets provided by the active source. Presets are grouped by where they came from:
 
-- **Presets URL** -- fetched from the source's dedicated presets endpoint (split mode only).
-- **Definition file** -- embedded in the loaded definition file.
-- **Per-definition groups** -- presets embedded in individual definition files (split mode only), shown under the definition key name.
+- **Presets URL** - fetched from the source's dedicated presets endpoint (split mode only).
+- **Definition file** - embedded in the loaded definition file.
+- **Per-definition groups** - presets embedded in individual definition files (split mode only), shown under the definition key name.
 
 Each preset row is expandable to reveal its `type`, `key`, and `overrides`. An amber icon indicates a source preset that shares the same name as one of your custom presets -- see merge order below.
 

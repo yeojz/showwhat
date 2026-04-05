@@ -84,7 +84,7 @@ The `annotations` record contains metadata populated by custom evaluators during
 | `key`     | `string`        | The definition key that failed                               |
 | `error`   | `ShowwhatError` | The error that occurred (e.g. not found, inactive, no match) |
 
-Per-key errors such as `DefinitionNotFoundError`, `DefinitionInactiveError`, and `VariationNotFoundError` are wrapped in `ResolutionError` and returned in the result record -- they are never thrown.
+Per-key errors such as `DefinitionNotFoundError`, `DefinitionInactiveError`, and `VariationNotFoundError` are wrapped in `ResolutionError` and returned in the result record - they are never thrown.
 
 **Throws:**
 
@@ -92,7 +92,7 @@ Per-key errors such as `DefinitionNotFoundError`, `DefinitionInactiveError`, and
 
 ## `resolve()`
 
-Resolve all definitions in a set against a context. If any key fails, the entire call rejects.
+Resolve all definitions in a set against a context. Per-key failures are caught and returned as `ResolutionError` entries in the result record, same as `showwhat()`.
 
 ```ts
 import { resolve } from "showwhat";
@@ -102,8 +102,12 @@ const results = await resolve({
   context: { env: "prod" },
 });
 
-results.flag_a.value; // resolved value
-results.flag_b.value; // resolved value
+const entry = results.flag_a;
+if (entry.success) {
+  console.log(entry.value); // resolved value
+} else {
+  console.log(entry.error); // ShowwhatError
+}
 ```
 
 **Parameters:**
@@ -125,7 +129,7 @@ results.flag_b.value; // resolved value
 | `createRegex`       | `RegexFactory?`                            | Factory for regex creation (default: `(p) => new RegExp(p)`)                   |
 | `createAnnotations` | `(definitionKey?: string) => Annotations?` | Factory to seed [annotations](/docs/annotations) per variation (default: `{}`) |
 
-**Returns:** `Promise<Record<string, Resolution>>`
+**Returns:** `Promise<Record<string, Resolution | ResolutionError>>`
 
 ## `resolveVariation()`
 
@@ -164,7 +168,7 @@ Parse a YAML string into a validated `FileFormat` object (containing `definition
 ```ts
 import { parseYaml } from "showwhat";
 
-const { definitions, presets } = parseYaml(yamlString);
+const { definitions, presets } = await parseYaml(yamlString);
 ```
 
 **Throws:** `ParseError` on invalid YAML, `SchemaValidationError` on schema violation.
@@ -176,7 +180,7 @@ Validate a plain object as a `FileFormat` object (containing `definitions` and o
 ```ts
 import { parseObject } from "showwhat";
 
-const { definitions } = parseObject({
+const { definitions } = await parseObject({
   definitions: { my_flag: { variations: [{ value: true }] } },
 });
 ```
@@ -188,10 +192,22 @@ Parse a plain object as a validated `Presets` map. Use this when reading a stand
 ```ts
 import { parsePresetsObject } from "showwhat";
 
-const presets = parsePresetsObject(rawObject);
+const presets = await parsePresetsObject(rawObject);
 ```
 
 **Throws:** `SchemaValidationError` on schema violation.
+
+## `parsePresetsYaml()`
+
+Parse a YAML string into a validated `Presets` map. Use this when reading a standalone preset YAML file.
+
+```ts
+import { parsePresetsYaml } from "showwhat";
+
+const presets = await parsePresetsYaml(yamlString);
+```
+
+**Throws:** `ParseError` on invalid YAML, `SchemaValidationError` on schema violation.
 
 ## `registerEvaluators()`
 
@@ -218,6 +234,7 @@ const matched = await evaluateCondition({
   condition: { type: "env", value: "prod" },
   context: { env: "prod" },
   evaluators: builtinEvaluators,
+  annotations: {},
 });
 ```
 
@@ -229,7 +246,8 @@ These are simplified representations. See the source schemas in `packages/core/s
 // Shared base type for values in the data model.
 // Manually defined because TypeScript cannot infer recursive types via z.infer;
 // the non-recursive DataPrimitive IS inferred from its schema.
-type DataValue = string | number | boolean | DataValue[] | Record<string, DataValue>;
+type DataPrimitive = string | number | boolean;
+type DataValue = DataPrimitive | DataPrimitive[] | { [key: string]: DataValue };
 
 type ContextValue = DataValue;
 type Context = Record<string, ContextValue>;

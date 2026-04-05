@@ -59,6 +59,10 @@ Returned in `ResolutionError` when a condition fails to evaluate due to a config
 
 The `conditionType` property indicates which condition type produced the error (e.g. `"string"`).
 
+### `UnknownConditionTypeError`
+
+Returned in `ResolutionError` when a condition references a type that has no registered evaluator and no fallback evaluator is configured.
+
 ### `ValidationError`
 
 Thrown when the context object fails schema validation. This is a systemic error that prevents resolution from starting.
@@ -87,9 +91,10 @@ ShowwhatError
 ├── DefinitionInactiveError
 ├── VariationNotFoundError
 ├── ConditionError
+├── UnknownConditionTypeError
 ├── ValidationError
+│   └── SchemaValidationError
 ├── ParseError
-├── SchemaValidationError
 ├── InvalidContextError
 └── DataError
 ```
@@ -103,6 +108,7 @@ import {
   DefinitionInactiveError,
   VariationNotFoundError,
   ConditionError,
+  UnknownConditionTypeError,
   ValidationError,
   ParseError,
   SchemaValidationError,
