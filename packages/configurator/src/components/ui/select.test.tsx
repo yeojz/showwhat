@@ -10,8 +10,8 @@ import {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
+  SelectScrollUpArrow,
+  SelectScrollDownArrow,
 } from "./select.js";
 
 describe("Select components", () => {
@@ -111,7 +111,6 @@ describe("Select components", () => {
       </Select>,
     );
     await user.click(screen.getByRole("combobox"));
-    // SelectSeparator renders with data-slot
     expect(document.querySelector("[data-slot='select-separator']")).toBeDefined();
   });
 
@@ -131,29 +130,12 @@ describe("Select components", () => {
     );
     await user.click(screen.getByRole("combobox"));
     await user.click(screen.getByText("Two"));
-    expect(onChange).toHaveBeenCalledWith("two");
+    expect(onChange).toHaveBeenCalledWith("two", expect.anything());
   });
 
-  it("exports SelectScrollUpButton and SelectScrollDownButton", () => {
-    expect(SelectScrollUpButton).toBeDefined();
-    expect(SelectScrollDownButton).toBeDefined();
-  });
-
-  it("renders SelectContent with popper position", async () => {
-    const user = userEvent.setup();
-    render(
-      <Select value="one">
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent position="popper">
-          <SelectItem value="one">One</SelectItem>
-          <SelectItem value="two">Two</SelectItem>
-        </SelectContent>
-      </Select>,
-    );
-    await user.click(screen.getByRole("combobox"));
-    expect(screen.getByText("Two")).toBeDefined();
+  it("exports SelectScrollUpArrow and SelectScrollDownArrow", () => {
+    expect(SelectScrollUpArrow).toBeDefined();
+    expect(SelectScrollDownArrow).toBeDefined();
   });
 
   it("passes custom className to SelectLabel", async () => {
