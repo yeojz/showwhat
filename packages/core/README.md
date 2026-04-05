@@ -25,12 +25,16 @@ const data = await MemoryData.fromObject({
 
 const def = await data.get("checkout_v2");
 
-const result = await resolve({
+const results = await resolve({
   definitions: { checkout_v2: def! },
   context: { env: "prod" },
   options: { evaluators: builtinEvaluators },
 });
-console.log(result.checkout_v2.value); // true
+
+const entry = results["checkout_v2"];
+if (entry.success) {
+  console.log(entry.value); // true
+}
 ```
 
 > **Note:** The resolver is strict — evaluators must be passed explicitly. There is no default evaluator set injected automatically.

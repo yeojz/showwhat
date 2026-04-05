@@ -19,13 +19,13 @@ Define flags and config as **variations with conditions** in YAML or JSON. At ru
 | [`@showwhat/core`](./packages/core)                 | Rule engine, schemas, parsers, and in-memory data source |
 | [`@showwhat/configurator`](./packages/configurator) | React UI library for visual rule editing                 |
 | [`@showwhat/openfeature`](./packages/openfeature)   | OpenFeature bridge for showwhat definitions              |
-| [`@showwhat/webapp`](./apps/webapp)                 | Browser app for authoring and testing definitions        |
-| [`@showwhat/docs`](./apps/docs)                     | Documentation site                                       |
+| [webapp](./apps/webapp)                             | Browser app for authoring and testing definitions        |
+| [docs](./apps/docs)                                 | Documentation site                                       |
 
 ## Quick start
 
 ```bash
-pnpm install showwhat
+npm install showwhat
 pnpm add showwhat
 yarn add showwhat
 
@@ -49,12 +49,15 @@ definitions:
 `);
 
 const result = await showwhat({
-  key: "checkout_v2",
+  keys: ["checkout_v2"],
   context: { env: "prod" },
   options: { data },
 });
 
-console.log(result.value); // true
+const entry = result["checkout_v2"];
+if (entry.success) {
+  console.log(entry.value); // true
+}
 ```
 
 ## Definition format
@@ -84,7 +87,7 @@ showwhat assumes definition authors are trusted. See the [Security guide](https:
 
 ## AI Usage Disclosure
 
-Parts of the codebase, tests, and documentation have been refined with AI assistance, with all outputs reviewed by humans. See [CONTRIBUTING.md](./CONTRIBUTING.md#ai-usage-guidelines) for guidelines.
+The codebase, tests, and documentation was created with AI assistance, with outputs reviewed by humans. See [CONTRIBUTING.md](./CONTRIBUTING.md#ai-usage-guidelines) for guidelines.
 
 ## License
 
