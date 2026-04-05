@@ -44,36 +44,42 @@ If no source is loaded or the source has no presets, this section shows an empty
 
 ## Merge order
 
-When presets exist in multiple places, they are merged into a single set. In JavaScript spread semantics, later entries override earlier ones with the same name.
+When presets exist in multiple places, the Configurator merges them into a single set using the [`mergePresets`](/docs/presets#merging-presets) helper from the `showwhat` package. This is the same function available to library users, so the merge behaviour is identical whether presets are resolved in your application or in the Configurator.
 
 ### Bundled mode
 
-When using a bundled-mode source or a file import, all definitions share one merged preset set:
+When using a bundled-mode source or a file import, all definitions share one merged preset set. The `PresetReader` returns file/source presets as the base, and custom presets are applied as overrides:
 
-```
-{ ...customPresets, ...filePresets, ...sourcePresets }
+```ts
+mergePresets({ presets: reader, overrides: customPresets });
+// equivalent to: { ...readerPresets, ...customPresets }
 ```
 
-**Source presets** (from the presets URL) take the highest priority, then **file presets** (embedded in the definition file), then **custom presets** (from the editor).
+**Custom presets** (from the editor) take the highest priority, then **source/file presets** (from the reader).
 
 ### Split mode
 
-Each definition sees shared presets plus its own embedded presets:
+Each definition sees shared presets plus its own embedded presets. The Configurator calls `mergePresets` twice — once for shared presets, and once per definition key:
 
-```
-shared = { ...customPresets, ...filePresets, ...sourcePresets }
-merged = { ...shared, ...perDefinitionPresets }
+```ts
+// Shared presets (all definitions)
+const shared = await mergePresets({ presets: reader, overrides: customPresets });
+
+// Per-definition presets (split mode only)
+const forKey = await mergePresets({ key: "banner", presets: reader, overrides: customPresets });
 ```
 
-**Per-definition presets** (embedded in that key's file) take the highest priority, followed by the shared set.
+When called with a `key`, the reader layers per-definition file presets on top of shared source presets before custom overrides are applied. **Per-definition presets** take the highest priority, followed by the shared set.
 
 ### Avoiding collisions
 
-If a source preset has the same name as your custom preset, the source preset wins in the merged set. The amber icon in the preset viewer flags these collisions.
+If a custom preset has the same name as a source preset, the custom preset wins in the merged set. The amber icon in the preset viewer flags these collisions.
 
 ::: tip
 Give custom presets unique names that won't collide with source-provided presets. Or, if the source presets are authoritative, use the custom editor only for presets that the source doesn't provide.
 :::
+
+For the full merge strategy and how to replicate this in your application code, see [Preset Merge Strategy](/docs/preset-merge-strategy).
 
 ## Next steps
 

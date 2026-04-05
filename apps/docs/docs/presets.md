@@ -239,6 +239,55 @@ function App() {
 
 With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Sg Free"). Each preset renders a type-specific editor with the key pre-filled and locked. Fields listed in `overrides` are also disabled in the editor.
 
+### Merging presets
+
+When presets come from multiple sources (a hosted endpoint, definition files, and local overrides), use `mergePresets` to combine them into a single set. This is the same function the Configurator uses internally, so using it in your application code guarantees identical merge behaviour.
+
+```ts
+import { mergePresets, createPresetConditions, registerEvaluators, showwhat } from "showwhat";
+import type { PresetReader } from "showwhat";
+
+// A PresetReader fetches presets on demand — e.g. from a remote source
+const reader: PresetReader = {
+  async getPresets(key?: string) {
+    const url = key ? `/api/presets/${key}` : "/api/presets";
+    const res = await fetch(url);
+    return res.json();
+  },
+};
+
+// Local overrides (e.g. from a config file or user input)
+const overrides = {
+  beta: { type: "bool", key: "beta_user" },
+};
+
+// Merge shared presets
+const merged = await mergePresets({ presets: reader, overrides });
+
+// Merge per-key presets (split mode)
+const bannerPresets = await mergePresets({ key: "banner", presets: reader, overrides });
+
+// Use in evaluation
+const result = await showwhat({
+  keys: ["banner"],
+  context: { env: "prod", beta_user: true },
+  options: {
+    data,
+    evaluators: registerEvaluators(createPresetConditions(bannerPresets)),
+  },
+});
+```
+
+`mergePresets` accepts three optional fields:
+
+| Field       | Type           | Description                                                                                                           |
+| ----------- | -------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `presets`   | `PresetReader` | Async source of base presets. Called with no argument for shared presets, or with a `key` for per-definition presets. |
+| `overrides` | `Presets`      | Local overrides that are spread on top of the base presets.                                                           |
+| `key`       | `string`       | When provided, calls `presets.getPresets(key)` instead of `presets.getPresets()`.                                     |
+
+The merge is a shallow object spread: `{ ...base, ...overrides }`. Overrides win when names collide. See [Preset Merge Strategy](/docs/preset-merge-strategy) for the full merge order across source modes.
+
 ## API reference
 
 ### Types
@@ -247,6 +296,7 @@ With extensions provided, presets appear in the "Add condition" menu with friend
 | --------------------- | ------------------------ | --------------------------------------------------------------------- |
 | `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`                                    |
 | `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string; overrides?: Record<string, unknown> }` |
+| `PresetReader`        | `showwhat`               | Interface with `getPresets(key?)` for on-demand preset fetching       |
 | `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"`                        |
 | `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                            |
 
@@ -254,6 +304,7 @@ With extensions provided, presets appear in the "Add condition" menu with friend
 
 | Function                    | Import from              | Description                                                      |
 | --------------------------- | ------------------------ | ---------------------------------------------------------------- |
+| `mergePresets`              | `showwhat`               | Merges presets from a `PresetReader` with local overrides        |
 | `createPresetConditions`    | `showwhat`               | Creates evaluators from a preset map for use with `showwhat()`   |
 | `createPresetUI`            | `@showwhat/configurator` | Creates condition meta and editor overrides for the Configurator |
 | `createPresetConditionMeta` | `@showwhat/configurator` | Creates only the condition meta entries (without editors)        |
@@ -273,6 +324,7 @@ if (!result.success) {
 
 ## Next steps
 
+- [Preset Merge Strategy](/docs/preset-merge-strategy) for the full merge order and how to keep library and Configurator in sync
 - [Conditions](/docs/conditions) for all built-in condition types that presets build on
 - [Custom Conditions](/docs/custom-conditions) to go beyond presets with fully custom evaluators
 - [Configurator](/docs/configurator) to use presets in the visual editor
