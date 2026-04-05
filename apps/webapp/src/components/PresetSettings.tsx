@@ -199,15 +199,10 @@ export function InlinePresetList({
   resolvedPresets: Presets;
   overrides: Presets;
 }) {
-  // Filter out presets that came from overrides to show only source-provided ones
-  const sourceEntries = Object.entries(resolvedPresets).filter(
-    ([name]) => !(name in overrides) || name in resolvedPresets,
-  );
-  const hasAny = sourceEntries.length > 0;
+  const entries = Object.entries(resolvedPresets);
+  const hasAny = entries.length > 0;
   const hasOverrides =
-    hasAny &&
-    Object.keys(overrides).length > 0 &&
-    sourceEntries.some(([name]) => name in overrides);
+    hasAny && Object.keys(overrides).length > 0 && entries.some(([name]) => name in overrides);
 
   return (
     <section className="space-y-4">
@@ -230,7 +225,7 @@ export function InlinePresetList({
           <PresetGroup
             label="Resolved presets"
             description="Merged from all sources (hosted endpoint, definition files, and overrides)."
-            entries={sourceEntries}
+            entries={entries}
             customPresets={overrides}
           />
         </div>

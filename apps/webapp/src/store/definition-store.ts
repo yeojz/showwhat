@@ -291,6 +291,12 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
               filePresets: (s.inlinePresets as Presets | null | undefined) ?? {},
             };
           }
+          if (version === 2) {
+            // v2 had sourcePresets and definitionPresets — strip them
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { sourcePresets: _sp, definitionPresets: _dp, ...rest } = s;
+            return rest;
+          }
           return persistedState;
         },
         onRehydrateStorage: () => (state) => {
