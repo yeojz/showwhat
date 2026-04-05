@@ -468,7 +468,7 @@ export function SourceDetailPanel({
                   url={source.url}
                   lastFetched={source.lastFetched}
                   loading={loading}
-                  onReload={onRefreshSingle}
+                  onReload={isLoaded ? onRefreshSingle : undefined}
                 />
               )}
               {source.mode === "split" && (
@@ -489,7 +489,7 @@ export function SourceDetailPanel({
                       url={source.presetsUrl}
                       lastFetched={source.presetsLastFetched}
                       loading={loading}
-                      onReload={onReloadPresets}
+                      onReload={isLoaded ? onReloadPresets : undefined}
                     />
                   )}
                 </>

@@ -30,7 +30,7 @@ describe("ConditionBuilder nested error propagation", () => {
     );
 
     // The nested env condition should render inside the AND group
-    expect(screen.getAllByText("Environment").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("env").length).toBeGreaterThan(0);
 
     // Errors are shown only after touch — simulate editing the nested condition
     // Find the nested condition's value input and change it to trigger touched state
@@ -63,7 +63,7 @@ describe("ConditionBuilder nested error propagation", () => {
     );
 
     expect(screen.getByText("L1 | or")).toBeDefined();
-    expect(screen.getByText("String")).toBeDefined();
+    expect(screen.getByText("string")).toBeDefined();
 
     // Touch the nested condition to show errors
     const inputs = screen.getAllByRole("textbox");

@@ -17,8 +17,8 @@ describe("ConditionBuilder", () => {
     ];
     const onChange = vi.fn();
     render(<ConditionBuilder conditions={conditions} onChange={onChange} />);
-    expect(screen.getAllByText("Environment").length).toBeGreaterThan(0);
-    expect(screen.getByText("String")).toBeDefined();
+    expect(screen.getAllByText("env").length).toBeGreaterThan(0);
+    expect(screen.getByText("string")).toBeDefined();
   });
 
   it("should call onChange when removing a condition", () => {

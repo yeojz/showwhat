@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
-import type { Definitions, Presets } from "showwhat";
+import type { Definition, Definitions } from "showwhat";
 import type { HostedSource } from "../store/source-store.js";
 
 const mockParseYaml = vi.fn();
@@ -29,7 +29,7 @@ const sampleDefs: Definitions = {
   "feature-a": { variations: [{ value: true }] },
 };
 
-const samplePresets: Presets = {
+const samplePresets = {
   tier: { type: "string", key: "tier" },
 };
 
@@ -232,80 +232,25 @@ describe("useSourceFetch", () => {
       });
 
       const { result } = renderHook(() => useSourceFetch());
-      let fetched: unknown;
+      let fetched: Definition | null = null;
       await act(async () => {
         fetched = await result.current.reloadDefinitionKey(createSplitSource(), "flag-a");
       });
 
-      expect(fetched).toEqual({ definition: { variations: [{ value: true }] } });
+      expect(fetched).toEqual({ variations: [{ value: true }] });
     });
 
     it("sets error and returns null on failure", async () => {
       fetchMock.mockRejectedValueOnce(new Error("HTTP 500"));
 
       const { result } = renderHook(() => useSourceFetch());
-      let fetched: unknown;
+      let fetched: Definition | null = null;
       await act(async () => {
         fetched = await result.current.reloadDefinitionKey(createSplitSource(), "flag-a");
       });
 
       expect(fetched).toBeNull();
       expect(result.current.error?.message).toContain("500");
-    });
-  });
-
-  describe("reloadPresets", () => {
-    it("returns presets on success", async () => {
-      const presetsResponse = {
-        ok: true,
-        headers: new Headers(),
-        text: () =>
-          Promise.resolve(JSON.stringify({ presets: { tier: { type: "string", key: "tier" } } })),
-      };
-      fetchMock.mockResolvedValueOnce(presetsResponse);
-      mockPresetsSafeParse.mockReturnValue({
-        success: true,
-        data: { tier: { type: "string", key: "tier" } },
-      });
-
-      const { result } = renderHook(() => useSourceFetch());
-      let presets: Presets | null = null;
-      await act(async () => {
-        presets = await result.current.reloadPresets("https://r2.example.com/presets.json", "json");
-      });
-
-      expect(presets).toEqual({ tier: { type: "string", key: "tier" } });
-    });
-
-    it("returns null when fetchPresets returns undefined", async () => {
-      const presetsResponse = {
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify({})),
-      };
-      fetchMock.mockResolvedValueOnce(presetsResponse);
-      mockPresetsSafeParse.mockReturnValue({ success: false });
-
-      const { result } = renderHook(() => useSourceFetch());
-      let presets: Presets | null = null;
-      await act(async () => {
-        presets = await result.current.reloadPresets("https://r2.example.com/presets.json", "json");
-      });
-
-      expect(presets).toBeNull();
-    });
-
-    it("sets error and returns null on failure", async () => {
-      fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
-
-      const { result } = renderHook(() => useSourceFetch());
-      let presets: Presets | null = null;
-      await act(async () => {
-        presets = await result.current.reloadPresets("https://r2.example.com/presets.json", "json");
-      });
-
-      expect(presets).toBeNull();
-      expect(result.current.error?.message).toContain("CORS");
     });
   });
 });

@@ -16,7 +16,7 @@ export const OP_OPTIONS = [
 
 export const meta = {
   type: "datetime",
-  label: "Datetime",
+  label: "datetime",
   description: "Compare a context key against a date/time",
   defaults: { type: "datetime", key: "", op: "eq", value: new Date().toISOString() },
 };

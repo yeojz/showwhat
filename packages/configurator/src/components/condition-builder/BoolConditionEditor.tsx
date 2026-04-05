@@ -10,7 +10,7 @@ export const OP_OPTIONS = [{ value: "eq", label: "eq" }];
 
 export const meta = {
   type: "bool",
-  label: "Boolean",
+  label: "bool",
   description: "Match a context key against a boolean",
   defaults: { type: "bool", key: "", value: true },
 };

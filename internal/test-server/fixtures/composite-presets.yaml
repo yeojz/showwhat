@@ -1,11 +1,11 @@
 definitions:
   regional-discount:
-    description: Discount banner for US free-tier users
+    description: Discount banner for SG free-tier users
     active: true
     variations:
       - value: "upgrade_offer"
         conditions:
-          - type: us_free_user
+          - type: sg_free_user
       - value: null
 
   premium-dashboard:
@@ -27,15 +27,15 @@ definitions:
       - value: false
 
 presets:
-  # Composite AND preset — user must be in the "us" region AND on the "free" tier
-  us_free_user:
+  # Composite AND preset — user must be in the "sg" region AND on the "free" tier
+  sg_free_user:
     type: and
     overrides:
       conditions:
         - type: string
           key: region
           op: eq
-          value: us
+          value: sg
         - type: string
           key: tier
           op: eq
@@ -65,7 +65,7 @@ presets:
           key: region
           op: in
           value:
-            - us
+            - sg
             - eu
         - type: or
           conditions:

@@ -47,7 +47,7 @@ export const DefinitionListItem = memo(function DefinitionListItem({
                 : "border-status-inactive bg-status-inactive",
         )}
       />
-      <span className="flex-1 truncate font-mono text-sm">{definitionKey}</span>
+      <span className="min-w-0 flex-1 break-all font-mono text-sm">{definitionKey}</span>
       <Badge variant="secondary" className="text-xs tabular-nums">
         {variationCount}
       </Badge>

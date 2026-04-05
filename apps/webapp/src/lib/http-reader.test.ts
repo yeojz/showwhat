@@ -601,84 +601,6 @@ describe("SplitSourceHttpReader", () => {
       expect(result.presets).toBeUndefined();
     });
 
-    it("collects definitionPresets embedded in individual definition files", async () => {
-      const defAResponse = {
-        ok: true,
-        headers: new Headers(),
-        text: () =>
-          Promise.resolve(
-            JSON.stringify({
-              variations: [{ value: true }],
-              presets: { tier: { type: "string", key: "tier" } },
-            }),
-          ),
-      };
-      const defBResponse = {
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify({ variations: [{ value: false }] })),
-      };
-
-      fetchMock.mockResolvedValueOnce(defAResponse).mockResolvedValueOnce(defBResponse);
-
-      mockDefinitionSafeParse.mockImplementation((raw: unknown) => ({
-        success: true,
-        data: raw,
-      }));
-      mockPresetsSafeParse
-        .mockReturnValueOnce({ success: true, data: { tier: { type: "string", key: "tier" } } })
-        .mockReturnValue({ success: false });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const result = await reader.fetchSource();
-
-      expect(result.definitionPresets).toEqual({
-        "flag-a": { tier: { type: "string", key: "tier" } },
-      });
-    });
-
-    it("tracks definitionPresets per key from multiple definition files", async () => {
-      const makeDefResponse = (presets: unknown) => ({
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify({ variations: [{ value: true }], presets })),
-      });
-
-      fetchMock
-        .mockResolvedValueOnce(makeDefResponse({ tier: { type: "string", key: "tier" } }))
-        .mockResolvedValueOnce(makeDefResponse({ env: { type: "string", key: "env" } }));
-
-      mockDefinitionSafeParse.mockImplementation((raw: unknown) => ({ success: true, data: raw }));
-      mockPresetsSafeParse
-        .mockReturnValueOnce({ success: true, data: { tier: { type: "string", key: "tier" } } })
-        .mockReturnValueOnce({ success: true, data: { env: { type: "string", key: "env" } } });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const result = await reader.fetchSource();
-
-      expect(result.definitionPresets).toEqual({
-        "flag-a": { tier: { type: "string", key: "tier" } },
-        "flag-b": { env: { type: "string", key: "env" } },
-      });
-    });
-
-    it("omits definitionPresets when no definition files contain presets", async () => {
-      const defResponse = {
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify({ variations: [{ value: true }] })),
-      };
-
-      fetchMock.mockResolvedValueOnce(defResponse);
-      mockDefinitionSafeParse.mockImplementation((raw: unknown) => ({ success: true, data: raw }));
-      mockPresetsSafeParse.mockReturnValue({ success: false });
-
-      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: ["flag-a"] }));
-      const result = await reader.fetchSource();
-
-      expect(result.definitionPresets).toBeUndefined();
-    });
-
     it("filters dangerous keys from definitionKeys", async () => {
       const defResponse = {
         ok: true,
@@ -934,24 +856,150 @@ describe("SplitSourceHttpReader", () => {
       expect(presets).toEqual({});
     });
 
-    it("returns same presets with or without key argument", async () => {
-      fetchMock.mockResolvedValue({
+    it("returns source presets overlaid with key file presets", async () => {
+      const presetsResponse = {
         ok: true,
         headers: new Headers(),
         text: () =>
           Promise.resolve(JSON.stringify({ presets: { tier: { type: "string", key: "tier" } } })),
-      });
-      mockPresetsSafeParse.mockReturnValue({
+      };
+      const keyFileResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              variations: [{ value: true }],
+              presets: { env: { type: "string", key: "env" } },
+            }),
+          ),
+      };
+
+      fetchMock.mockResolvedValueOnce(presetsResponse).mockResolvedValueOnce(keyFileResponse);
+
+      mockPresetsSafeParse
+        .mockReturnValueOnce({ success: true, data: { tier: { type: "string", key: "tier" } } })
+        .mockReturnValueOnce({ success: true, data: { env: { type: "string", key: "env" } } });
+      mockDefinitionSafeParse.mockReturnValue({
         success: true,
-        data: { tier: { type: "string", key: "tier" } },
+        data: { variations: [{ value: true }] },
       });
 
       const reader = new SplitSourceHttpReader(
         createSplitSource({ presetsUrl: "https://r2.example.com/presets.json" }),
       );
-      const presetsWithKey = await reader.getPresets("some-key");
+      const presets = await reader.getPresets("flag-a");
 
-      expect(presetsWithKey).toEqual({ tier: { type: "string", key: "tier" } });
+      expect(presets).toEqual({
+        tier: { type: "string", key: "tier" },
+        env: { type: "string", key: "env" },
+      });
+    });
+
+    it("returns only key file presets when no presetsUrl", async () => {
+      const keyFileResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              variations: [{ value: true }],
+              presets: { env: { type: "string", key: "env" } },
+            }),
+          ),
+      };
+
+      fetchMock.mockResolvedValueOnce(keyFileResponse);
+
+      mockPresetsSafeParse.mockReturnValue({
+        success: true,
+        data: { env: { type: "string", key: "env" } },
+      });
+      mockDefinitionSafeParse.mockReturnValue({
+        success: true,
+        data: { variations: [{ value: true }] },
+      });
+
+      const reader = new SplitSourceHttpReader(createSplitSource());
+      const presets = await reader.getPresets("flag-a");
+
+      expect(presets).toEqual({ env: { type: "string", key: "env" } });
+    });
+
+    it("returns only source presets when key file has no presets", async () => {
+      const presetsResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () =>
+          Promise.resolve(JSON.stringify({ presets: { tier: { type: "string", key: "tier" } } })),
+      };
+      const keyFileResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () => Promise.resolve(JSON.stringify({ variations: [{ value: true }] })),
+      };
+
+      fetchMock.mockResolvedValueOnce(presetsResponse).mockResolvedValueOnce(keyFileResponse);
+
+      mockPresetsSafeParse
+        .mockReturnValueOnce({ success: true, data: { tier: { type: "string", key: "tier" } } })
+        .mockReturnValueOnce({ success: false });
+      mockDefinitionSafeParse.mockReturnValue({
+        success: true,
+        data: { variations: [{ value: true }] },
+      });
+
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ presetsUrl: "https://r2.example.com/presets.json" }),
+      );
+      const presets = await reader.getPresets("flag-a");
+
+      expect(presets).toEqual({ tier: { type: "string", key: "tier" } });
+    });
+
+    it("key file presets override source presets on collision", async () => {
+      const presetsResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({ presets: { tier: { type: "string", key: "tier-source" } } }),
+          ),
+      };
+      const keyFileResponse = {
+        ok: true,
+        headers: new Headers(),
+        text: () =>
+          Promise.resolve(
+            JSON.stringify({
+              variations: [{ value: true }],
+              presets: { tier: { type: "string", key: "tier-file" } },
+            }),
+          ),
+      };
+
+      fetchMock.mockResolvedValueOnce(presetsResponse).mockResolvedValueOnce(keyFileResponse);
+
+      mockPresetsSafeParse
+        .mockReturnValueOnce({
+          success: true,
+          data: { tier: { type: "string", key: "tier-source" } },
+        })
+        .mockReturnValueOnce({
+          success: true,
+          data: { tier: { type: "string", key: "tier-file" } },
+        });
+      mockDefinitionSafeParse.mockReturnValue({
+        success: true,
+        data: { variations: [{ value: true }] },
+      });
+
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ presetsUrl: "https://r2.example.com/presets.json" }),
+      );
+      const presets = await reader.getPresets("flag-a");
+
+      expect(presets).toEqual({ tier: { type: "string", key: "tier-file" } });
     });
   });
 
@@ -999,54 +1047,6 @@ describe("SplitSourceHttpReader", () => {
       const result = await reader.fetchDefinitionKey("flag-a");
 
       expect(result.filePresets).toBeUndefined();
-    });
-  });
-
-  describe("fetchPresets", () => {
-    it("delegates to fetchPresetsFromUrl and returns presets", async () => {
-      fetchMock.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        text: () =>
-          Promise.resolve(JSON.stringify({ presets: { tier: { type: "string", key: "tier" } } })),
-      });
-      mockPresetsSafeParse.mockReturnValue({
-        success: true,
-        data: { tier: { type: "string", key: "tier" } },
-      });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
-
-      expect(presets).toEqual({ tier: { type: "string", key: "tier" } });
-    });
-
-    it("returns undefined for invalid response", async () => {
-      fetchMock.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify("not-an-object")),
-      });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
-
-      expect(presets).toBeUndefined();
-    });
-
-    it("returns undefined when presetsData fails PresetsSchema validation", async () => {
-      // presetsData exists but PresetsSchema.safeParse returns false
-      fetchMock.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify({ presets: "invalid-presets" })),
-      });
-      mockPresetsSafeParse.mockReturnValue({ success: false });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
-
-      expect(presets).toBeUndefined();
     });
   });
 

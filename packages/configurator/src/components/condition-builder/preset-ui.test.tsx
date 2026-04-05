@@ -33,11 +33,11 @@ const SAMPLE_PRESETS: Presets = {
 
 const COMPOSITE_PRESETS: Presets = {
   ...SAMPLE_PRESETS,
-  us_free: {
+  sg_free: {
     type: "and",
     overrides: {
       conditions: [
-        { type: "string", key: "region", op: "eq", value: "us" },
+        { type: "string", key: "region", op: "eq", value: "sg" },
         { type: "string", key: "tier", op: "eq", value: "free" },
       ],
     },
@@ -49,7 +49,7 @@ describe("createPresetConditionMeta", () => {
     const metas = createPresetConditionMeta(SAMPLE_PRESETS);
     const tierMeta = metas.find((m) => m.type === "tier");
     expect(tierMeta).toBeDefined();
-    expect(tierMeta!.label).toBe("Tier");
+    expect(tierMeta!.label).toBe("tier");
     expect(tierMeta!.description).toContain("tier");
     expect(tierMeta!.description).toContain("string");
   });
@@ -58,7 +58,7 @@ describe("createPresetConditionMeta", () => {
     const metas = createPresetConditionMeta(SAMPLE_PRESETS);
     const segmentMeta = metas.find((m) => m.type === "segment");
     expect(segmentMeta).toBeDefined();
-    expect(segmentMeta!.label).toBe("Segment");
+    expect(segmentMeta!.label).toBe("segment");
     expect(segmentMeta!.description).toContain("segment_match");
   });
 
@@ -326,9 +326,7 @@ describe("PresetConditionEditor interactions", () => {
         onChange={onChange}
       />,
     );
-    // Switch to raw mode for easier interaction
-    const rawButton = screen.getByLabelText("Switch to raw input");
-    await user.click(rawButton);
+    // Raw mode is the default
     const rawInput = screen.getByPlaceholderText("ISO 8601 datetime");
     await user.clear(rawInput);
     await user.type(rawInput, "2025-06-01T00:00:00Z");
@@ -751,7 +749,7 @@ describe("ConditionBlock with extensions", () => {
         />
       </ConditionExtensionsProvider>,
     );
-    expect(screen.getByText("Tier")).toBeInTheDocument();
+    expect(screen.getByText("tier")).toBeInTheDocument();
   });
 });
 
@@ -765,8 +763,8 @@ describe("AddConditionMenu with extensions", () => {
       </ConditionExtensionsProvider>,
     );
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("Tier")).toBeInTheDocument();
-    expect(screen.getByText("Segment")).toBeInTheDocument();
+    expect(screen.getByText("tier")).toBeInTheDocument();
+    expect(screen.getByText("segment")).toBeInTheDocument();
   });
 
   it("calls onAdd with preset type when clicked", async () => {
@@ -779,7 +777,7 @@ describe("AddConditionMenu with extensions", () => {
       </ConditionExtensionsProvider>,
     );
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("Tier"));
+    await user.click(screen.getByText("tier"));
     expect(onAdd).toHaveBeenCalledWith("tier");
   });
 });
@@ -892,17 +890,17 @@ describe("Preset overrides disable fields", () => {
 describe("createPresetConditionMeta composite presets", () => {
   it("produces meta for composite presets", () => {
     const metas = createPresetConditionMeta(COMPOSITE_PRESETS);
-    const usFree = metas.find((m) => m.type === "us_free");
-    expect(usFree).toBeDefined();
-    expect(usFree!.label).toBe("Us_free");
-    expect(usFree!.description).toContain("and");
+    const sgFree = metas.find((m) => m.type === "sg_free");
+    expect(sgFree).toBeDefined();
+    expect(sgFree!.label).toBe("sg_free");
+    expect(sgFree!.description).toContain("and");
   });
 
   it("bakes overrides into composite meta defaults", () => {
     const metas = createPresetConditionMeta(COMPOSITE_PRESETS);
-    const usFree = metas.find((m) => m.type === "us_free");
-    expect(usFree!.defaults).toMatchObject({
-      type: "us_free",
+    const sgFree = metas.find((m) => m.type === "sg_free");
+    expect(sgFree!.defaults).toMatchObject({
+      type: "sg_free",
       conditions: expect.any(Array),
     });
   });
@@ -911,22 +909,22 @@ describe("createPresetConditionMeta composite presets", () => {
 describe("createPresetUI composite presets", () => {
   it("returns editor overrides for composite presets", () => {
     const { editorOverrides } = createPresetUI(COMPOSITE_PRESETS);
-    expect(editorOverrides.has("us_free")).toBe(true);
+    expect(editorOverrides.has("sg_free")).toBe(true);
   });
 });
 
 describe("Composite preset editor override", () => {
   it("renders read-only label for composite preset", () => {
     const extensions = createPresetUI(COMPOSITE_PRESETS);
-    const UsFreeEditor = extensions.editorOverrides.get("us_free")!;
-    render(<UsFreeEditor condition={{ type: "us_free" }} onChange={vi.fn()} />);
+    const SgFreeEditor = extensions.editorOverrides.get("sg_free")!;
+    render(<SgFreeEditor condition={{ type: "sg_free" }} onChange={vi.fn()} />);
     expect(screen.getByText(/composite/i)).toBeInTheDocument();
   });
 
   it("shows view button for composite preset", () => {
     const extensions = createPresetUI(COMPOSITE_PRESETS);
-    const UsFreeEditor = extensions.editorOverrides.get("us_free")!;
-    render(<UsFreeEditor condition={{ type: "us_free" }} onChange={vi.fn()} />);
+    const SgFreeEditor = extensions.editorOverrides.get("sg_free")!;
+    render(<SgFreeEditor condition={{ type: "sg_free" }} onChange={vi.fn()} />);
     expect(screen.getByRole("button", { name: /view/i })).toBeInTheDocument();
   });
 });

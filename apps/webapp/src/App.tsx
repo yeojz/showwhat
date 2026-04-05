@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Configurator, createPresetUI } from "@showwhat/configurator";
 import type { ConfiguratorStoreSource } from "@showwhat/configurator";
-import type { Definition } from "showwhat";
+import { mergePresets } from "showwhat";
+import type { Definition, Presets, PresetReader } from "showwhat";
 import { Toolbar } from "./components/Toolbar.js";
 import { EmptyState } from "./components/EmptyState.js";
 import { SidebarActions } from "./components/SidebarActions.js";
@@ -46,6 +47,11 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dirtyCount = useDefinitionStore((s) => s.dirtyKeys.length);
   const addDefinition = useDefinitionStore((s) => s.addDefinition);
+  const definitionKeys = useDefinitionStore((s) => Object.keys(s.definitions).join("\0"));
+  const definitionKeysList = useMemo(
+    () => (definitionKeys ? definitionKeys.split("\0") : []),
+    [definitionKeys],
+  );
 
   // Split mode detection (needed before preset merging)
   const activeSourceId = useSourceStore((s) => s.activeSourceId);
@@ -53,37 +59,60 @@ export function App() {
   const activeSource = activeSourceId ? sources.find((s) => s.id === activeSourceId) : undefined;
   const isSplit = activeSource?.mode === "split";
 
-  const customPresets = usePresetStore((s) => s.presets);
+  const overrides = usePresetStore((s) => s.presets);
   const filePresets = useDefinitionStore((s) => s.filePresets);
-  const sourcePresets = useDefinitionStore((s) => s.sourcePresets);
-  const definitionPresets = useDefinitionStore((s) => s.definitionPresets);
+  const presetReader = useDefinitionStore((s) => s.presetReader);
 
-  // Shared presets (custom + source endpoint + file-level) available to all definitions.
-  const sharedPresets = useMemo(
-    () => ({ ...customPresets, ...filePresets, ...sourcePresets }),
-    [customPresets, filePresets, sourcePresets],
-  );
+  // Build a PresetReader from available sources:
+  // - Split mode: presetReader is set (handles presetsUrl + per-key file presets)
+  // - Bundled/file mode: presetReader is null, wrap filePresets as a simple reader
+  const effectiveReader = useMemo((): PresetReader | undefined => {
+    if (presetReader) return presetReader;
+    if (Object.keys(filePresets).length === 0) return undefined;
+    return { getPresets: async () => filePresets };
+  }, [presetReader, filePresets]);
 
-  // For bundled mode: all presets merged (no per-definition scoping needed).
-  const conditionExtensions = useMemo(() => createPresetUI(sharedPresets), [sharedPresets]);
+  // Resolve merged presets (async → state)
+  const [resolvedPresets, setResolvedPresets] = useState<Presets>({});
+  const [resolvedKeyPresets, setResolvedKeyPresets] = useState<Record<string, Presets>>({});
 
-  // For split mode: each definition sees shared presets + only its own embedded presets.
+  useEffect(() => {
+    let cancelled = false;
+    mergePresets({ presets: effectiveReader, overrides }).then((result) => {
+      if (!cancelled) setResolvedPresets(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveReader, overrides]);
+
+  const conditionExtensions = useMemo(() => createPresetUI(resolvedPresets), [resolvedPresets]);
+
   const conditionExtensionsResolver = useMemo(() => {
     if (!isSplit) return undefined;
-    // Cache resolved extensions per key to avoid re-creating on every render.
-    const cache = new Map<string, ReturnType<typeof createPresetUI>>();
+    const cache = new Map<
+      string,
+      { presets: Presets; extensions: ReturnType<typeof createPresetUI> }
+    >();
     return (key: string) => {
       const cached = cache.get(key);
-      const keyPresets = definitionPresets[key] ?? {};
-      // Simple identity check — bust cache when reference changes.
-      if (cached && (cached as unknown as { _src: unknown })._src === keyPresets) return cached;
-      const merged = { ...sharedPresets, ...keyPresets };
-      const result = createPresetUI(merged);
-      (result as unknown as { _src: unknown })._src = keyPresets;
-      cache.set(key, result);
-      return result;
+      const keyPresets = resolvedKeyPresets[key];
+      if (cached && cached.presets === keyPresets) return cached.extensions;
+
+      // Trigger async resolution for this key if not yet resolved
+      if (!keyPresets) {
+        mergePresets({ key, presets: effectiveReader, overrides }).then((result) => {
+          setResolvedKeyPresets((prev) => ({ ...prev, [key]: result }));
+        });
+        // Return shared presets as fallback until key-specific ones resolve
+        return createPresetUI(resolvedPresets);
+      }
+
+      const extensions = createPresetUI(keyPresets);
+      cache.set(key, { presets: keyPresets, extensions });
+      return extensions;
     };
-  }, [isSplit, sharedPresets, definitionPresets]);
+  }, [isSplit, effectiveReader, overrides, resolvedPresets, resolvedKeyPresets]);
 
   const storeSource: ConfiguratorStoreSource = useMemo(
     () => ({
@@ -139,10 +168,10 @@ export function App() {
             <div className="mx-auto max-w-2xl p-8 space-y-8">
               <PresetEditor />
               <InlinePresetList
-                filePresets={filePresets}
-                sourcePresets={sourcePresets}
-                definitionPresets={definitionPresets}
-                customPresets={customPresets}
+                presetReader={effectiveReader}
+                overrides={overrides}
+                definitionKeys={definitionKeysList}
+                isSplit={isSplit}
               />
             </div>
           </div>

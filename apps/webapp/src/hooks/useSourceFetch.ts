@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import type { Definition } from "showwhat";
-import type { Presets } from "showwhat";
 import type { HostedSource, SplitSource } from "../store/source-store.js";
 import {
   SplitSourceHttpReader,
@@ -63,16 +62,14 @@ export function useSourceFetch() {
   }, []);
 
   const reloadDefinitionKey = useCallback(
-    async (
-      source: SplitSource,
-      key: string,
-    ): Promise<{ definition: Definition; filePresets?: Presets } | null> => {
+    async (source: SplitSource, key: string): Promise<Definition | null> => {
       setLoading(true);
       setError(null);
 
       try {
         const reader = new SplitSourceHttpReader(source);
-        return await reader.fetchDefinitionKey(key);
+        const { definition } = await reader.fetchDefinitionKey(key);
+        return definition;
       } catch (err) {
         setError({ message: formatFetchError(err) });
         return null;
@@ -83,36 +80,5 @@ export function useSourceFetch() {
     [],
   );
 
-  const reloadPresets = useCallback(
-    async (
-      url: string,
-      format: "yaml" | "json",
-      headers?: Record<string, string>,
-    ): Promise<Presets | null> => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const reader = new SplitSourceHttpReader({
-          id: "",
-          mode: "split",
-          label: "",
-          format,
-          baseUrl: "",
-          definitionKeys: [],
-          headers,
-        });
-        const presets = await reader.fetchPresets(url, format, headers);
-        return presets ?? null;
-      } catch (err) {
-        setError({ message: formatFetchError(err) });
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
-
-  return { fetchSource, reloadKeyList, reloadDefinitionKey, reloadPresets, loading, error };
+  return { fetchSource, reloadKeyList, reloadDefinitionKey, loading, error };
 }

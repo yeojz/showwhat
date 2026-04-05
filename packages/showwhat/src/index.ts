@@ -11,6 +11,8 @@ import type {
   Definitions,
   DefinitionReader,
   Dependencies,
+  Presets,
+  PresetReader,
   Resolution,
   ResolutionError,
   ResolverOptions,
@@ -74,6 +76,20 @@ export async function showwhat({
       evaluators: options.evaluators ?? builtinEvaluators,
     },
   });
+}
+
+export async function mergePresets({
+  key,
+  presets,
+  overrides,
+}: {
+  key?: string;
+  presets?: PresetReader;
+  overrides?: Presets;
+}): Promise<Presets> {
+  const base = presets ? (key ? await presets.getPresets(key) : await presets.getPresets()) : {};
+  if (!overrides || Object.keys(overrides).length === 0) return base;
+  return { ...base, ...overrides };
 }
 
 const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);

@@ -13,6 +13,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useDefinitionStore } from "../store/definition-store.js";
 import { useSourceStore } from "../store/source-store.js";
 import type { HostedSource, SplitSource } from "../store/source-store.js";
+import { createHttpReader } from "../lib/http-reader.js";
 import { useSourceFetch } from "../hooks/useSourceFetch.js";
 import { useFileImport } from "../hooks/useFileImport.js";
 import { SourceFormDialog } from "./SourceForm.js";
@@ -29,9 +30,7 @@ export function SourceSettings() {
     dirtyKeys,
     importDefinitions,
     upsertDefinition,
-    setSourcePresets,
-    setDefinitionPresets,
-    upsertDefinitionPresets,
+    setPresetReader,
     clearAll,
   } = useDefinitionStore(
     useShallow((s) => ({
@@ -41,9 +40,7 @@ export function SourceSettings() {
       dirtyKeys: s.dirtyKeys,
       importDefinitions: s.importDefinitions,
       upsertDefinition: s.upsertDefinition,
-      setSourcePresets: s.setSourcePresets,
-      setDefinitionPresets: s.setDefinitionPresets,
-      upsertDefinitionPresets: s.upsertDefinitionPresets,
+      setPresetReader: s.setPresetReader,
       clearAll: s.clearAll,
     })),
   );
@@ -82,7 +79,6 @@ export function SourceSettings() {
     fetchSource,
     reloadKeyList,
     reloadDefinitionKey,
-    reloadPresets,
     loading,
     error: fetchError,
   } = useSourceFetch();
@@ -123,13 +119,9 @@ export function SourceSettings() {
     if (!result) return;
 
     if (source.mode === "split") {
-      // Definitions and presets are managed independently for split sources.
-      // definitionPresets tracks per-key embedded presets; sourcePresets from presetsUrl.
       importDefinitions(result.definitions, source.label, source.format);
-      if (result.definitionPresets) setDefinitionPresets(result.definitionPresets);
-      setSourcePresets(result.presets ?? {});
+      setPresetReader(createHttpReader(source));
     } else {
-      // Bundled mode: presets are embedded in the file itself
       importDefinitions(result.definitions, source.label, source.format, result.presets);
     }
     setActiveSource(source.id);
@@ -167,7 +159,6 @@ export function SourceSettings() {
 
   function doFileImport(result: NonNullable<typeof pendingFileImport>) {
     setActiveSource(null);
-    setSourcePresets({});
     importDefinitions(result.definitions, result.fileName, result.format, result.presets);
     setSelection("__active__");
   }
@@ -209,10 +200,9 @@ export function SourceSettings() {
   async function handleReloadKey(key: string) {
     const source = getRelevantSource();
     if (!source || source.mode !== "split") return;
-    const fetched = await reloadDefinitionKey(source as SplitSource, key);
-    if (fetched) {
-      upsertDefinition(key, fetched.definition);
-      if (fetched.filePresets) upsertDefinitionPresets(key, fetched.filePresets);
+    const definition = await reloadDefinitionKey(source as SplitSource, key);
+    if (definition) {
+      upsertDefinition(key, definition);
       markFetched(source.id, [key]);
     }
   }
@@ -220,11 +210,8 @@ export function SourceSettings() {
   async function handleReloadPresets() {
     const source = getRelevantSource();
     if (!source || source.mode !== "split" || !source.presetsUrl) return;
-    const presets = await reloadPresets(source.presetsUrl, source.format, source.headers);
-    if (presets) {
-      setSourcePresets(presets);
-      markPresetsFetched(source.id);
-    }
+    setPresetReader(createHttpReader(source));
+    markPresetsFetched(source.id);
   }
 
   async function handleRefreshSingle() {
@@ -403,7 +390,7 @@ export function SourceSettings() {
   return (
     <div className="flex h-full">
       {/* Left pane */}
-      <div className="w-64 shrink-0 border-r border-border bg-muted/30 flex flex-col">
+      <div className="w-72 shrink-0 border-r border-border bg-muted/30 flex flex-col">
         {/* Active section */}
         <div className="border-b border-border">
           <div className="px-3 pt-3 pb-1">

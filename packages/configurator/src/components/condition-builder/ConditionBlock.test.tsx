@@ -10,7 +10,7 @@ describe("ConditionBlock", () => {
   it("renders a leaf condition with its registered label", () => {
     const condition: Condition = { type: "env", op: "eq", value: "prod" };
     render(<ConditionBlock condition={condition} onChange={vi.fn()} onRemove={vi.fn()} />);
-    expect(screen.getByText("Environment")).toBeDefined();
+    expect(screen.getByText("env")).toBeDefined();
   });
 
   it("renders an AND group via ConditionGroup", () => {

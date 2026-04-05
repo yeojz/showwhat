@@ -6,5 +6,5 @@ presets:
     type: number
     key: tier_level
   mobile:
-    type: boolean
+    type: bool
     key: mobile

@@ -33,10 +33,6 @@ const TYPE_DEFAULTS: Record<string, Record<string, unknown>> = {
 
 // ── Meta generation ──────────────────────────────────────────────────────────
 
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[] {
   return Object.entries(presets).map(([name, preset]) => {
     const isBuiltin = PRIMITIVE_TYPES.has(preset.type);
@@ -52,7 +48,7 @@ export function createPresetConditionMeta(presets: Presets): ConditionTypeMeta[]
 
     return {
       type: name,
-      label: capitalize(name),
+      label: name,
       description,
       defaults: { ...baseDefaults, ...preset.overrides, type: name },
     };
@@ -70,7 +66,14 @@ export function createPresetEditor(
   const lockedFields = new Set(Object.keys(overrides));
 
   function PresetConditionEditor({ condition, onChange }: ConditionValueEditorProps) {
-    const rec = useMemo(() => condition as Record<string, unknown>, [condition]);
+    const rec = useMemo(
+      (): Record<string, unknown> => ({
+        key: presetKey,
+        ...(condition as Record<string, unknown>),
+        ...overrides,
+      }),
+      [condition],
+    );
     const update = useCallback(
       (field: string, value: unknown) => {
         onChange(

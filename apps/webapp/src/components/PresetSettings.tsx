@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Textarea } from "@showwhat/configurator";
 import { ArrowUpCircle, Check, ChevronRight } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePresetStore } from "../store/preset-store.js";
-import type { Presets } from "showwhat";
+import type { Presets, PresetReader } from "showwhat";
 
 export function PresetEditor() {
   const { presetYaml, setPresetYaml } = usePresetStore(
@@ -33,9 +33,12 @@ export function PresetEditor() {
 
   return (
     <section>
-      <h2 className="text-base font-semibold text-foreground">Custom Presets</h2>
+      <h2 className="text-base font-semibold text-foreground">Preset Overrides</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Define named condition presets in YAML or JSON format.
+        Define named preset overrides in YAML or JSON format. These take the highest priority in the
+        Configurator. To match this behaviour at runtime, pass the same overrides to{" "}
+        <code className="text-[0.7rem] bg-muted px-1 py-0.5 rounded">mergePresets()</code> in your
+        application code.
       </p>
       <div className="mt-3 space-y-3">
         <Textarea
@@ -193,30 +196,77 @@ function PresetGroup({
 }
 
 export function InlinePresetList({
-  filePresets,
-  sourcePresets,
-  definitionPresets,
-  customPresets,
+  presetReader,
+  overrides,
+  definitionKeys,
+  isSplit,
 }: {
-  filePresets: Presets;
-  sourcePresets: Presets;
-  definitionPresets: Record<string, Presets>;
-  customPresets: Presets;
+  presetReader?: PresetReader;
+  overrides: Presets;
+  definitionKeys: string[];
+  isSplit: boolean;
 }) {
-  const fileEntries = Object.entries(filePresets);
-  const sourceEntries = Object.entries(sourcePresets);
-  const definitionEntries = Object.entries(definitionPresets);
-  const allDefinitionPresetEntries = definitionEntries.flatMap(([, presets]) =>
-    Object.entries(presets),
-  );
-  const hasAny =
-    fileEntries.length > 0 || sourceEntries.length > 0 || allDefinitionPresetEntries.length > 0;
+  const [sharedPresets, setSharedPresets] = useState<Presets>({});
+  const [perKeyPresets, setPerKeyPresets] = useState<Record<string, Presets>>({});
+
+  useEffect(() => {
+    if (!presetReader) {
+      setSharedPresets({});
+      setPerKeyPresets({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      // Fetch shared presets first
+      const shared = await presetReader.getPresets();
+      if (cancelled) return;
+      setSharedPresets(shared);
+
+      // For split mode, fetch per-key presets and extract only key-specific ones
+      if (isSplit && definitionKeys.length > 0) {
+        const results = await Promise.all(
+          definitionKeys.map(async (key) => {
+            const keyPresets = await presetReader.getPresets(key);
+            return { key, presets: keyPresets };
+          }),
+        );
+        if (cancelled) return;
+
+        const map: Record<string, Presets> = {};
+        for (const { key, presets: keyPresets } of results) {
+          const unique: Presets = {};
+          for (const [name, def] of Object.entries(keyPresets)) {
+            if (!(name in shared)) {
+              unique[name] = def;
+            }
+          }
+          if (Object.keys(unique).length > 0) {
+            map[key] = unique;
+          }
+        }
+        setPerKeyPresets(map);
+      } else {
+        setPerKeyPresets({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [presetReader, isSplit, definitionKeys]);
+
+  const sharedEntries = Object.entries(sharedPresets);
+  const perKeyEntries = Object.entries(perKeyPresets);
+  const hasAny = sharedEntries.length > 0 || perKeyEntries.length > 0;
+
+  const allEntries = [
+    ...sharedEntries,
+    ...perKeyEntries.flatMap(([, presets]) => Object.entries(presets)),
+  ];
   const hasOverrides =
-    hasAny &&
-    Object.keys(customPresets).length > 0 &&
-    [...fileEntries, ...sourceEntries, ...allDefinitionPresetEntries].some(
-      ([name]) => name in customPresets,
-    );
+    hasAny && Object.keys(overrides).length > 0 && allEntries.some(([name]) => name in overrides);
 
   return (
     <section className="space-y-4">
@@ -237,24 +287,22 @@ export function InlinePresetList({
       {hasAny && (
         <div className="space-y-4">
           <PresetGroup
-            label="Presets URL"
-            description="Fetched from the source's dedicated presets endpoint."
-            entries={sourceEntries}
-            customPresets={customPresets}
+            label={isSplit ? "Presets URL" : "Definition file"}
+            description={
+              isSplit
+                ? "Fetched from the source's dedicated presets endpoint."
+                : "Embedded within the loaded definition file."
+            }
+            entries={sharedEntries}
+            customPresets={overrides}
           />
-          <PresetGroup
-            label="Definition file"
-            description="Embedded within the loaded definition file."
-            entries={fileEntries}
-            customPresets={customPresets}
-          />
-          {definitionEntries.map(([defKey, presets]) => (
+          {perKeyEntries.map(([defKey, presets]) => (
             <PresetGroup
               key={defKey}
               label={defKey}
               description={`Embedded in the "${defKey}" definition file.`}
               entries={Object.entries(presets)}
-              customPresets={customPresets}
+              customPresets={overrides}
             />
           ))}
         </div>

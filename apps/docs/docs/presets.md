@@ -222,43 +222,7 @@ definitions:
 
 In this example, `sg_free` is a composite preset — it carries its full condition tree and needs no extra fields. The `tier` preset has `overrides: { op: "eq" }`, so `op` is locked and only `value` needs to be specified. The `age` preset has no overrides, so both `op` and `value` are user-specified.
 
-### Configurator
-
-Use `createPresetUI` to generate UI extensions from your preset map, then pass them to the `<Configurator>` component:
-
-```tsx
-import { Configurator } from "@showwhat/configurator";
-import { createPresetUI } from "@showwhat/configurator";
-
-const conditionExtensions = createPresetUI(presets);
-
-function App() {
-  return <Configurator store={store} conditionExtensions={conditionExtensions} />;
-}
-```
-
-With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Sg Free"). Each preset renders a type-specific editor with the key pre-filled and locked. Fields listed in `overrides` are also disabled in the editor.
-
-## API reference
-
-### Types
-
-| Type                  | Import from              | Description                                                           |
-| --------------------- | ------------------------ | --------------------------------------------------------------------- |
-| `Presets`             | `showwhat`               | `Record<string, PresetDefinition>`                                    |
-| `PresetDefinition`    | `showwhat`               | `{ type: string; key?: string; overrides?: Record<string, unknown> }` |
-| `BuiltinPresetType`   | `showwhat`               | `"string" \| "number" \| "bool" \| "datetime"`                        |
-| `ConditionExtensions` | `@showwhat/configurator` | `{ extraConditionTypes, editorOverrides }`                            |
-
-### Functions
-
-| Function                    | Import from              | Description                                                      |
-| --------------------------- | ------------------------ | ---------------------------------------------------------------- |
-| `createPresetConditions`    | `showwhat`               | Creates evaluators from a preset map for use with `showwhat()`   |
-| `createPresetUI`            | `@showwhat/configurator` | Creates condition meta and editor overrides for the Configurator |
-| `createPresetConditionMeta` | `@showwhat/configurator` | Creates only the condition meta entries (without editors)        |
-
-### Validation
+## Validation
 
 Use `PresetsSchema` (Zod) to validate preset definitions at runtime:
 
@@ -273,6 +237,7 @@ if (!result.success) {
 
 ## Next steps
 
+- [Preset Merge Strategy](/docs/preset-merge-strategy) for merging presets from multiple sources
+- [Presets in the Configurator](/docs/configurator-presets) for the visual preset editor and viewer
 - [Conditions](/docs/conditions) for all built-in condition types that presets build on
 - [Custom Conditions](/docs/custom-conditions) to go beyond presets with fully custom evaluators
-- [Configurator](/docs/configurator) to use presets in the visual editor

@@ -5,7 +5,7 @@ definitions:
     variations:
       - value: "full_access"
         conditions:
-          - type: us_or_eu_premium
+          - type: sg_or_eu_premium
       - value: "limited_access"
         conditions:
           - type: any_paid_tier
@@ -17,7 +17,7 @@ definitions:
     variations:
       - value: true
         conditions:
-          - type: annotated_us_beta
+          - type: annotated_sg_beta
       - value: false
 
   deep-rollout:
@@ -31,8 +31,8 @@ definitions:
 
 presets:
   # OR containing two AND branches
-  # (region=us AND tier=pro) OR (region=eu AND tier=enterprise)
-  us_or_eu_premium:
+  # (region=sg AND tier=pro) OR (region=eu AND tier=enterprise)
+  sg_or_eu_premium:
     type: or
     overrides:
       conditions:
@@ -41,7 +41,7 @@ presets:
             - type: string
               key: region
               op: eq
-              value: us
+              value: sg
             - type: string
               key: tier
               op: eq
@@ -72,14 +72,14 @@ presets:
           value: enterprise
 
   # AND combining matchAnnotations with a region string check
-  annotated_us_beta:
+  annotated_sg_beta:
     type: and
     overrides:
       conditions:
         - type: string
           key: region
           op: eq
-          value: us
+          value: sg
         - type: matchAnnotations
           conditions:
             - type: string
@@ -98,7 +98,7 @@ presets:
           key: region
           op: in
           value:
-            - us
+            - sg
             - ca
             - gb
         - type: or
@@ -117,5 +117,4 @@ presets:
                   value: pro
                 - type: bool
                   key: opted_in
-                  op: eq
                   value: true

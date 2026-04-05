@@ -1,6 +1,6 @@
 definitions:
   geo-content:
-    description: Content variant served to US visitors
+    description: Content variant served to SG visitors
     active: true
     variations:
       - value: "us_content"
@@ -31,7 +31,7 @@ presets:
   geo:
     type: geo_match
     overrides:
-      region: us
+      region: sg
 
   # Custom type delegated to a user-registered "segment_match" evaluator
   segment:

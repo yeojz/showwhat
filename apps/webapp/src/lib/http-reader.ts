@@ -12,13 +12,8 @@ const DANGEROUS_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 export type SourceFetchResult = {
   definitions: Definitions;
-  /** Presets from a dedicated presetsUrl endpoint (split mode) or from file (bundled mode). */
+  /** Presets from file (bundled) or presetsUrl (split). */
   presets?: Presets;
-  /**
-   * Per-definition-key presets for split mode. Each entry maps a definition
-   * key to the presets found in that key's file.
-   */
-  definitionPresets?: Record<string, Presets>;
   keys: string[];
   failedKeys?: string[];
 };
@@ -179,14 +174,6 @@ export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
     return { definition: result.data, filePresets };
   }
 
-  async fetchPresets(
-    url: string,
-    format: "yaml" | "json",
-    headers?: Record<string, string>,
-  ): Promise<Presets | undefined> {
-    return fetchPresetsFromUrl(url, format, headers);
-  }
-
   async fetchSource(): Promise<SourceFetchResult> {
     const keys = this.#source.definitionKeys.filter((k) => !DANGEROUS_KEYS.has(k));
 
@@ -196,21 +183,17 @@ export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
 
     const definitions: Record<string, Definition> = {};
     const failedKeys: string[] = [];
-    const definitionPresetsMap: Record<string, Presets> = {};
 
     const results = await Promise.allSettled(
       keys.map(async (key) => {
-        const fetched = await this.fetchDefinitionKey(key);
-        return { key, ...fetched };
+        const { definition } = await this.fetchDefinitionKey(key);
+        return { key, definition };
       }),
     );
 
     for (const result of results) {
       if (result.status === "fulfilled") {
         definitions[result.value.key] = result.value.definition;
-        if (result.value.filePresets) {
-          definitionPresetsMap[result.value.key] = result.value.filePresets;
-        }
       } else {
         const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
         const match = msg.match(/Invalid definition for "(.+?)"/);
@@ -234,8 +217,6 @@ export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
     return {
       definitions: definitions as Definitions,
       presets,
-      definitionPresets:
-        Object.keys(definitionPresetsMap).length > 0 ? definitionPresetsMap : undefined,
       keys: Object.keys(definitions),
       failedKeys,
     };
@@ -299,17 +280,25 @@ export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
     return (keys as string[]).filter((k) => !DANGEROUS_KEYS.has(k));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getPresets(_key?: string): Promise<Presets> {
-    if (!this.#source.presetsUrl) {
-      return {};
+  async getPresets(key?: string): Promise<Presets> {
+    // Shared presets from presetsUrl
+    let sourcePresets: Presets = {};
+    if (this.#source.presetsUrl) {
+      sourcePresets =
+        (await fetchPresetsFromUrl(
+          this.#source.presetsUrl,
+          this.#source.format,
+          this.#source.headers,
+        )) ?? {};
     }
-    const presets = await fetchPresetsFromUrl(
-      this.#source.presetsUrl,
-      this.#source.format,
-      this.#source.headers,
-    );
-    return presets ?? {};
+
+    if (!key) return sourcePresets;
+
+    // Per-key file presets
+    const { filePresets } = await this.fetchDefinitionKey(key);
+    if (!filePresets) return sourcePresets;
+
+    return { ...sourcePresets, ...filePresets };
   }
 }
 

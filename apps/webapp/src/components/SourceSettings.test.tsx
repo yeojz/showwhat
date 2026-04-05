@@ -148,7 +148,6 @@ vi.mock("lucide-react", () => ({
 const mockFetchSource = vi.fn();
 const mockReloadKeyList = vi.fn();
 const mockReloadDefinitionKey = vi.fn();
-const mockReloadPresets = vi.fn();
 let fetchHookState = {
   loading: false,
   error: null as null | { message: string; failedKeys?: string[] },
@@ -159,9 +158,14 @@ vi.mock("../hooks/useSourceFetch.js", () => ({
     fetchSource: mockFetchSource,
     reloadKeyList: mockReloadKeyList,
     reloadDefinitionKey: mockReloadDefinitionKey,
-    reloadPresets: mockReloadPresets,
     ...fetchHookState,
   }),
+}));
+
+// http-reader mock
+const mockCreateHttpReader = vi.fn().mockReturnValue({ fetchSource: vi.fn() });
+vi.mock("../lib/http-reader.js", () => ({
+  createHttpReader: (...args: unknown[]) => mockCreateHttpReader(...args),
 }));
 
 // File import mock
@@ -176,9 +180,7 @@ vi.mock("../hooks/useFileImport.js", () => ({
 // Store mocks
 const mockImportDefinitions = vi.fn();
 const mockUpsertDefinition = vi.fn();
-const mockSetSourcePresets = vi.fn();
-const mockSetDefinitionPresets = vi.fn();
-const mockUpsertDefinitionPresets = vi.fn();
+const mockSetPresetReader = vi.fn();
 const mockClearAll = vi.fn();
 let definitionStoreState: Record<string, unknown> = {};
 
@@ -285,9 +287,7 @@ describe("SourceSettings", () => {
       dirtyKeys: [],
       importDefinitions: mockImportDefinitions,
       upsertDefinition: mockUpsertDefinition,
-      setSourcePresets: mockSetSourcePresets,
-      setDefinitionPresets: mockSetDefinitionPresets,
-      upsertDefinitionPresets: mockUpsertDefinitionPresets,
+      setPresetReader: mockSetPresetReader,
       clearAll: mockClearAll,
     };
     sourceStoreState = {
@@ -308,13 +308,11 @@ describe("SourceSettings", () => {
     mockFetchSource.mockReset();
     mockReloadKeyList.mockReset();
     mockReloadDefinitionKey.mockReset();
-    mockReloadPresets.mockReset();
+    mockCreateHttpReader.mockReset().mockReturnValue({ fetchSource: vi.fn() });
     mockImportFile.mockReset();
     mockImportDefinitions.mockReset();
     mockUpsertDefinition.mockReset();
-    mockSetSourcePresets.mockReset();
-    mockSetDefinitionPresets.mockReset();
-    mockUpsertDefinitionPresets.mockReset();
+    mockSetPresetReader.mockReset();
     mockClearAll.mockReset();
     mockAddSource.mockReset();
     mockUpdateSource.mockReset();
@@ -689,15 +687,16 @@ describe("SourceSettings", () => {
 
   // ─── handleLoad: split mode ─────────────────────────────────────
 
-  it("handleLoad for split source calls importDefinitions without presets, then sets presets separately", async () => {
+  it("handleLoad for split source calls importDefinitions without presets, then sets presetReader", async () => {
     const user = userEvent.setup();
     const fetchResult = {
       definitions: { "flag-a": { kind: "boolean" } },
       keys: ["flag-a"],
       presets: { env: { dev: {} } },
-      definitionPresets: { "flag-a": { local: { test: {} } } },
     };
     mockFetchSource.mockResolvedValue(fetchResult);
+    const mockReader = { fetchSource: vi.fn() };
+    mockCreateHttpReader.mockReturnValue(mockReader);
     sourceStoreState = {
       ...sourceStoreState,
       sources: [sampleSplitSource],
@@ -710,13 +709,12 @@ describe("SourceSettings", () => {
     expect(mockFetchSource).toHaveBeenCalledWith(sampleSplitSource);
     // Split mode: importDefinitions called WITHOUT presets (3 args)
     expect(mockImportDefinitions).toHaveBeenCalledWith(fetchResult.definitions, "Staging", "json");
-    expect(mockSetDefinitionPresets).toHaveBeenCalledWith(fetchResult.definitionPresets);
-    expect(mockSetSourcePresets).toHaveBeenCalledWith(fetchResult.presets);
+    expect(mockSetPresetReader).toHaveBeenCalledWith(mockReader);
     expect(mockSetActiveSource).toHaveBeenCalledWith("src-2");
     expect(mockMarkFetched).toHaveBeenCalledWith("src-2", ["flag-a"]);
   });
 
-  it("handleLoad for split source without definitionPresets skips setDefinitionPresets", async () => {
+  it("handleLoad for split source without presets still sets presetReader", async () => {
     const user = userEvent.setup();
     const fetchResult = {
       definitions: { "flag-a": { kind: "boolean" } },
@@ -724,6 +722,8 @@ describe("SourceSettings", () => {
       presets: undefined,
     };
     mockFetchSource.mockResolvedValue(fetchResult);
+    const mockReader = { fetchSource: vi.fn() };
+    mockCreateHttpReader.mockReturnValue(mockReader);
     sourceStoreState = {
       ...sourceStoreState,
       sources: [sampleSplitSource],
@@ -732,8 +732,7 @@ describe("SourceSettings", () => {
 
     await user.click(screen.getByTestId("confirm-Load source?"));
 
-    expect(mockSetDefinitionPresets).not.toHaveBeenCalled();
-    expect(mockSetSourcePresets).toHaveBeenCalledWith({});
+    expect(mockSetPresetReader).toHaveBeenCalledWith(mockReader);
   });
 
   // ─── handleUnload ───────────────────────────────────────────────
@@ -913,7 +912,6 @@ describe("SourceSettings", () => {
     });
 
     expect(mockSetActiveSource).toHaveBeenCalledWith(null);
-    expect(mockSetSourcePresets).toHaveBeenCalledWith({});
     expect(mockImportDefinitions).toHaveBeenCalledWith(
       importResult.definitions,
       "test.yaml",
@@ -953,7 +951,6 @@ describe("SourceSettings", () => {
     await user.click(screen.getByTestId("confirm-Replace current source?"));
 
     expect(mockSetActiveSource).toHaveBeenCalledWith(null);
-    expect(mockSetSourcePresets).toHaveBeenCalledWith({});
     expect(mockImportDefinitions).toHaveBeenCalledWith(
       importResult.definitions,
       "test.yaml",
@@ -1054,13 +1051,10 @@ describe("SourceSettings", () => {
 
   // ─── handleReloadKey ────────────────────────────────────────────
 
-  it("handleReloadKey reloads a definition key and updates stores", async () => {
+  it("handleReloadKey reloads a definition key and updates store", async () => {
     const user = userEvent.setup();
-    const fetchedKeyResult = {
-      definition: { kind: "boolean", defaultValue: true },
-      filePresets: { local: { test: {} } },
-    };
-    mockReloadDefinitionKey.mockResolvedValue(fetchedKeyResult);
+    const definition = { kind: "boolean", defaultValue: true };
+    mockReloadDefinitionKey.mockResolvedValue(definition);
     definitionStoreState = {
       ...definitionStoreState,
       sourceFileName: "Staging",
@@ -1081,41 +1075,8 @@ describe("SourceSettings", () => {
       expect(mockReloadDefinitionKey).toHaveBeenCalled();
     });
 
-    expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", fetchedKeyResult.definition);
-    expect(mockUpsertDefinitionPresets).toHaveBeenCalledWith(
-      "flag-a",
-      fetchedKeyResult.filePresets,
-    );
+    expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", definition);
     expect(mockMarkFetched).toHaveBeenCalledWith("src-2", ["flag-a"]);
-  });
-
-  it("handleReloadKey without filePresets does not call upsertDefinitionPresets", async () => {
-    const user = userEvent.setup();
-    const fetchedKeyResult = {
-      definition: { kind: "boolean" },
-    };
-    mockReloadDefinitionKey.mockResolvedValue(fetchedKeyResult);
-    definitionStoreState = {
-      ...definitionStoreState,
-      sourceFileName: "Staging",
-      sourceFormat: "json",
-    };
-    sourceStoreState = {
-      ...sourceStoreState,
-      sources: [sampleSplitSource],
-      activeSourceId: "src-2",
-    };
-    render(<SourceSettings />);
-
-    const reloadKeyButtons = screen.getAllByTitle(/^Reload flag-a$/);
-    await user.click(reloadKeyButtons[0]);
-
-    await vi.waitFor(() => {
-      expect(mockReloadDefinitionKey).toHaveBeenCalled();
-    });
-
-    expect(mockUpsertDefinition).toHaveBeenCalled();
-    expect(mockUpsertDefinitionPresets).not.toHaveBeenCalled();
   });
 
   it("handleReloadKey does nothing when reloadDefinitionKey returns null", async () => {
@@ -1145,10 +1106,10 @@ describe("SourceSettings", () => {
 
   // ─── handleReloadPresets ────────────────────────────────────────
 
-  it("handleReloadPresets reloads presets for split source with presetsUrl", async () => {
+  it("handleReloadPresets sets presetReader and marks presets fetched for split source with presetsUrl", async () => {
     const user = userEvent.setup();
-    const newPresets = { env: { staging: {} } };
-    mockReloadPresets.mockResolvedValue(newPresets);
+    const mockReader = { fetchSource: vi.fn() };
+    mockCreateHttpReader.mockReturnValue(mockReader);
     definitionStoreState = {
       ...definitionStoreState,
       sourceFileName: "WithPresets",
@@ -1165,41 +1126,8 @@ describe("SourceSettings", () => {
     const reloadButtons = screen.getAllByTitle(/reload from presets url/i);
     await user.click(reloadButtons[0]);
 
-    await vi.waitFor(() => {
-      expect(mockReloadPresets).toHaveBeenCalledWith(
-        "https://r2.example.com/presets.json",
-        "json",
-        undefined,
-      );
-    });
-
-    expect(mockSetSourcePresets).toHaveBeenCalledWith(newPresets);
+    expect(mockSetPresetReader).toHaveBeenCalledWith(mockReader);
     expect(mockMarkPresetsFetched).toHaveBeenCalledWith("src-3");
-  });
-
-  it("handleReloadPresets does nothing when reloadPresets returns null", async () => {
-    const user = userEvent.setup();
-    mockReloadPresets.mockResolvedValue(null);
-    definitionStoreState = {
-      ...definitionStoreState,
-      sourceFileName: "WithPresets",
-      sourceFormat: "json",
-    };
-    sourceStoreState = {
-      ...sourceStoreState,
-      sources: [sampleSplitSourceWithPresets],
-      activeSourceId: "src-3",
-    };
-    render(<SourceSettings />);
-
-    const reloadButtons = screen.getAllByTitle(/reload from presets url/i);
-    await user.click(reloadButtons[0]);
-
-    await vi.waitFor(() => {
-      expect(mockReloadPresets).toHaveBeenCalled();
-    });
-
-    expect(mockSetSourcePresets).not.toHaveBeenCalled();
   });
 
   // ─── handleRefreshSingle ────────────────────────────────────────

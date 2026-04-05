@@ -189,8 +189,8 @@ describe("SourceFormDialog", () => {
   it("switches to split mode and shows split fields", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
     await userEvent.click(screen.getByText("Split (per-definition)"));
-    expect(screen.getByText("List URL (optional)")).toBeDefined();
-    expect(screen.getByText("Base URL")).toBeDefined();
+    expect(screen.getByText("List (optional)")).toBeDefined();
+    expect(screen.getByText("Base")).toBeDefined();
   });
 
   it("validates split mode: missing baseUrl", async () => {
@@ -272,10 +272,10 @@ describe("SourceFormDialog", () => {
   it("switches from split back to bundled mode", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
     await userEvent.click(screen.getByText("Split (per-definition)"));
-    expect(screen.getByText("List URL (optional)")).toBeDefined();
+    expect(screen.getByText("List (optional)")).toBeDefined();
     await userEvent.click(screen.getByText("Bundled"));
-    expect(screen.queryByText("List URL (optional)")).toBeNull();
-    expect(screen.getByText("URL")).toBeDefined();
+    expect(screen.queryByText("List (optional)")).toBeNull();
+    expect(screen.getByText("Source")).toBeDefined();
   });
 
   it("shows base URL error text in split mode", async () => {
@@ -319,7 +319,7 @@ describe("SourceFormDialog", () => {
   it("shows presetsUrl field in split mode", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
     await userEvent.click(screen.getByText("Split (per-definition)"));
-    expect(screen.getByText("Presets URL (optional)")).toBeDefined();
+    expect(screen.getByText("Presets (optional)")).toBeDefined();
   });
 
   it("submits split source with presetsUrl", async () => {

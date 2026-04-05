@@ -13,55 +13,55 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("String")).toBeDefined();
-    expect(screen.getByText("Number")).toBeDefined();
-    expect(screen.getByText("Datetime")).toBeDefined();
-    expect(screen.getByText("Boolean")).toBeDefined();
+    expect(screen.getByText("string")).toBeDefined();
+    expect(screen.getByText("number")).toBeDefined();
+    expect(screen.getByText("datetime")).toBeDefined();
+    expect(screen.getByText("bool")).toBeDefined();
   });
 
   it("opens dropdown and shows sugar condition types", async () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("Environment")).toBeDefined();
-    expect(screen.getByText("Start At")).toBeDefined();
-    expect(screen.getByText("End At")).toBeDefined();
+    expect(screen.getByText("env")).toBeDefined();
+    expect(screen.getByText("startAt")).toBeDefined();
+    expect(screen.getByText("endAt")).toBeDefined();
   });
 
   it("opens dropdown and shows group types, match annotations, and custom", async () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("AND Group")).toBeDefined();
-    expect(screen.getByText("OR Group")).toBeDefined();
-    expect(screen.getByText("Match Annotations")).toBeDefined();
+    expect(screen.getByText("and")).toBeDefined();
+    expect(screen.getByText("or")).toBeDefined();
+    expect(screen.getByText("matchAnnotations")).toBeDefined();
     expect(screen.getByText("Custom")).toBeDefined();
   });
 
-  it("calls onAdd with 'and' when AND Group is clicked", async () => {
+  it("calls onAdd with 'and' when and is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("AND Group"));
+    await user.click(screen.getByText("and"));
     expect(onAdd).toHaveBeenCalledWith("and");
   });
 
-  it("calls onAdd with 'or' when OR Group is clicked", async () => {
+  it("calls onAdd with 'or' when or is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("OR Group"));
+    await user.click(screen.getByText("or"));
     expect(onAdd).toHaveBeenCalledWith("or");
   });
 
-  it("calls onAdd with 'matchAnnotations' when Match Annotations is clicked", async () => {
+  it("calls onAdd with 'matchAnnotations' when matchAnnotations is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("Match Annotations"));
+    await user.click(screen.getByText("matchAnnotations"));
     expect(onAdd).toHaveBeenCalledWith("matchAnnotations");
   });
 
@@ -79,34 +79,34 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("String"));
+    await user.click(screen.getByText("string"));
     expect(onAdd).toHaveBeenCalledWith("string");
   });
 
-  it("calls onAdd with 'env' when Environment is clicked", async () => {
+  it("calls onAdd with 'env' when env is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("Environment"));
+    await user.click(screen.getByText("env"));
     expect(onAdd).toHaveBeenCalledWith("env");
   });
 
-  it("calls onAdd with 'startAt' when Start At is clicked", async () => {
+  it("calls onAdd with 'startAt' when startAt is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("Start At"));
+    await user.click(screen.getByText("startAt"));
     expect(onAdd).toHaveBeenCalledWith("startAt");
   });
 
-  it("calls onAdd with 'endAt' when End At is clicked", async () => {
+  it("calls onAdd with 'endAt' when endAt is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("End At"));
+    await user.click(screen.getByText("endAt"));
     expect(onAdd).toHaveBeenCalledWith("endAt");
   });
 });

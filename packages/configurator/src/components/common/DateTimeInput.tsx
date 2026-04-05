@@ -25,7 +25,7 @@ function fromLocalDatetime(local: string): string {
 
 export function DateTimeInput({ value, onChange, disabled }: DateTimeInputProps) {
   const [rawValue, setRawValue] = useState(value);
-  const [showRaw, setShowRaw] = useState(false);
+  const [showRaw, setShowRaw] = useState(true);
   const prevValueRef = useRef(value);
   if (prevValueRef.current !== value) {
     prevValueRef.current = value;

@@ -10,7 +10,7 @@ const OP_OPTIONS = [{ value: "gte", label: "gte" }];
 
 export const meta = {
   type: "startAt",
-  label: "Start At",
+  label: "startAt",
   description: "Active after a specific date/time",
   defaults: { type: "startAt", value: new Date().toISOString() },
 };
