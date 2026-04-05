@@ -8,7 +8,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogOverlay,
+  DialogBackdrop,
   DialogPortal,
   DialogTitle,
   DialogTrigger,
@@ -154,8 +154,8 @@ describe("Dialog components", () => {
     expect(footer.className).toContain("footer-class");
   });
 
-  it("exports DialogOverlay and DialogPortal", () => {
-    expect(DialogOverlay).toBeDefined();
+  it("exports DialogBackdrop and DialogPortal", () => {
+    expect(DialogBackdrop).toBeDefined();
     expect(DialogPortal).toBeDefined();
   });
 });
