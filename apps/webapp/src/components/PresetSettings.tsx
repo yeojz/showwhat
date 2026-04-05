@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Textarea } from "@showwhat/configurator";
 import { ArrowUpCircle, Check, ChevronRight } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePresetStore } from "../store/preset-store.js";
-import type { Presets } from "showwhat";
+import type { Presets, PresetReader } from "showwhat";
 
 export function PresetEditor() {
   const { presetYaml, setPresetYaml } = usePresetStore(
@@ -193,16 +193,77 @@ function PresetGroup({
 }
 
 export function InlinePresetList({
-  resolvedPresets,
+  presetReader,
   overrides,
+  definitionKeys,
+  isSplit,
 }: {
-  resolvedPresets: Presets;
+  presetReader?: PresetReader;
   overrides: Presets;
+  definitionKeys: string[];
+  isSplit: boolean;
 }) {
-  const entries = Object.entries(resolvedPresets);
-  const hasAny = entries.length > 0;
+  const [sharedPresets, setSharedPresets] = useState<Presets>({});
+  const [perKeyPresets, setPerKeyPresets] = useState<Record<string, Presets>>({});
+
+  useEffect(() => {
+    if (!presetReader) {
+      setSharedPresets({});
+      setPerKeyPresets({});
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      // Fetch shared presets first
+      const shared = await presetReader.getPresets();
+      if (cancelled) return;
+      setSharedPresets(shared);
+
+      // For split mode, fetch per-key presets and extract only key-specific ones
+      if (isSplit && definitionKeys.length > 0) {
+        const results = await Promise.all(
+          definitionKeys.map(async (key) => {
+            const keyPresets = await presetReader.getPresets(key);
+            return { key, presets: keyPresets };
+          }),
+        );
+        if (cancelled) return;
+
+        const map: Record<string, Presets> = {};
+        for (const { key, presets: keyPresets } of results) {
+          const unique: Presets = {};
+          for (const [name, def] of Object.entries(keyPresets)) {
+            if (!(name in shared)) {
+              unique[name] = def;
+            }
+          }
+          if (Object.keys(unique).length > 0) {
+            map[key] = unique;
+          }
+        }
+        setPerKeyPresets(map);
+      } else {
+        setPerKeyPresets({});
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [presetReader, isSplit, definitionKeys]);
+
+  const sharedEntries = Object.entries(sharedPresets);
+  const perKeyEntries = Object.entries(perKeyPresets);
+  const hasAny = sharedEntries.length > 0 || perKeyEntries.length > 0;
+
+  const allEntries = [
+    ...sharedEntries,
+    ...perKeyEntries.flatMap(([, presets]) => Object.entries(presets)),
+  ];
   const hasOverrides =
-    hasAny && Object.keys(overrides).length > 0 && entries.some(([name]) => name in overrides);
+    hasAny && Object.keys(overrides).length > 0 && allEntries.some(([name]) => name in overrides);
 
   return (
     <section className="space-y-4">
@@ -223,11 +284,24 @@ export function InlinePresetList({
       {hasAny && (
         <div className="space-y-4">
           <PresetGroup
-            label="Resolved presets"
-            description="Merged from all sources (hosted endpoint, definition files, and overrides)."
-            entries={entries}
+            label={isSplit ? "Presets URL" : "Definition file"}
+            description={
+              isSplit
+                ? "Fetched from the source's dedicated presets endpoint."
+                : "Embedded within the loaded definition file."
+            }
+            entries={sharedEntries}
             customPresets={overrides}
           />
+          {perKeyEntries.map(([defKey, presets]) => (
+            <PresetGroup
+              key={defKey}
+              label={defKey}
+              description={`Embedded in the "${defKey}" definition file.`}
+              entries={Object.entries(presets)}
+              customPresets={overrides}
+            />
+          ))}
         </div>
       )}
 

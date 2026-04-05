@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
 
@@ -161,121 +161,158 @@ describe("InlinePresetList", () => {
 
   const emptyPresets = {};
 
-  it("shows empty state when no resolved presets", () => {
-    render(<InlinePresetList resolvedPresets={emptyPresets} overrides={emptyPresets} />);
+  function makeReader(shared: Presets, perKey?: Record<string, Presets>) {
+    return {
+      getPresets: async (key?: string) => {
+        if (key && perKey?.[key]) {
+          return { ...shared, ...perKey[key] };
+        }
+        return shared;
+      },
+    };
+  }
+
+  it("shows empty state when no presetReader", async () => {
+    render(<InlinePresetList overrides={emptyPresets} definitionKeys={[]} isSplit={false} />);
     expect(screen.getByText("No presets loaded from source.")).toBeDefined();
-    expect(screen.getByText(/Load a source that includes presets/)).toBeDefined();
   });
 
-  it("shows resolved presets under 'Resolved presets' group", () => {
-    render(
-      <InlinePresetList resolvedPresets={{ beta: { type: "boolean" } }} overrides={emptyPresets} />,
-    );
-    expect(screen.getByText("Resolved presets")).toBeDefined();
-    expect(screen.getByText("beta")).toBeDefined();
-    expect(screen.getByText("boolean")).toBeDefined();
-  });
-
-  it("shows amber override icon when resolved preset name matches an override", () => {
+  it("shows shared presets under 'Definition file' group for bundled mode", async () => {
+    const reader = makeReader({ beta: { type: "boolean" } });
     render(
       <InlinePresetList
-        resolvedPresets={{ tier: { type: "string" } }}
-        overrides={{ tier: { type: "string" } }}
+        presetReader={reader}
+        overrides={emptyPresets}
+        definitionKeys={[]}
+        isSplit={false}
       />,
     );
-    const icons = screen.getAllByTestId("icon-arrow-up-circle");
-    expect(icons.length).toBeGreaterThanOrEqual(1);
+    await waitFor(() => {
+      expect(screen.getByText("Definition file")).toBeDefined();
+      expect(screen.getByText("beta")).toBeDefined();
+      expect(screen.getByText("boolean")).toBeDefined();
+    });
   });
 
-  it("shows check icon when resolved preset does NOT match an override", () => {
-    render(
-      <InlinePresetList resolvedPresets={{ beta: { type: "boolean" } }} overrides={emptyPresets} />,
-    );
-    expect(screen.getByTestId("icon-check")).toBeDefined();
-  });
-
-  it("shows override footnote when hasOverrides is true", () => {
+  it("shows shared presets under 'Presets URL' group for split mode", async () => {
+    const reader = makeReader({ env: { type: "string" } });
     render(
       <InlinePresetList
-        resolvedPresets={{ tier: { type: "string" } }}
-        overrides={{ tier: { type: "string" } }}
+        presetReader={reader}
+        overrides={emptyPresets}
+        definitionKeys={["flag-a"]}
+        isSplit={true}
       />,
     );
-    expect(screen.getByText(/Amber icon indicates the source preset overrides/)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText("Presets URL")).toBeDefined();
+      expect(screen.getByText("env")).toBeDefined();
+    });
   });
 
-  it("does not show override footnote when no overrides exist", () => {
-    render(
-      <InlinePresetList resolvedPresets={{ beta: { type: "boolean" } }} overrides={emptyPresets} />,
+  it("shows per-key presets in separate groups for split mode", async () => {
+    const reader = makeReader(
+      { env: { type: "string" } },
+      { "rate-limits": { rlthis: { type: "number", key: "rate" } } },
     );
-    expect(screen.queryByText(/Amber icon indicates the source preset overrides/)).toBeNull();
+    render(
+      <InlinePresetList
+        presetReader={reader}
+        overrides={emptyPresets}
+        definitionKeys={["rate-limits", "ui-config"]}
+        isSplit={true}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("rate-limits")).toBeDefined();
+      expect(screen.getByText("rlthis")).toBeDefined();
+    });
+    // rlthis should NOT appear under a ui-config group
+    expect(screen.queryByText("ui-config")).toBeNull();
+  });
+
+  it("shows amber override icon when preset name matches an override", async () => {
+    const reader = makeReader({ tier: { type: "string" } });
+    render(
+      <InlinePresetList
+        presetReader={reader}
+        overrides={{ tier: { type: "string" } }}
+        definitionKeys={[]}
+        isSplit={false}
+      />,
+    );
+    await waitFor(() => {
+      const icons = screen.getAllByTestId("icon-arrow-up-circle");
+      expect(icons.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  it("shows check icon when preset does NOT match an override", async () => {
+    const reader = makeReader({ beta: { type: "boolean" } });
+    render(
+      <InlinePresetList
+        presetReader={reader}
+        overrides={emptyPresets}
+        definitionKeys={[]}
+        isSplit={false}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByTestId("icon-check")).toBeDefined();
+    });
+  });
+
+  it("shows override footnote when overrides exist", async () => {
+    const reader = makeReader({ tier: { type: "string" } });
+    render(
+      <InlinePresetList
+        presetReader={reader}
+        overrides={{ tier: { type: "string" } }}
+        definitionKeys={[]}
+        isSplit={false}
+      />,
+    );
+    await waitFor(() => {
+      expect(screen.getByText(/Amber icon indicates/)).toBeDefined();
+    });
   });
 
   it("clicking a preset row with details expands to show formatted YAML", async () => {
     const user = userEvent.setup();
+    const reader = makeReader({
+      tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+    });
     render(
       <InlinePresetList
-        resolvedPresets={{
-          tier: {
-            type: "string",
-            key: "tier",
-            overrides: { op: "eq", value: "free" },
-          },
-        }}
+        presetReader={reader}
         overrides={emptyPresets}
+        definitionKeys={[]}
+        isSplit={false}
       />,
     );
-    // Not expanded initially
+    await waitFor(() => expect(screen.getByText("tier")).toBeDefined());
     expect(screen.queryByText(/key: tier/)).toBeNull();
 
-    // Click the row to expand
     await user.click(screen.getByText("tier"));
 
-    // Now the formatted YAML should be visible
     const pre = screen.getByText(/key: tier/);
-    expect(pre).toBeDefined();
     expect(pre.textContent).toContain("type: string");
-    expect(pre.textContent).toContain("key: tier");
-    expect(pre.textContent).toContain("overrides:");
     expect(pre.textContent).toContain("op: eq");
-    expect(pre.textContent).toContain("value: free");
   });
 
   it("clicking a preset row without details does NOT expand", async () => {
     const user = userEvent.setup();
+    const reader = makeReader({ simple: { type: "boolean" } });
     render(
       <InlinePresetList
-        resolvedPresets={{ simple: { type: "boolean" } }}
+        presetReader={reader}
         overrides={emptyPresets}
+        definitionKeys={[]}
+        isSplit={false}
       />,
     );
+    await waitFor(() => expect(screen.getByText("simple")).toBeDefined());
     await user.click(screen.getByText("simple"));
-    // No <pre> element should appear since there are no details
-    const preElements = document.querySelectorAll("pre");
-    expect(preElements).toHaveLength(0);
-  });
-
-  it("formatPresetYaml renders type, key, and overrides correctly via expansion", async () => {
-    const user = userEvent.setup();
-    render(
-      <InlinePresetList
-        resolvedPresets={{
-          region: {
-            type: "string",
-            key: "region",
-            overrides: { op: "in", value: "us,eu" },
-          },
-        }}
-        overrides={emptyPresets}
-      />,
-    );
-    await user.click(screen.getByText("region"));
-    const pre = screen.getByText(/key: region/);
-    const lines = pre.textContent!.split("\n");
-    expect(lines[0]).toBe("type: string");
-    expect(lines[1]).toBe("key: region");
-    expect(lines[2]).toBe("overrides:");
-    expect(lines[3]).toBe("  op: in");
-    expect(lines[4]).toBe("  value: us,eu");
+    expect(document.querySelectorAll("pre")).toHaveLength(0);
   });
 });

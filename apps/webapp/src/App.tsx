@@ -47,6 +47,7 @@ export function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dirtyCount = useDefinitionStore((s) => s.dirtyKeys.length);
   const addDefinition = useDefinitionStore((s) => s.addDefinition);
+  const definitionKeys = useDefinitionStore((s) => Object.keys(s.definitions));
 
   // Split mode detection (needed before preset merging)
   const activeSourceId = useSourceStore((s) => s.activeSourceId);
@@ -162,7 +163,12 @@ export function App() {
           <div className="h-full overflow-y-auto">
             <div className="mx-auto max-w-2xl p-8 space-y-8">
               <PresetEditor />
-              <InlinePresetList resolvedPresets={resolvedPresets} overrides={overrides} />
+              <InlinePresetList
+                presetReader={effectiveReader}
+                overrides={overrides}
+                definitionKeys={definitionKeys}
+                isSplit={isSplit}
+              />
             </div>
           </div>
         )}
