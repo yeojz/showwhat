@@ -30,7 +30,6 @@ export function SourceSettings() {
     importDefinitions,
     upsertDefinition,
     setSourcePresets,
-    setDefinitionPresets,
     upsertDefinitionPresets,
     clearAll,
   } = useDefinitionStore(
@@ -42,7 +41,6 @@ export function SourceSettings() {
       importDefinitions: s.importDefinitions,
       upsertDefinition: s.upsertDefinition,
       setSourcePresets: s.setSourcePresets,
-      setDefinitionPresets: s.setDefinitionPresets,
       upsertDefinitionPresets: s.upsertDefinitionPresets,
       clearAll: s.clearAll,
     })),
@@ -124,9 +122,8 @@ export function SourceSettings() {
 
     if (source.mode === "split") {
       // Definitions and presets are managed independently for split sources.
-      // definitionPresets tracks per-key embedded presets; sourcePresets from presetsUrl.
+      // Per-key presets are accessed via reader.getPresets(key); sourcePresets from presetsUrl.
       importDefinitions(result.definitions, source.label, source.format);
-      if (result.definitionPresets) setDefinitionPresets(result.definitionPresets);
       setSourcePresets(result.presets ?? {});
     } else {
       // Bundled mode: presets are embedded in the file itself

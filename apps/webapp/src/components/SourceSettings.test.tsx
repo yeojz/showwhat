@@ -695,7 +695,6 @@ describe("SourceSettings", () => {
       definitions: { "flag-a": { kind: "boolean" } },
       keys: ["flag-a"],
       presets: { env: { dev: {} } },
-      definitionPresets: { "flag-a": { local: { test: {} } } },
     };
     mockFetchSource.mockResolvedValue(fetchResult);
     sourceStoreState = {
@@ -710,13 +709,12 @@ describe("SourceSettings", () => {
     expect(mockFetchSource).toHaveBeenCalledWith(sampleSplitSource);
     // Split mode: importDefinitions called WITHOUT presets (3 args)
     expect(mockImportDefinitions).toHaveBeenCalledWith(fetchResult.definitions, "Staging", "json");
-    expect(mockSetDefinitionPresets).toHaveBeenCalledWith(fetchResult.definitionPresets);
     expect(mockSetSourcePresets).toHaveBeenCalledWith(fetchResult.presets);
     expect(mockSetActiveSource).toHaveBeenCalledWith("src-2");
     expect(mockMarkFetched).toHaveBeenCalledWith("src-2", ["flag-a"]);
   });
 
-  it("handleLoad for split source without definitionPresets skips setDefinitionPresets", async () => {
+  it("handleLoad for split source without presets sets empty sourcePresets", async () => {
     const user = userEvent.setup();
     const fetchResult = {
       definitions: { "flag-a": { kind: "boolean" } },
@@ -732,7 +730,6 @@ describe("SourceSettings", () => {
 
     await user.click(screen.getByTestId("confirm-Load source?"));
 
-    expect(mockSetDefinitionPresets).not.toHaveBeenCalled();
     expect(mockSetSourcePresets).toHaveBeenCalledWith({});
   });
 
