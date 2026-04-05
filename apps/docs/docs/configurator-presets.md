@@ -44,7 +44,7 @@ If no source is loaded or the source has no presets, this section shows an empty
 
 ## Merge order
 
-When presets exist in multiple places, the Configurator merges them into a single set using the [`mergePresets`](/docs/presets#merging-presets) helper from the `showwhat` package. This is the same function available to library users, so the merge behaviour is identical whether presets are resolved in your application or in the Configurator.
+When presets exist in multiple places, the Configurator merges them into a single set using the [`mergePresets`](/docs/preset-merge-strategy) helper from the `showwhat` package. This is the same function available to library users, so the merge behaviour is identical whether presets are resolved in your application or in the Configurator.
 
 ### Bundled mode
 
@@ -83,6 +83,6 @@ For the full merge strategy and how to replicate this in your application code, 
 
 ## Next steps
 
-- [Presets](/docs/presets) for the full format reference and evaluation API
+- [Presets](/docs/presets) for the format reference and evaluation
 - [Editing Definitions](/docs/configurator-editing) to use preset conditions in the editor
 - [Sources](/docs/configurator-sources) to load sources that include presets
