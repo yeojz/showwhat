@@ -13,6 +13,7 @@ import { useShallow } from "zustand/react/shallow";
 import { useDefinitionStore } from "../store/definition-store.js";
 import { useSourceStore } from "../store/source-store.js";
 import type { HostedSource, SplitSource } from "../store/source-store.js";
+import { createHttpReader } from "../lib/http-reader.js";
 import { useSourceFetch } from "../hooks/useSourceFetch.js";
 import { useFileImport } from "../hooks/useFileImport.js";
 import { SourceFormDialog } from "./SourceForm.js";
@@ -29,6 +30,7 @@ export function SourceSettings() {
     dirtyKeys,
     importDefinitions,
     upsertDefinition,
+    setPresetReader,
     clearAll,
   } = useDefinitionStore(
     useShallow((s) => ({
@@ -38,15 +40,10 @@ export function SourceSettings() {
       dirtyKeys: s.dirtyKeys,
       importDefinitions: s.importDefinitions,
       upsertDefinition: s.upsertDefinition,
+      setPresetReader: s.setPresetReader,
       clearAll: s.clearAll,
     })),
   );
-
-  // TODO(task-5): replace with presetReader-based approach
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const setSourcePresets = (_presets: Record<string, unknown>) => {};
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const upsertDefinitionPresets = (_key: string, _presets: Record<string, unknown>) => {};
 
   const {
     sources,
@@ -82,7 +79,6 @@ export function SourceSettings() {
     fetchSource,
     reloadKeyList,
     reloadDefinitionKey,
-    reloadPresets,
     loading,
     error: fetchError,
   } = useSourceFetch();
@@ -123,12 +119,9 @@ export function SourceSettings() {
     if (!result) return;
 
     if (source.mode === "split") {
-      // Definitions and presets are managed independently for split sources.
-      // Per-key presets are accessed via reader.getPresets(key); sourcePresets from presetsUrl.
       importDefinitions(result.definitions, source.label, source.format);
-      setSourcePresets(result.presets ?? {});
+      setPresetReader(createHttpReader(source));
     } else {
-      // Bundled mode: presets are embedded in the file itself
       importDefinitions(result.definitions, source.label, source.format, result.presets);
     }
     setActiveSource(source.id);
@@ -166,7 +159,6 @@ export function SourceSettings() {
 
   function doFileImport(result: NonNullable<typeof pendingFileImport>) {
     setActiveSource(null);
-    setSourcePresets({});
     importDefinitions(result.definitions, result.fileName, result.format, result.presets);
     setSelection("__active__");
   }
@@ -208,10 +200,9 @@ export function SourceSettings() {
   async function handleReloadKey(key: string) {
     const source = getRelevantSource();
     if (!source || source.mode !== "split") return;
-    const fetched = await reloadDefinitionKey(source as SplitSource, key);
-    if (fetched) {
-      upsertDefinition(key, fetched.definition);
-      if (fetched.filePresets) upsertDefinitionPresets(key, fetched.filePresets);
+    const definition = await reloadDefinitionKey(source as SplitSource, key);
+    if (definition) {
+      upsertDefinition(key, definition);
       markFetched(source.id, [key]);
     }
   }
@@ -219,11 +210,8 @@ export function SourceSettings() {
   async function handleReloadPresets() {
     const source = getRelevantSource();
     if (!source || source.mode !== "split" || !source.presetsUrl) return;
-    const presets = await reloadPresets(source.presetsUrl, source.format, source.headers);
-    if (presets) {
-      setSourcePresets(presets);
-      markPresetsFetched(source.id);
-    }
+    setPresetReader(createHttpReader(source));
+    markPresetsFetched(source.id);
   }
 
   async function handleRefreshSingle() {
