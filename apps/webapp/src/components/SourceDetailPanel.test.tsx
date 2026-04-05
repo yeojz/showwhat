@@ -215,9 +215,14 @@ describe("SourceDetailPanel (bundled source)", () => {
     expect(screen.getByText("Delete")).toBeDefined();
   });
 
-  it("shows reload button for bundled source URL", () => {
-    render(<SourceDetailPanel {...defaultProps()} />);
+  it("shows reload button for bundled source URL when loaded", () => {
+    render(<SourceDetailPanel {...defaultProps({ isLoaded: true })} />);
     expect(screen.getByTitle("Reload from url")).toBeDefined();
+  });
+
+  it("hides reload button for bundled source URL when not loaded", () => {
+    render(<SourceDetailPanel {...defaultProps({ isLoaded: false })} />);
+    expect(screen.queryByTitle("Reload from url")).toBeNull();
   });
 
   it("shows last-fetched timestamp next to URL", () => {
@@ -569,7 +574,7 @@ describe("SourceDetailPanel callbacks", () => {
   it("onRefreshSingle is called when reload button is clicked", async () => {
     const user = userEvent.setup();
     const onRefreshSingle = vi.fn();
-    render(<SourceDetailPanel {...defaultProps({ onRefreshSingle })} />);
+    render(<SourceDetailPanel {...defaultProps({ isLoaded: true, onRefreshSingle })} />);
 
     await user.click(screen.getByTitle("Reload from url"));
     expect(onRefreshSingle).toHaveBeenCalledOnce();
