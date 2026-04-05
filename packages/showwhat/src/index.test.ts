@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import {
   showwhat,
+  mergePresets,
   registerEvaluators,
   MemoryData,
   resolveVariation,
@@ -11,7 +12,7 @@ import {
   ValidationError,
   VariationNotFoundError,
 } from "./index.js";
-import type { ConditionEvaluator, Definitions } from "./index.js";
+import type { ConditionEvaluator, Definitions, PresetReader, Presets } from "./index.js";
 
 const flags: Definitions = {
   checkout_v2: {
@@ -434,5 +435,61 @@ describe("registerEvaluators", () => {
     expect(extended.string).toBeDefined();
     expect(extended.number).toBeDefined();
     expect(extended.custom).toBe(custom);
+  });
+});
+
+describe("mergePresets", () => {
+  const presetA: Presets = {
+    dark: { context: { theme: "dark" } },
+  };
+  const presetB: Presets = {
+    light: { context: { theme: "light" } },
+  };
+
+  function makeReader(all: Presets, keyed?: Record<string, Presets>): PresetReader {
+    return {
+      getPresets: vi.fn(async (key?: string) => {
+        if (key !== undefined && keyed) return keyed[key] ?? {};
+        return all;
+      }) as PresetReader["getPresets"],
+    };
+  }
+
+  it("returns empty object when no reader or overrides", async () => {
+    const result = await mergePresets({});
+    expect(result).toEqual({});
+  });
+
+  it("returns overrides when no reader", async () => {
+    const result = await mergePresets({ overrides: presetA });
+    expect(result).toEqual(presetA);
+  });
+
+  it("returns reader presets when no overrides", async () => {
+    const reader = makeReader(presetA);
+    const result = await mergePresets({ presets: reader });
+    expect(result).toEqual(presetA);
+  });
+
+  it("overrides take priority over reader presets", async () => {
+    const reader = makeReader(presetA);
+    const result = await mergePresets({ presets: reader, overrides: presetB });
+    expect(result).toEqual({ ...presetA, ...presetB });
+  });
+
+  it("calls getPresets(key) when key is provided", async () => {
+    const keyed = { myKey: presetB };
+    const reader = makeReader(presetA, keyed);
+    const result = await mergePresets({ key: "myKey", presets: reader });
+    expect(reader.getPresets).toHaveBeenCalledWith("myKey");
+    expect(result).toEqual(presetB);
+  });
+
+  it("layers overrides on top of key-specific presets", async () => {
+    const keyed = { myKey: presetA };
+    const reader = makeReader({}, keyed);
+    const overrides: Presets = { extra: { context: { mode: "test" } } };
+    const result = await mergePresets({ key: "myKey", presets: reader, overrides });
+    expect(result).toEqual({ ...presetA, ...overrides });
   });
 });
