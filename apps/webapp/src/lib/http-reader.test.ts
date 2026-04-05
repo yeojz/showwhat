@@ -1050,54 +1050,6 @@ describe("SplitSourceHttpReader", () => {
     });
   });
 
-  describe("fetchPresets", () => {
-    it("delegates to fetchPresetsFromUrl and returns presets", async () => {
-      fetchMock.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        text: () =>
-          Promise.resolve(JSON.stringify({ presets: { tier: { type: "string", key: "tier" } } })),
-      });
-      mockPresetsSafeParse.mockReturnValue({
-        success: true,
-        data: { tier: { type: "string", key: "tier" } },
-      });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
-
-      expect(presets).toEqual({ tier: { type: "string", key: "tier" } });
-    });
-
-    it("returns undefined for invalid response", async () => {
-      fetchMock.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify("not-an-object")),
-      });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
-
-      expect(presets).toBeUndefined();
-    });
-
-    it("returns undefined when presetsData fails PresetsSchema validation", async () => {
-      // presetsData exists but PresetsSchema.safeParse returns false
-      fetchMock.mockResolvedValue({
-        ok: true,
-        headers: new Headers(),
-        text: () => Promise.resolve(JSON.stringify({ presets: "invalid-presets" })),
-      });
-      mockPresetsSafeParse.mockReturnValue({ success: false });
-
-      const reader = new SplitSourceHttpReader(createSplitSource());
-      const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
-
-      expect(presets).toBeUndefined();
-    });
-  });
-
   describe("fetchDefinitionKey - non-object raw", () => {
     it("skips preset extraction when raw is an array (non-object)", async () => {
       // raw is an array — the `if (typeof raw === "object" && !Array.isArray(raw))` branch is false

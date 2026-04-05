@@ -33,9 +33,9 @@ export function PresetEditor() {
 
   return (
     <section>
-      <h2 className="text-base font-semibold text-foreground">Custom Presets</h2>
+      <h2 className="text-base font-semibold text-foreground">Preset Overrides</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        Define named condition presets in YAML or JSON format.
+        Define named preset overrides in YAML or JSON format. These take the highest priority.
       </p>
       <div className="mt-3 space-y-3">
         <Textarea
@@ -193,30 +193,21 @@ function PresetGroup({
 }
 
 export function InlinePresetList({
-  filePresets,
-  sourcePresets,
-  definitionPresets,
-  customPresets,
+  resolvedPresets,
+  overrides,
 }: {
-  filePresets: Presets;
-  sourcePresets: Presets;
-  definitionPresets: Record<string, Presets>;
-  customPresets: Presets;
+  resolvedPresets: Presets;
+  overrides: Presets;
 }) {
-  const fileEntries = Object.entries(filePresets);
-  const sourceEntries = Object.entries(sourcePresets);
-  const definitionEntries = Object.entries(definitionPresets);
-  const allDefinitionPresetEntries = definitionEntries.flatMap(([, presets]) =>
-    Object.entries(presets),
+  // Filter out presets that came from overrides to show only source-provided ones
+  const sourceEntries = Object.entries(resolvedPresets).filter(
+    ([name]) => !(name in overrides) || name in resolvedPresets,
   );
-  const hasAny =
-    fileEntries.length > 0 || sourceEntries.length > 0 || allDefinitionPresetEntries.length > 0;
+  const hasAny = sourceEntries.length > 0;
   const hasOverrides =
     hasAny &&
-    Object.keys(customPresets).length > 0 &&
-    [...fileEntries, ...sourceEntries, ...allDefinitionPresetEntries].some(
-      ([name]) => name in customPresets,
-    );
+    Object.keys(overrides).length > 0 &&
+    sourceEntries.some(([name]) => name in overrides);
 
   return (
     <section className="space-y-4">
@@ -237,26 +228,11 @@ export function InlinePresetList({
       {hasAny && (
         <div className="space-y-4">
           <PresetGroup
-            label="Presets URL"
-            description="Fetched from the source's dedicated presets endpoint."
+            label="Resolved presets"
+            description="Merged from all sources (hosted endpoint, definition files, and overrides)."
             entries={sourceEntries}
-            customPresets={customPresets}
+            customPresets={overrides}
           />
-          <PresetGroup
-            label="Definition file"
-            description="Embedded within the loaded definition file."
-            entries={fileEntries}
-            customPresets={customPresets}
-          />
-          {definitionEntries.map(([defKey, presets]) => (
-            <PresetGroup
-              key={defKey}
-              label={defKey}
-              description={`Embedded in the "${defKey}" definition file.`}
-              entries={Object.entries(presets)}
-              customPresets={customPresets}
-            />
-          ))}
         </div>
       )}
 

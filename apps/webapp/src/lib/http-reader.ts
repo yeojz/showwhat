@@ -174,14 +174,6 @@ export class SplitSourceHttpReader implements DefinitionReader, PresetReader {
     return { definition: result.data, filePresets };
   }
 
-  async fetchPresets(
-    url: string,
-    format: "yaml" | "json",
-    headers?: Record<string, string>,
-  ): Promise<Presets | undefined> {
-    return fetchPresetsFromUrl(url, format, headers);
-  }
-
   async fetchSource(): Promise<SourceFetchResult> {
     const keys = this.#source.definitionKeys.filter((k) => !DANGEROUS_KEYS.has(k));
 

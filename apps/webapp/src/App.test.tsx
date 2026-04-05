@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, act, cleanup } from "@testing-library/react";
+import { render, act, cleanup, waitFor } from "@testing-library/react";
 
 // Stub window.matchMedia for jsdom (used by applyTheme for "system" theme)
 const matchMediaListeners: Array<() => void> = [];
@@ -110,6 +110,26 @@ vi.mock("./components/PresetSettings.js", () => ({
   InlinePresetList: () => <div data-testid="inline-preset-list" />,
 }));
 
+// Mock mergePresets from showwhat
+const mockMergePresets = vi.fn(
+  async ({
+    presets,
+    overrides,
+  }: {
+    key?: string;
+    presets?: { getPresets: (key?: string) => Promise<Record<string, unknown>> };
+    overrides?: Record<string, unknown>;
+  }) => {
+    const base = presets ? await presets.getPresets() : {};
+    return { ...base, ...(overrides ?? {}) };
+  },
+);
+
+vi.mock("showwhat", () => ({
+  mergePresets: (...args: unknown[]) =>
+    mockMergePresets(...(args as Parameters<typeof mockMergePresets>)),
+}));
+
 // Minimal store state
 const mockAddDefinition = vi.fn();
 const defaultState: Record<string, unknown> = {
@@ -118,17 +138,13 @@ const defaultState: Record<string, unknown> = {
   definitions: {},
   savedDefinitions: {},
   filePresets: {},
-  sourcePresets: {},
-  definitionPresets: {},
+  presetReader: null,
   sourceFileName: null,
   sourceFormat: null,
   selectedKey: null,
   validationErrors: {},
   importDefinitions: vi.fn(),
   upsertDefinition: vi.fn(),
-  setSourcePresets: vi.fn(),
-  setDefinitionPresets: vi.fn(),
-  upsertDefinitionPresets: vi.fn(),
   revertAll: vi.fn(),
   clearAll: vi.fn(),
 };
@@ -204,6 +220,7 @@ describe("App", () => {
     subscribers.length = 0;
     mockAddDefinition.mockReset();
     mockCreatePresetUI.mockClear();
+    mockMergePresets.mockClear();
     vi.spyOn(history, "pushState").mockImplementation(() => {});
     Object.defineProperty(window, "location", {
       writable: true,
@@ -473,16 +490,19 @@ describe("App", () => {
   // Preset merging
   // -----------------------------------------------------------------------
 
-  it("merges custom, file, and source presets for createPresetUI", () => {
+  it("resolves presets via mergePresets and passes them to createPresetUI", async () => {
     stateOverrides = {
       filePresets: { file: { type: "string", key: "file" } },
-      sourcePresets: { source: { type: "string", key: "source" } },
     };
     render(<App />);
 
-    expect(mockCreatePresetUI).toHaveBeenCalledWith({
-      file: { type: "string", key: "file" },
-      source: { type: "string", key: "source" },
+    await waitFor(() => {
+      expect(mockMergePresets).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(mockCreatePresetUI).toHaveBeenCalledWith(
+        expect.objectContaining({ file: { type: "string", key: "file" } }),
+      );
     });
   });
 
@@ -530,27 +550,33 @@ describe("App", () => {
     expect(capturedConditionExtensionsResolver).toBeNull();
   });
 
-  it("passes conditionExtensionsResolver in split mode that returns preset UI", () => {
+  it("passes conditionExtensionsResolver in split mode that returns preset UI", async () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
-    expect(capturedConditionExtensionsResolver).not.toBeNull();
+    await waitFor(() => {
+      expect(capturedConditionExtensionsResolver).not.toBeNull();
+    });
     mockCreatePresetUI.mockClear();
     const result = capturedConditionExtensionsResolver!("some-key");
     expect(result).toBeDefined();
+    // Falls back to createPresetUI with resolvedPresets while key-specific presets load
     expect(mockCreatePresetUI).toHaveBeenCalled();
   });
 
-  it("resolves different keys independently", () => {
+  it("resolves different keys independently", async () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
+    await waitFor(() => {
+      expect(capturedConditionExtensionsResolver).not.toBeNull();
+    });
     mockCreatePresetUI.mockClear();
     capturedConditionExtensionsResolver!("key-a");
     capturedConditionExtensionsResolver!("key-b");

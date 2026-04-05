@@ -84,8 +84,8 @@ describe("PresetEditor", () => {
 
   it("renders heading and description", () => {
     render(<PresetEditor />);
-    expect(screen.getByText("Custom Presets")).toBeDefined();
-    expect(screen.getByText(/Define named condition presets/)).toBeDefined();
+    expect(screen.getByText("Preset Overrides")).toBeDefined();
+    expect(screen.getByText(/Define named preset overrides in YAML or JSON format/)).toBeDefined();
   });
 
   it("renders textarea with current presetYaml", () => {
@@ -160,84 +160,36 @@ describe("InlinePresetList", () => {
   });
 
   const emptyPresets = {};
-  const emptyDefinitionPresets: Record<string, Record<string, unknown>> = {};
 
-  it("shows empty state when no presets from any source", () => {
-    render(
-      <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={emptyPresets}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
-      />,
-    );
+  it("shows empty state when no resolved presets", () => {
+    render(<InlinePresetList resolvedPresets={emptyPresets} overrides={emptyPresets} />);
     expect(screen.getByText("No presets loaded from source.")).toBeDefined();
     expect(screen.getByText(/Load a source that includes presets/)).toBeDefined();
   });
 
-  it("shows presets from sourcePresets under 'Presets URL' group", () => {
+  it("shows resolved presets under 'Resolved presets' group", () => {
     render(
-      <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{ beta: { type: "boolean" } }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
-      />,
+      <InlinePresetList resolvedPresets={{ beta: { type: "boolean" } }} overrides={emptyPresets} />,
     );
-    expect(screen.getByText("Presets URL")).toBeDefined();
+    expect(screen.getByText("Resolved presets")).toBeDefined();
     expect(screen.getByText("beta")).toBeDefined();
     expect(screen.getByText("boolean")).toBeDefined();
   });
 
-  it("shows presets from filePresets under 'Definition file' group", () => {
+  it("shows amber override icon when resolved preset name matches an override", () => {
     render(
       <InlinePresetList
-        filePresets={{ region: { type: "string", key: "region" } }}
-        sourcePresets={emptyPresets}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
-      />,
-    );
-    expect(screen.getByText("Definition file")).toBeDefined();
-    expect(screen.getByText("region")).toBeDefined();
-    expect(screen.getByText("string")).toBeDefined();
-  });
-
-  it("shows presets from definitionPresets under definition key group labels", () => {
-    render(
-      <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={emptyPresets}
-        definitionPresets={{ "feature-flags": { darkMode: { type: "boolean" } } }}
-        customPresets={emptyPresets}
-      />,
-    );
-    expect(screen.getByText("feature-flags")).toBeDefined();
-    expect(screen.getByText("darkMode")).toBeDefined();
-    expect(screen.getByText("boolean")).toBeDefined();
-  });
-
-  it("shows amber override icon when source preset name matches a custom preset", () => {
-    render(
-      <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{ tier: { type: "string" } }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={{ tier: { type: "string" } }}
+        resolvedPresets={{ tier: { type: "string" } }}
+        overrides={{ tier: { type: "string" } }}
       />,
     );
     const icons = screen.getAllByTestId("icon-arrow-up-circle");
     expect(icons.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows check icon when source preset does NOT match a custom preset", () => {
+  it("shows check icon when resolved preset does NOT match an override", () => {
     render(
-      <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{ beta: { type: "boolean" } }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
-      />,
+      <InlinePresetList resolvedPresets={{ beta: { type: "boolean" } }} overrides={emptyPresets} />,
     );
     expect(screen.getByTestId("icon-check")).toBeDefined();
   });
@@ -245,10 +197,8 @@ describe("InlinePresetList", () => {
   it("shows override footnote when hasOverrides is true", () => {
     render(
       <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{ tier: { type: "string" } }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={{ tier: { type: "string" } }}
+        resolvedPresets={{ tier: { type: "string" } }}
+        overrides={{ tier: { type: "string" } }}
       />,
     );
     expect(screen.getByText(/Amber icon indicates the source preset overrides/)).toBeDefined();
@@ -256,12 +206,7 @@ describe("InlinePresetList", () => {
 
   it("does not show override footnote when no overrides exist", () => {
     render(
-      <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{ beta: { type: "boolean" } }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
-      />,
+      <InlinePresetList resolvedPresets={{ beta: { type: "boolean" } }} overrides={emptyPresets} />,
     );
     expect(screen.queryByText(/Amber icon indicates the source preset overrides/)).toBeNull();
   });
@@ -270,16 +215,14 @@ describe("InlinePresetList", () => {
     const user = userEvent.setup();
     render(
       <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{
+        resolvedPresets={{
           tier: {
             type: "string",
             key: "tier",
             overrides: { op: "eq", value: "free" },
           },
         }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
+        overrides={emptyPresets}
       />,
     );
     // Not expanded initially
@@ -302,10 +245,8 @@ describe("InlinePresetList", () => {
     const user = userEvent.setup();
     render(
       <InlinePresetList
-        filePresets={emptyPresets}
-        sourcePresets={{ simple: { type: "boolean" } }}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
+        resolvedPresets={{ simple: { type: "boolean" } }}
+        overrides={emptyPresets}
       />,
     );
     await user.click(screen.getByText("simple"));
@@ -318,16 +259,14 @@ describe("InlinePresetList", () => {
     const user = userEvent.setup();
     render(
       <InlinePresetList
-        filePresets={{
+        resolvedPresets={{
           region: {
             type: "string",
             key: "region",
             overrides: { op: "in", value: "us,eu" },
           },
         }}
-        sourcePresets={emptyPresets}
-        definitionPresets={emptyDefinitionPresets}
-        customPresets={emptyPresets}
+        overrides={emptyPresets}
       />,
     );
     await user.click(screen.getByText("region"));
