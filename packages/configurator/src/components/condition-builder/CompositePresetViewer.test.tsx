@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createCompositePresetEditor } from "./CompositePresetViewer.js";
 
@@ -68,8 +68,10 @@ describe("createCompositePresetEditor", () => {
     expect(footerCloseButton).toBeDefined();
     await user.click(footerCloseButton!);
 
-    // Dialog title should no longer be visible
-    expect(screen.queryByText("pro_preset")).toBeNull();
+    // Dialog close is async in base-ui
+    await waitFor(() => {
+      expect(screen.queryByText("pro_preset")).toBeNull();
+    });
   });
 
   it("displays composite type in uppercase", () => {

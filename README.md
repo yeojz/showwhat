@@ -89,10 +89,7 @@ showwhat assumes definition authors are trusted. See the [Security guide](https:
 
 ## AI Usage Disclosure
 
-- Core library (`core` and `showwhat`) are developed with AI refinements.
-- UI based components like `configurator` and `webapp` are spec-driven, executed with AI with multi-model reviews.
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md#ai-usage-guidelines) for guidelines.
+The codebase, tests, and documentation was created with AI assistance, with outputs reviewed by humans. See [CONTRIBUTING.md](./CONTRIBUTING.md#ai-usage-guidelines) for guidelines.
 
 ## License
 
