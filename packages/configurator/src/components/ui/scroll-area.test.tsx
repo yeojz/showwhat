@@ -2,23 +2,26 @@ import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { ScrollArea, ScrollBar } from "./scroll-area.js";
 
-// Mock radix-ui scroll area primitives so ScrollBar renders real DOM in jsdom
-vi.mock("radix-ui", async (importOriginal) => {
+// Mock @base-ui/react scroll area primitives so ScrollBar renders real DOM in jsdom
+vi.mock("@base-ui/react/scroll-area", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
   return {
     ...actual,
     ScrollArea: {
       Root: ({ children, ...props }: React.ComponentProps<"div">) => (
-        <div data-radix-scroll-area-root="" {...props}>
+        <div data-base-ui-scroll-area-root="" {...props}>
           {children}
         </div>
       ),
       Viewport: ({ children, ...props }: React.ComponentProps<"div">) => (
-        <div data-radix-scroll-area-viewport="" {...props}>
+        <div data-base-ui-scroll-area-viewport="" {...props}>
           {children}
         </div>
       ),
-      ScrollAreaScrollbar: ({
+      Content: ({ children, ...props }: React.ComponentProps<"div">) => (
+        <div {...props}>{children}</div>
+      ),
+      Scrollbar: ({
         children,
         orientation,
         ...props
@@ -27,7 +30,7 @@ vi.mock("radix-ui", async (importOriginal) => {
           {children}
         </div>
       ),
-      ScrollAreaThumb: (props: React.ComponentProps<"div">) => <div {...props} />,
+      Thumb: (props: React.ComponentProps<"div">) => <div {...props} />,
       Corner: (props: React.ComponentProps<"div">) => <div {...props} />,
     },
   };
@@ -62,7 +65,6 @@ describe("ScrollBar", () => {
       </ScrollArea>,
     );
     const scrollbars = container.querySelectorAll("[data-slot='scroll-area-scrollbar']");
-    // ScrollArea renders its own default vertical ScrollBar plus the explicit one
     const vertical = Array.from(scrollbars).filter(
       (el) => el.getAttribute("data-orientation") === "vertical",
     );
