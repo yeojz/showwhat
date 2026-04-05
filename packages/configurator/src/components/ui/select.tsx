@@ -59,9 +59,7 @@ function SelectContent({
           {...props}
         >
           <SelectScrollUpArrow />
-          <SelectPrimitive.List className="p-1">
-            {children}
-          </SelectPrimitive.List>
+          <SelectPrimitive.List className="p-1">{children}</SelectPrimitive.List>
           <SelectScrollDownArrow />
         </SelectPrimitive.Popup>
       </SelectPrimitive.Positioner>
@@ -69,7 +67,10 @@ function SelectContent({
   );
 }
 
-function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.GroupLabel>) {
+function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.GroupLabel>) {
   return (
     <SelectPrimitive.GroupLabel
       data-slot="select-label"

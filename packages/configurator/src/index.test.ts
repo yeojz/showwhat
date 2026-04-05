@@ -34,7 +34,7 @@ describe("index barrel exports", () => {
     expect(exports.Separator).toBeDefined();
     expect(exports.ScrollArea).toBeDefined();
     expect(exports.Dialog).toBeDefined();
-    expect(exports.DropdownMenu).toBeDefined();
+    expect(exports.Menu).toBeDefined();
     expect(exports.Label).toBeDefined();
     expect(exports.Switch).toBeDefined();
     expect(exports.Textarea).toBeDefined();

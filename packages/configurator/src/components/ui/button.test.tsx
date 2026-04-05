@@ -27,5 +27,4 @@ describe("Button", () => {
     const el = screen.getByText("Styled");
     expect(el.className).toContain("custom-class");
   });
-
 });

@@ -26,5 +26,4 @@ describe("Badge", () => {
     const el = screen.getByText("Styled");
     expect(el.className).toContain("custom-class");
   });
-
 });

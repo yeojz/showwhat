@@ -88,7 +88,9 @@ export function DefinitionEditor({
         )}
         {onExport && (
           <Menu>
-            <MenuTrigger render={<Button variant="ghost" size="sm" disabled={isDirty || isPending} />}>
+            <MenuTrigger
+              render={<Button variant="ghost" size="sm" disabled={isDirty || isPending} />}
+            >
               <Download className="mr-1.5 h-4 w-4" />
               Export
             </MenuTrigger>

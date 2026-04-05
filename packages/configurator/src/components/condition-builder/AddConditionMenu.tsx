@@ -44,9 +44,7 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         <MenuSeparator />
         <MenuItem onClick={() => onAdd("and")}>and</MenuItem>
         <MenuItem onClick={() => onAdd("or")}>or</MenuItem>
-        <MenuItem onClick={() => onAdd("matchAnnotations")}>
-          matchAnnotations
-        </MenuItem>
+        <MenuItem onClick={() => onAdd("matchAnnotations")}>matchAnnotations</MenuItem>
         <MenuSeparator />
         <MenuItem onClick={() => onAdd("__custom")}>Custom</MenuItem>
       </MenuContent>

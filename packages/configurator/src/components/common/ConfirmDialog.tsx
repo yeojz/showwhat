@@ -32,9 +32,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogTrigger render={children as React.ReactElement}>
-        {null}
-      </AlertDialogTrigger>
+      <AlertDialogTrigger render={children as React.ReactElement}>{null}</AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

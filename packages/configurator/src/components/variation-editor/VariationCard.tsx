@@ -51,20 +51,20 @@ export const VariationCard = memo(function VariationCard({
               />
             }
           >
-              <Badge variant="secondary" className="font-mono text-xs">
-                {index}
-              </Badge>
-              <span className="flex-1 truncate text-sm text-muted-foreground">
-                {variation.description || String(variation.value ?? "")}
+            <Badge variant="secondary" className="font-mono text-xs">
+              {index}
+            </Badge>
+            <span className="flex-1 truncate text-sm text-muted-foreground">
+              {variation.description || String(variation.value ?? "")}
+            </span>
+            {conditionCount > 0 && (
+              <span className="text-xs text-muted-foreground/60">
+                {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
               </span>
-              {conditionCount > 0 && (
-                <span className="text-xs text-muted-foreground/60">
-                  {conditionCount} {conditionCount === 1 ? "condition" : "conditions"}
-                </span>
-              )}
-              <ChevronRight
-                className={`h-4 w-4 text-muted-foreground/60 transition-transform ${open ? "rotate-90" : ""}`}
-              />
+            )}
+            <ChevronRight
+              className={`h-4 w-4 text-muted-foreground/60 transition-transform ${open ? "rotate-90" : ""}`}
+            />
           </Collapsible.Trigger>
         </div>
         <Collapsible.Panel>

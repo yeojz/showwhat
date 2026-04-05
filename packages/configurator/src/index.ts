@@ -37,13 +37,7 @@ export {
   DialogTrigger,
   DialogClose,
 } from "./components/ui/dialog.js";
-export {
-  Menu,
-  MenuContent,
-  MenuItem,
-  MenuTrigger,
-  MenuSeparator,
-} from "./components/ui/menu.js";
+export { Menu, MenuContent, MenuItem, MenuTrigger, MenuSeparator } from "./components/ui/menu.js";
 export { Label } from "./components/ui/label.js";
 export { Switch } from "./components/ui/switch.js";
 export { Textarea } from "./components/ui/textarea.js";
