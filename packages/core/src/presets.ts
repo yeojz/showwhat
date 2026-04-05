@@ -28,9 +28,11 @@ export function createPresetConditions(presets: Presets): ConditionEvaluators {
     }) => {
       const rec = condition as Record<string, unknown>;
       const rewritten: Record<string, unknown> = { ...rec, ...overrides, type: preset.type };
+
       if (preset.key) {
         rewritten.key = preset.key;
       }
+
       return evaluateCondition({
         condition: rewritten as Condition,
         context,

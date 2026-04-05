@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { evaluateBool as evaluate, boolEvaluator } from "./bool.js";
 import { defaultCreateRegex } from "./types.js";
+import type { ConditionEvaluators } from "./types.js";
 
 describe("bool (eq op)", () => {
   it("returns true when context value is true and condition value is true", async () => {
@@ -76,6 +77,7 @@ describe("boolEvaluator", () => {
         deps: {},
         depth: "",
         createRegex: defaultCreateRegex,
+        evaluators: {} as ConditionEvaluators,
       }),
     ).toBe(true);
   });

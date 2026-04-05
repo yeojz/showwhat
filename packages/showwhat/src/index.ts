@@ -87,9 +87,18 @@ export async function mergePresets({
   presets?: PresetReader;
   overrides?: Presets;
 }): Promise<Presets> {
-  const base = presets ? (key ? await presets.getPresets(key) : await presets.getPresets()) : {};
-  if (!overrides || Object.keys(overrides).length === 0) return base;
-  return { ...base, ...overrides };
+  if (!presets) {
+    return {
+      ...overrides,
+    };
+  }
+
+  const base = key ? await presets.getPresets(key) : await presets.getPresets();
+
+  return {
+    ...base,
+    ...overrides,
+  };
 }
 
 const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);

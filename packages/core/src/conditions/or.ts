@@ -8,16 +8,19 @@ export const orEvaluator: ConditionEvaluator = async (args) => {
 
   for (let i = 0; i < conditions.length; i++) {
     const childDepth = depth === "" ? `${i}` : `${depth}.${i}`;
+
     const result = await evaluateCondition({
       ...args,
       condition: conditions[i],
       depth: childDepth,
     });
+
     if (result) {
       args.logger?.debug("or condition short-circuited (child returned true)", {
         childType: conditions[i].type,
         depth: childDepth,
       });
+
       return true;
     }
   }

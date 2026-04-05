@@ -28,22 +28,26 @@ const PresetDefinitionSchema = z
     }
     if (COMPOSITE_TYPES.has(val.type)) {
       const conditions = val.overrides?.conditions;
+
       if (!Array.isArray(conditions) || conditions.length === 0) {
         ctx.addIssue({
           code: "custom",
           message: `"overrides.conditions" must be a non-empty array for composite type ("${val.type}")`,
           path: ["overrides", "conditions"],
         });
-      } else {
-        for (let i = 0; i < conditions.length; i++) {
-          const result = ConditionSchema.safeParse(conditions[i]);
-          if (!result.success) {
-            for (const issue of result.error.issues) {
-              ctx.addIssue({
-                ...issue,
-                path: ["overrides", "conditions", i, ...issue.path],
-              });
-            }
+
+        return;
+      }
+
+      for (let i = 0; i < conditions.length; i++) {
+        const result = ConditionSchema.safeParse(conditions[i]);
+
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            ctx.addIssue({
+              ...issue,
+              path: ["overrides", "conditions", i, ...issue.path],
+            });
           }
         }
       }

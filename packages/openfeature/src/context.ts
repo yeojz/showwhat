@@ -22,6 +22,7 @@ function convertValue(value: EvaluationContextValue): ContextValue | undefined {
         return undefined;
       }
     }
+
     return result;
   }
 
@@ -29,9 +30,11 @@ function convertValue(value: EvaluationContextValue): ContextValue | undefined {
     const result: Record<string, ContextValue> = {};
     for (const [k, v] of Object.entries(value)) {
       const converted = convertValue(v);
+
       if (converted === undefined) {
         return undefined;
       }
+
       result[k] = converted;
     }
     return result;
@@ -52,6 +55,7 @@ export function toShowwhatContext(evalCtx: EvaluationContext, logger?: Logger): 
 
   for (const [key, value] of Object.entries(evalCtx)) {
     const converted = convertValue(value);
+
     if (converted !== undefined) {
       ctx[key] = converted;
     } else {

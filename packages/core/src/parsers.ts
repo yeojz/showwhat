@@ -11,6 +11,7 @@ function loadYaml(input: string): unknown {
   } catch (e: unknown) {
     const err = e as Error;
     const line = (e as yaml.YAMLException)?.mark?.line;
+
     throw new ParseError(`YAML: ${err.message}`, line);
   }
 }
@@ -24,11 +25,13 @@ function assertPlainObject(raw: unknown, label: string): asserts raw is Record<s
 export async function parseYaml(input: string): Promise<FileFormat> {
   const raw = loadYaml(input);
   assertPlainObject(raw, "YAML: Unknown structure at the root level");
+
   return await parseObject(raw);
 }
 
 export async function parseObject(raw: unknown): Promise<FileFormat> {
   const result = FileFormatSchema.safeParse(raw);
+
   if (!result.success) {
     throw new SchemaValidationError(result.error, "flags");
   }
@@ -39,9 +42,11 @@ export async function parseObject(raw: unknown): Promise<FileFormat> {
 export async function parsePresetsObject(raw: unknown): Promise<Presets> {
   assertPlainObject(raw, "Expected object with presets key");
   const result = PresetsSchema.safeParse(raw.presets ?? {});
+
   if (!result.success) {
     throw new SchemaValidationError(result.error, "presets");
   }
+
   return result.data;
 }
 

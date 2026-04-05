@@ -7,5 +7,6 @@ export function parseDate(key: string, raw: string): Date {
   if (!IsoUtcDatetime.safeParse(raw).success) {
     throw new InvalidContextError(key, raw);
   }
+
   return new Date(raw);
 }

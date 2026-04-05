@@ -17,15 +17,21 @@ export async function evaluateString(
   switch (condition.op) {
     case "eq":
       return actual === condition.value;
+
     case "neq":
       return actual !== condition.value;
+
     case "in":
       return (condition.value as string[]).includes(actual);
+
     case "nin":
-      return !(condition.value as string[]).includes(actual);
+      const incl = (condition.value as string[]).includes(actual);
+      return !incl;
+
     case "regex": {
       const pattern = condition.value as string;
       let regex: { test: (input: string) => boolean };
+
       try {
         regex = createRegex(pattern);
       } catch (e) {
@@ -35,6 +41,7 @@ export async function evaluateString(
           e,
         );
       }
+
       return regex.test(actual);
     }
   }

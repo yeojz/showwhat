@@ -8,6 +8,7 @@ export const matchAnnotationsEvaluator: ConditionEvaluator = async (args) => {
 
   for (let i = 0; i < conditions.length; i++) {
     const childDepth = depth === "" ? `${i}` : `${depth}.${i}`;
+
     const result = await evaluateCondition({
       ...args,
       condition: conditions[i],
@@ -15,11 +16,13 @@ export const matchAnnotationsEvaluator: ConditionEvaluator = async (args) => {
       annotations: {},
       depth: childDepth,
     });
+
     if (!result) {
       args.logger?.debug("matchAnnotations condition short-circuited (child returned false)", {
         childType: conditions[i].type,
         depth: childDepth,
       });
+
       return false;
     }
   }

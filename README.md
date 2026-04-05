@@ -77,7 +77,9 @@ definitions:
 
 ### Built-in condition types
 
-`env` · `string` · `number` · `bool` · `datetime` · `startAt` · `endAt` · `and` · `or` · `matchAnnotations`
+- Primitives: `string` | `number` | `bool` | `datetime`
+- Shorthands: `env` | `startAt` | `endAt`
+- Composites: `and` | `or` | `matchAnnotations`
 
 See the [Conditions guide](https://showwhat.yeojz.dev/docs/conditions) for full details.
 

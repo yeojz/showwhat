@@ -39,5 +39,9 @@ export function mapShowwhatError(error: unknown): ErrorMapping {
   }
 
   const message = error instanceof Error ? error.message : String(error);
-  return { errorCode: ErrorCode.GENERAL, errorMessage: message };
+
+  return {
+    errorCode: ErrorCode.GENERAL,
+    errorMessage: message,
+  };
 }

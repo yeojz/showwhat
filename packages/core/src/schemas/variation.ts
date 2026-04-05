@@ -10,4 +10,5 @@ export const VariationSchema = z.object({
   conditions: z.array(ConditionSchema).optional(),
   description: z.string().optional(),
 });
+
 export type Variation = z.infer<typeof VariationSchema>;

@@ -6,16 +6,26 @@ export async function evaluateBool(
   condition: BoolCondition,
   ctx: Readonly<Context>,
 ): Promise<boolean> {
-  if (!Object.hasOwn(ctx, condition.key)) return false;
+  if (!Object.hasOwn(ctx, condition.key)) {
+    return false;
+  }
+
   const raw = ctx[condition.key];
 
   if (typeof raw === "boolean") {
     return raw === condition.value;
   }
 
-  if (typeof raw === "string") {
-    if (raw === "true") return condition.value === true;
-    if (raw === "false") return condition.value === false;
+  if (typeof raw !== "string") {
+    return false;
+  }
+
+  if (raw === "true") {
+    return condition.value === true;
+  }
+
+  if (raw === "false") {
+    return condition.value === false;
   }
 
   return false;

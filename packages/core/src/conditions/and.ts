@@ -13,11 +13,13 @@ export const andEvaluator: ConditionEvaluator = async (args) => {
       condition: conditions[i],
       depth: childDepth,
     });
+
     if (!result) {
       args.logger?.debug("and condition short-circuited (child returned false)", {
         childType: conditions[i].type,
         depth: childDepth,
       });
+
       return false;
     }
   }
