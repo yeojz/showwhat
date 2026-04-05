@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import type { Condition } from "showwhat";
-import { Collapsible as CollapsiblePrimitive } from "radix-ui";
+import { Collapsible } from "@base-ui/react/collapsible";
 import { ChevronRight, Eye, GripVertical, Trash2 } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { Label } from "../ui/label.js";
@@ -32,7 +32,7 @@ export const VariationCard = memo(function VariationCard({
   const conditionCount = variation.conditions?.length ?? 0;
 
   return (
-    <CollapsiblePrimitive.Root open={open} onOpenChange={setOpen}>
+    <Collapsible.Root open={open} onOpenChange={setOpen}>
       <div className="rounded-lg border border-border/50 bg-card transition-colors hover:border-primary/30">
         <div className="flex items-center gap-2 px-3 py-2.5">
           <button
@@ -43,11 +43,14 @@ export const VariationCard = memo(function VariationCard({
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <CollapsiblePrimitive.Trigger asChild>
-            <button
-              type="button"
-              className="flex flex-1 items-center gap-2 text-left hover:cursor-pointer"
-            >
+          <Collapsible.Trigger
+            render={
+              <button
+                type="button"
+                className="flex flex-1 items-center gap-2 text-left hover:cursor-pointer"
+              />
+            }
+          >
               <Badge variant="secondary" className="font-mono text-xs">
                 {index}
               </Badge>
@@ -62,10 +65,9 @@ export const VariationCard = memo(function VariationCard({
               <ChevronRight
                 className={`h-4 w-4 text-muted-foreground/60 transition-transform ${open ? "rotate-90" : ""}`}
               />
-            </button>
-          </CollapsiblePrimitive.Trigger>
+          </Collapsible.Trigger>
         </div>
-        <CollapsiblePrimitive.Content>
+        <Collapsible.Panel>
           <div className="space-y-4 border-t border-border/40 px-4 py-4">
             <div className="flex items-center justify-between">
               <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -110,13 +112,15 @@ export const VariationCard = memo(function VariationCard({
                   <Label className="text-sm font-medium">Conditions</Label>
                   {conditionCount > 0 && (
                     <Dialog>
-                      <DialogTrigger asChild>
-                        <button
-                          type="button"
-                          className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground/60 hover:text-muted-foreground"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </button>
+                      <DialogTrigger
+                        render={
+                          <button
+                            type="button"
+                            className="inline-flex items-center justify-center rounded p-0.5 text-muted-foreground/60 hover:text-muted-foreground"
+                          />
+                        }
+                      >
+                        <Eye className="h-3.5 w-3.5" />
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
@@ -147,8 +151,8 @@ export const VariationCard = memo(function VariationCard({
               errors={validationErrors?.filter((err) => err.path[0] !== "conditions")}
             />
           </div>
-        </CollapsiblePrimitive.Content>
+        </Collapsible.Panel>
       </div>
-    </CollapsiblePrimitive.Root>
+    </Collapsible.Root>
   );
 });
