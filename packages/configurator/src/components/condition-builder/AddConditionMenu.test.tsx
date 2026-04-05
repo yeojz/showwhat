@@ -13,7 +13,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("string")).toBeDefined();
+    expect(await screen.findByText("string")).toBeDefined();
     expect(screen.getByText("number")).toBeDefined();
     expect(screen.getByText("datetime")).toBeDefined();
     expect(screen.getByText("bool")).toBeDefined();
@@ -23,7 +23,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("env")).toBeDefined();
+    expect(await screen.findByText("env")).toBeDefined();
     expect(screen.getByText("startAt")).toBeDefined();
     expect(screen.getByText("endAt")).toBeDefined();
   });
@@ -32,7 +32,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
-    expect(screen.getByText("and")).toBeDefined();
+    expect(await screen.findByText("and")).toBeDefined();
     expect(screen.getByText("or")).toBeDefined();
     expect(screen.getByText("matchAnnotations")).toBeDefined();
     expect(screen.getByText("Custom")).toBeDefined();
@@ -43,7 +43,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("and"));
+    await user.click(await screen.findByText("and"));
     expect(onAdd).toHaveBeenCalledWith("and");
   });
 
@@ -52,7 +52,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("or"));
+    await user.click(await screen.findByText("or"));
     expect(onAdd).toHaveBeenCalledWith("or");
   });
 
@@ -61,7 +61,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("matchAnnotations"));
+    await user.click(await screen.findByText("matchAnnotations"));
     expect(onAdd).toHaveBeenCalledWith("matchAnnotations");
   });
 
@@ -70,7 +70,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("Custom"));
+    await user.click(await screen.findByText("Custom"));
     expect(onAdd).toHaveBeenCalledWith("__custom");
   });
 
@@ -79,7 +79,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("string"));
+    await user.click(await screen.findByText("string"));
     expect(onAdd).toHaveBeenCalledWith("string");
   });
 
@@ -88,7 +88,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("env"));
+    await user.click(await screen.findByText("env"));
     expect(onAdd).toHaveBeenCalledWith("env");
   });
 
@@ -97,7 +97,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("startAt"));
+    await user.click(await screen.findByText("startAt"));
     expect(onAdd).toHaveBeenCalledWith("startAt");
   });
 
@@ -106,7 +106,7 @@ describe("AddConditionMenu", () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(screen.getByText("endAt"));
+    await user.click(await screen.findByText("endAt"));
     expect(onAdd).toHaveBeenCalledWith("endAt");
   });
 });

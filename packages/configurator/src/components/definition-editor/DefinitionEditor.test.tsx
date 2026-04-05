@@ -455,7 +455,7 @@ describe("DefinitionEditor", () => {
       />,
     );
     await user.click(screen.getByText("Export"));
-    await user.click(screen.getByText("Export as YAML"));
+    await user.click(await screen.findByText("Export as YAML"));
     expect(onExport).toHaveBeenCalledWith("yaml");
   });
 
@@ -472,7 +472,7 @@ describe("DefinitionEditor", () => {
       />,
     );
     await user.click(screen.getByText("Export"));
-    await user.click(screen.getByText("Export as JSON"));
+    await user.click(await screen.findByText("Export as JSON"));
     expect(onExport).toHaveBeenCalledWith("json");
   });
 });
