@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { Definitions, Presets } from "showwhat";
-import type { RemoteSource } from "../store/source-store.js";
+import type { HostedSource } from "../store/source-store.js";
 
 const mockParseYaml = vi.fn();
 const mockParseObject = vi.fn();
@@ -33,12 +33,12 @@ const samplePresets: Presets = {
   tier: { type: "string", key: "tier" },
 };
 
-function createSingleSource(
-  overrides?: Partial<Extract<RemoteSource, { mode: "single" }>>,
-): Extract<RemoteSource, { mode: "single" }> {
+function createBundledSource(
+  overrides?: Partial<Extract<HostedSource, { mode: "bundled" }>>,
+): Extract<HostedSource, { mode: "bundled" }> {
   return {
     id: "src-1",
-    mode: "single",
+    mode: "bundled",
     label: "Production",
     format: "yaml",
     url: "https://r2.example.com/flags.yaml",
@@ -46,12 +46,12 @@ function createSingleSource(
   };
 }
 
-function createKeyedSource(
-  overrides?: Partial<Extract<RemoteSource, { mode: "keyed" }>>,
-): Extract<RemoteSource, { mode: "keyed" }> {
+function createSplitSource(
+  overrides?: Partial<Extract<HostedSource, { mode: "split" }>>,
+): Extract<HostedSource, { mode: "split" }> {
   return {
     id: "src-2",
-    mode: "keyed",
+    mode: "split",
     label: "Staging",
     format: "json",
     baseUrl: "https://r2.example.com/defs/",
@@ -78,7 +78,7 @@ describe("useSourceFetch", () => {
   });
 
   describe("fetchSource", () => {
-    it("returns result and clears loading/error on success (single)", async () => {
+    it("returns result and clears loading/error on success (bundled)", async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         headers: new Headers(),
@@ -89,7 +89,7 @@ describe("useSourceFetch", () => {
       const { result } = renderHook(() => useSourceFetch());
       let fetchResult: unknown;
       await act(async () => {
-        fetchResult = await result.current.fetchSource(createSingleSource());
+        fetchResult = await result.current.fetchSource(createBundledSource());
       });
 
       expect(fetchResult).toEqual({
@@ -107,14 +107,14 @@ describe("useSourceFetch", () => {
       const { result } = renderHook(() => useSourceFetch());
       let fetchResult: unknown;
       await act(async () => {
-        fetchResult = await result.current.fetchSource(createSingleSource());
+        fetchResult = await result.current.fetchSource(createBundledSource());
       });
 
       expect(fetchResult).toBeNull();
       expect(result.current.error?.message).toContain("CORS");
     });
 
-    it("reports partial failures in keyed mode", async () => {
+    it("reports partial failures in split mode", async () => {
       const defAResponse = {
         ok: true,
         headers: new Headers(),
@@ -132,7 +132,7 @@ describe("useSourceFetch", () => {
       const { result } = renderHook(() => useSourceFetch());
       let fetchResult: Awaited<ReturnType<typeof result.current.fetchSource>>;
       await act(async () => {
-        fetchResult = await result.current.fetchSource(createKeyedSource());
+        fetchResult = await result.current.fetchSource(createSplitSource());
       });
 
       expect(fetchResult).not.toBeNull();
@@ -150,7 +150,7 @@ describe("useSourceFetch", () => {
 
       const { result } = renderHook(() => useSourceFetch());
       await act(async () => {
-        await result.current.fetchSource(createSingleSource());
+        await result.current.fetchSource(createBundledSource());
       });
       expect(result.current.error).not.toBeNull();
 
@@ -162,7 +162,7 @@ describe("useSourceFetch", () => {
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
       await act(async () => {
-        await result.current.fetchSource(createSingleSource());
+        await result.current.fetchSource(createBundledSource());
       });
       expect(result.current.error).toBeNull();
     });
@@ -180,7 +180,7 @@ describe("useSourceFetch", () => {
       let keys: string[] | null = null;
       await act(async () => {
         keys = await result.current.reloadKeyList(
-          createKeyedSource({ listUrl: "https://r2.example.com/keys.json" }),
+          createSplitSource({ listUrl: "https://r2.example.com/keys.json" }),
         );
       });
 
@@ -192,7 +192,7 @@ describe("useSourceFetch", () => {
       const { result } = renderHook(() => useSourceFetch());
       let keys: string[] | null = null;
       await act(async () => {
-        keys = await result.current.reloadKeyList(createKeyedSource({ listUrl: undefined }));
+        keys = await result.current.reloadKeyList(createSplitSource({ listUrl: undefined }));
       });
 
       expect(keys).toEqual(["flag-a", "flag-b"]);
@@ -209,7 +209,7 @@ describe("useSourceFetch", () => {
       let keys: string[] | null = null;
       await act(async () => {
         keys = await result.current.reloadKeyList(
-          createKeyedSource({ listUrl: "https://r2.example.com/keys.json" }),
+          createSplitSource({ listUrl: "https://r2.example.com/keys.json" }),
         );
       });
 
@@ -234,7 +234,7 @@ describe("useSourceFetch", () => {
       const { result } = renderHook(() => useSourceFetch());
       let fetched: unknown;
       await act(async () => {
-        fetched = await result.current.reloadDefinitionKey(createKeyedSource(), "flag-a");
+        fetched = await result.current.reloadDefinitionKey(createSplitSource(), "flag-a");
       });
 
       expect(fetched).toEqual({ definition: { variations: [{ value: true }] } });
@@ -246,7 +246,7 @@ describe("useSourceFetch", () => {
       const { result } = renderHook(() => useSourceFetch());
       let fetched: unknown;
       await act(async () => {
-        fetched = await result.current.reloadDefinitionKey(createKeyedSource(), "flag-a");
+        fetched = await result.current.reloadDefinitionKey(createSplitSource(), "flag-a");
       });
 
       expect(fetched).toBeNull();

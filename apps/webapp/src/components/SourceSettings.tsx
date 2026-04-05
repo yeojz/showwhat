@@ -12,7 +12,7 @@ import { FilePlus2, FileText, Globe, Plus, Unplug } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { useDefinitionStore } from "../store/definition-store.js";
 import { useSourceStore } from "../store/source-store.js";
-import type { RemoteSource, KeyedSource } from "../store/source-store.js";
+import type { HostedSource, SplitSource } from "../store/source-store.js";
 import { useSourceFetch } from "../hooks/useSourceFetch.js";
 import { useFileImport } from "../hooks/useFileImport.js";
 import { SourceFormDialog } from "./SourceForm.js";
@@ -87,7 +87,7 @@ export function SourceSettings() {
     error: fetchError,
   } = useSourceFetch();
   const { importFile, error: fileError } = useFileImport();
-  const [formState, setFormState] = useState<"add" | RemoteSource | null>(null);
+  const [formState, setFormState] = useState<"add" | HostedSource | null>(null);
   const [pendingFileImport, setPendingFileImport] = useState<{
     definitions: Parameters<typeof importDefinitions>[0];
     fileName: string;
@@ -118,18 +118,18 @@ export function SourceSettings() {
 
   const error = fetchError ?? fileError;
 
-  async function handleLoad(source: RemoteSource) {
+  async function handleLoad(source: HostedSource) {
     const result = await fetchSource(source);
     if (!result) return;
 
-    if (source.mode === "keyed") {
-      // Definitions and presets are managed independently for keyed sources.
+    if (source.mode === "split") {
+      // Definitions and presets are managed independently for split sources.
       // definitionPresets tracks per-key embedded presets; sourcePresets from presetsUrl.
       importDefinitions(result.definitions, source.label, source.format);
       if (result.definitionPresets) setDefinitionPresets(result.definitionPresets);
       setSourcePresets(result.presets ?? {});
     } else {
-      // Single-mode: presets are embedded in the file itself
+      // Bundled mode: presets are embedded in the file itself
       importDefinitions(result.definitions, source.label, source.format, result.presets);
     }
     setActiveSource(source.id);
@@ -144,7 +144,7 @@ export function SourceSettings() {
     setSelection(sources.length > 0 ? sources[0].id : "__active__");
   }
 
-  function handleSaveForm(data: Omit<RemoteSource, "id">) {
+  function handleSaveForm(data: Omit<HostedSource, "id">) {
     const isAdd = formState === "add";
     if (isAdd) {
       const id = addSource(data);
@@ -156,7 +156,7 @@ export function SourceSettings() {
     setFormState(null);
   }
 
-  function handleDeleteSource(source: RemoteSource) {
+  function handleDeleteSource(source: HostedSource) {
     if (activeSourceId === source.id) handleUnload();
     removeSource(source.id);
     if (selection === source.id) {
@@ -192,14 +192,14 @@ export function SourceSettings() {
     setPendingFileImport(null);
   }
 
-  function getRelevantSource(): RemoteSource | null {
+  function getRelevantSource(): HostedSource | null {
     return selection === "__active__" ? activeUrlSource : selectedSource;
   }
 
   async function handleReloadKeyList() {
     const source = getRelevantSource();
-    if (!source || source.mode !== "keyed") return;
-    const keys = await reloadKeyList(source as KeyedSource);
+    if (!source || source.mode !== "split") return;
+    const keys = await reloadKeyList(source as SplitSource);
     if (keys) {
       setDefinitionKeys(source.id, keys);
       markListFetched(source.id);
@@ -208,8 +208,8 @@ export function SourceSettings() {
 
   async function handleReloadKey(key: string) {
     const source = getRelevantSource();
-    if (!source || source.mode !== "keyed") return;
-    const fetched = await reloadDefinitionKey(source as KeyedSource, key);
+    if (!source || source.mode !== "split") return;
+    const fetched = await reloadDefinitionKey(source as SplitSource, key);
     if (fetched) {
       upsertDefinition(key, fetched.definition);
       if (fetched.filePresets) upsertDefinitionPresets(key, fetched.filePresets);
@@ -219,7 +219,7 @@ export function SourceSettings() {
 
   async function handleReloadPresets() {
     const source = getRelevantSource();
-    if (!source || source.mode !== "keyed" || !source.presetsUrl) return;
+    if (!source || source.mode !== "split" || !source.presetsUrl) return;
     const presets = await reloadPresets(source.presetsUrl, source.format, source.headers);
     if (presets) {
       setSourcePresets(presets);
@@ -229,7 +229,7 @@ export function SourceSettings() {
 
   async function handleRefreshSingle() {
     const source = getRelevantSource();
-    if (!source || source.mode !== "single") return;
+    if (!source || source.mode !== "bundled") return;
     const result = await fetchSource(source);
     if (!result) return;
     importDefinitions(result.definitions, source.label, source.format, result.presets);
@@ -362,7 +362,7 @@ export function SourceSettings() {
             <div>
               <p className="text-sm font-medium text-foreground/80">No source loaded</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Add a URL source or import a file to get started.
+                Add a hosted source or import a file to get started.
               </p>
             </div>
           </div>

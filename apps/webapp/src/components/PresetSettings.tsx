@@ -61,6 +61,37 @@ export function PresetEditor() {
   );
 }
 
+function formatValue(value: unknown, indent: number): string {
+  const pad = " ".repeat(indent);
+  if (value === null || value === undefined) return "null";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        const formatted = formatValue(item, indent + 2);
+        if (typeof item === "object" && item !== null) {
+          return `${pad}- ${formatted.trimStart()}`;
+        }
+        return `${pad}- ${formatted}`;
+      })
+      .join("\n");
+  }
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .map(([k, v]) => {
+        const formatted = formatValue(v, indent + 2);
+        if (typeof v === "object" && v !== null) {
+          return `${pad}${k}:\n${formatted}`;
+        }
+        return `${pad}${k}: ${formatted}`;
+      })
+      .join("\n");
+  }
+  return String(value);
+}
+
 function formatPresetYaml(preset: Presets[string]): string {
   const lines: string[] = [];
   lines.push(`type: ${preset.type}`);
@@ -70,7 +101,12 @@ function formatPresetYaml(preset: Presets[string]): string {
   if (preset.overrides && Object.keys(preset.overrides).length > 0) {
     lines.push("overrides:");
     for (const [k, v] of Object.entries(preset.overrides)) {
-      lines.push(`  ${k}: ${String(v)}`);
+      const formatted = formatValue(v, 4);
+      if (typeof v === "object" && v !== null) {
+        lines.push(`  ${k}:\n${formatted}`);
+      } else {
+        lines.push(`  ${k}: ${formatted}`);
+      }
     }
   }
   return lines.join("\n");

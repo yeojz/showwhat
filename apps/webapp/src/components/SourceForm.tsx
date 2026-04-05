@@ -13,14 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@showwhat/configurator";
-import type { RemoteSource, SourceFormat } from "../store/source-store.js";
+import type { HostedSource, SourceFormat } from "../store/source-store.js";
 
-type SourceMode = "single" | "keyed";
+type SourceMode = "bundled" | "split";
 
 type SourceFormDialogProps = {
   open: boolean;
-  initial?: RemoteSource;
-  onSave: (source: Omit<RemoteSource, "id">) => void;
+  initial?: HostedSource;
+  onSave: (source: Omit<HostedSource, "id">) => void;
   onClose: () => void;
 };
 
@@ -42,13 +42,13 @@ function isValidUrl(url: string): boolean {
 
 export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormDialogProps) {
   const [label, setLabel] = useState(initial?.label ?? "");
-  const [mode, setMode] = useState<SourceMode>(initial?.mode ?? "single");
+  const [mode, setMode] = useState<SourceMode>(initial?.mode ?? "bundled");
   const [format, setFormat] = useState<SourceFormat>(initial?.format ?? "yaml");
-  const [url, setUrl] = useState(initial?.mode === "single" ? initial.url : "");
-  const [baseUrl, setBaseUrl] = useState(initial?.mode === "keyed" ? initial.baseUrl : "");
-  const [listUrl, setListUrl] = useState(initial?.mode === "keyed" ? (initial.listUrl ?? "") : "");
+  const [url, setUrl] = useState(initial?.mode === "bundled" ? initial.url : "");
+  const [baseUrl, setBaseUrl] = useState(initial?.mode === "split" ? initial.baseUrl : "");
+  const [listUrl, setListUrl] = useState(initial?.mode === "split" ? (initial.listUrl ?? "") : "");
   const [presetsUrl, setPresetsUrl] = useState(
-    initial?.mode === "keyed" ? (initial.presetsUrl ?? "") : "",
+    initial?.mode === "split" ? (initial.presetsUrl ?? "") : "",
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -57,12 +57,12 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
 
     if (!label.trim()) errs.label = "Label is required";
 
-    if (mode === "single") {
+    if (mode === "bundled") {
       if (!url.trim()) errs.url = "URL is required";
       else if (!isValidUrl(url.trim())) errs.url = "Must be HTTPS (or localhost for dev)";
     }
 
-    if (mode === "keyed") {
+    if (mode === "split") {
       if (!baseUrl.trim()) errs.baseUrl = "Base URL is required";
       else if (!isValidUrl(baseUrl.trim() + "test"))
         errs.baseUrl = "Must be HTTPS (or localhost for dev)";
@@ -84,17 +84,17 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
 
     const base = { label: label.trim(), format, headers: initial?.headers };
 
-    if (mode === "single") {
-      onSave({ ...base, mode: "single", url: url.trim() } as Omit<RemoteSource, "id">);
+    if (mode === "bundled") {
+      onSave({ ...base, mode: "bundled", url: url.trim() } as Omit<HostedSource, "id">);
     } else {
       onSave({
         ...base,
-        mode: "keyed",
+        mode: "split",
         baseUrl: baseUrl.trim(),
         listUrl: listUrl.trim() || undefined,
         presetsUrl: presetsUrl.trim() || undefined,
-        definitionKeys: initial?.mode === "keyed" ? initial.definitionKeys : [],
-      } as Omit<RemoteSource, "id">);
+        definitionKeys: initial?.mode === "split" ? initial.definitionKeys : [],
+      } as Omit<HostedSource, "id">);
     }
   }
 
@@ -106,7 +106,7 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{initial ? "Edit URL source" : "Add URL source"}</DialogTitle>
+          <DialogTitle>{initial ? "Edit hosted source" : "Add hosted source"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1.5">
@@ -127,21 +127,21 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
                 <input
                   type="radio"
                   name="mode"
-                  checked={mode === "single"}
-                  onChange={() => setMode("single")}
+                  checked={mode === "bundled"}
+                  onChange={() => setMode("bundled")}
                   className="accent-primary"
                 />
-                Single file
+                Bundled
               </label>
               <label className="flex items-center gap-2 text-sm">
                 <input
                   type="radio"
                   name="mode"
-                  checked={mode === "keyed"}
-                  onChange={() => setMode("keyed")}
+                  checked={mode === "split"}
+                  onChange={() => setMode("split")}
                   className="accent-primary"
                 />
-                Keyed (per-definition)
+                Split (per-definition)
               </label>
             </div>
           </div>
@@ -159,7 +159,7 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
             </Select>
           </div>
 
-          {mode === "single" && (
+          {mode === "bundled" && (
             <div className="space-y-1.5">
               <Label htmlFor="source-url">URL</Label>
               <Input
@@ -172,7 +172,7 @@ export function SourceFormDialog({ open, initial, onSave, onClose }: SourceFormD
             </div>
           )}
 
-          {mode === "keyed" && (
+          {mode === "split" && (
             <>
               <div className="space-y-1.5">
                 <Label htmlFor="source-base-url">Base URL</Label>

@@ -47,11 +47,11 @@ export function App() {
   const dirtyCount = useDefinitionStore((s) => s.dirtyKeys.length);
   const addDefinition = useDefinitionStore((s) => s.addDefinition);
 
-  // Keyed mode detection (needed before preset merging)
+  // Split mode detection (needed before preset merging)
   const activeSourceId = useSourceStore((s) => s.activeSourceId);
   const sources = useSourceStore((s) => s.sources);
   const activeSource = activeSourceId ? sources.find((s) => s.id === activeSourceId) : undefined;
-  const isKeyed = activeSource?.mode === "keyed";
+  const isSplit = activeSource?.mode === "split";
 
   const customPresets = usePresetStore((s) => s.presets);
   const filePresets = useDefinitionStore((s) => s.filePresets);
@@ -64,12 +64,12 @@ export function App() {
     [customPresets, filePresets, sourcePresets],
   );
 
-  // For non-keyed mode: all presets merged (no per-definition scoping needed).
+  // For bundled mode: all presets merged (no per-definition scoping needed).
   const conditionExtensions = useMemo(() => createPresetUI(sharedPresets), [sharedPresets]);
 
-  // For keyed mode: each definition sees shared presets + only its own embedded presets.
+  // For split mode: each definition sees shared presets + only its own embedded presets.
   const conditionExtensionsResolver = useMemo(() => {
-    if (!isKeyed) return undefined;
+    if (!isSplit) return undefined;
     // Cache resolved extensions per key to avoid re-creating on every render.
     const cache = new Map<string, ReturnType<typeof createPresetUI>>();
     return (key: string) => {
@@ -83,7 +83,7 @@ export function App() {
       cache.set(key, result);
       return result;
     };
-  }, [isKeyed, sharedPresets, definitionPresets]);
+  }, [isSplit, sharedPresets, definitionPresets]);
 
   const storeSource: ConfiguratorStoreSource = useMemo(
     () => ({
@@ -93,7 +93,7 @@ export function App() {
     [],
   );
 
-  // Per-definition export for keyed mode
+  // Per-definition export for split mode
   const { exportDefinitionYaml, exportDefinitionJson } = useFileExport();
   const onExportDefinition = useCallback(
     (key: string, definition: Definition, format: "yaml" | "json") => {
@@ -130,7 +130,7 @@ export function App() {
             emptyState={
               <EmptyState onCreateNew={handleCreateNew} onGoToSources={() => setTab("sources")} />
             }
-            onExportDefinition={isKeyed ? onExportDefinition : undefined}
+            onExportDefinition={isSplit ? onExportDefinition : undefined}
           />
         )}
         {tab === "sources" && <SourceSettings />}

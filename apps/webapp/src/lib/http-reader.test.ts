@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Definitions } from "showwhat";
 import type { Presets } from "showwhat";
-import type { SingleSource, KeyedSource } from "../store/source-store.js";
+import type { BundledSource, SplitSource } from "../store/source-store.js";
 
 const mockParseYaml = vi.fn();
 const mockParseObject = vi.fn();
@@ -25,8 +25,8 @@ vi.mock("js-yaml", () => ({
 
 // Dynamic import AFTER mocks
 const {
-  SingleSourceHttpReader,
-  KeyedSourceHttpReader,
+  BundledSourceHttpReader,
+  SplitSourceHttpReader,
   createHttpReader,
   isAllowedUrl,
   formatFetchError,
@@ -40,10 +40,10 @@ const samplePresets: Presets = {
   tier: { type: "string", key: "tier" },
 };
 
-function createSingleSource(overrides?: Partial<SingleSource>): SingleSource {
+function createBundledSource(overrides?: Partial<BundledSource>): BundledSource {
   return {
     id: "src-1",
-    mode: "single",
+    mode: "bundled",
     label: "Production",
     format: "yaml",
     url: "https://r2.example.com/flags.yaml",
@@ -51,10 +51,10 @@ function createSingleSource(overrides?: Partial<SingleSource>): SingleSource {
   };
 }
 
-function createKeyedSource(overrides?: Partial<KeyedSource>): KeyedSource {
+function createSplitSource(overrides?: Partial<SplitSource>): SplitSource {
   return {
     id: "src-2",
-    mode: "keyed",
+    mode: "split",
     label: "Staging",
     format: "json",
     baseUrl: "https://r2.example.com/defs/",
@@ -127,18 +127,18 @@ describe("formatFetchError", () => {
 });
 
 describe("createHttpReader", () => {
-  it("returns SingleSourceHttpReader for single mode", () => {
-    const reader = createHttpReader(createSingleSource());
-    expect(reader).toBeInstanceOf(SingleSourceHttpReader);
+  it("returns BundledSourceHttpReader for bundled mode", () => {
+    const reader = createHttpReader(createBundledSource());
+    expect(reader).toBeInstanceOf(BundledSourceHttpReader);
   });
 
-  it("returns KeyedSourceHttpReader for keyed mode", () => {
-    const reader = createHttpReader(createKeyedSource());
-    expect(reader).toBeInstanceOf(KeyedSourceHttpReader);
+  it("returns SplitSourceHttpReader for split mode", () => {
+    const reader = createHttpReader(createSplitSource());
+    expect(reader).toBeInstanceOf(SplitSourceHttpReader);
   });
 });
 
-describe("SingleSourceHttpReader", () => {
+describe("BundledSourceHttpReader", () => {
   describe("fetchSource", () => {
     it("fetches and parses a YAML source", async () => {
       fetchMock.mockResolvedValue({
@@ -148,7 +148,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs, presets: samplePresets });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const result = await reader.fetchSource();
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -172,8 +172,8 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseObject.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(
-        createSingleSource({ format: "json", url: "https://r2.example.com/flags.json" }),
+      const reader = new BundledSourceHttpReader(
+        createBundledSource({ format: "json", url: "https://r2.example.com/flags.json" }),
       );
       const result = await reader.fetchSource();
 
@@ -192,8 +192,8 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(
-        createSingleSource({ headers: { Authorization: "Bearer token" } }),
+      const reader = new BundledSourceHttpReader(
+        createBundledSource({ headers: { Authorization: "Bearer token" } }),
       );
       await reader.fetchSource();
 
@@ -217,22 +217,22 @@ describe("SingleSourceHttpReader", () => {
         },
       });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const result = await reader.fetchSource();
 
       expect(Object.keys(result.definitions)).toEqual(["good-key"]);
     });
 
     it("rejects non-HTTPS URLs", async () => {
-      const reader = new SingleSourceHttpReader(
-        createSingleSource({ url: "http://evil.com/flags.yaml" }),
+      const reader = new BundledSourceHttpReader(
+        createBundledSource({ url: "http://evil.com/flags.yaml" }),
       );
       await expect(reader.fetchSource()).rejects.toThrow("HTTPS");
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it("rejects invalid URL strings", async () => {
-      const reader = new SingleSourceHttpReader(createSingleSource({ url: "not-a-url" }));
+      const reader = new BundledSourceHttpReader(createBundledSource({ url: "not-a-url" }));
       await expect(reader.fetchSource()).rejects.toThrow("HTTPS");
     });
 
@@ -244,7 +244,7 @@ describe("SingleSourceHttpReader", () => {
         text: () => Promise.resolve(largeText),
       });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       await expect(reader.fetchSource()).rejects.toThrow("too large");
     });
 
@@ -255,7 +255,7 @@ describe("SingleSourceHttpReader", () => {
         text: () => Promise.resolve(""),
       });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       await expect(reader.fetchSource()).rejects.toThrow("too large");
     });
 
@@ -267,7 +267,7 @@ describe("SingleSourceHttpReader", () => {
         headers: new Headers(),
       });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       await expect(reader.fetchSource()).rejects.toThrow("403");
     });
 
@@ -279,8 +279,8 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(
-        createSingleSource({ url: "http://localhost:3000/flags.yaml" }),
+      const reader = new BundledSourceHttpReader(
+        createBundledSource({ url: "http://localhost:3000/flags.yaml" }),
       );
       const result = await reader.fetchSource();
 
@@ -298,7 +298,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const defs = await reader.getAll();
 
       expect(defs).toEqual(sampleDefs);
@@ -314,7 +314,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const def = await reader.get("feature-a");
 
       expect(def).toEqual(sampleDefs["feature-a"]);
@@ -328,7 +328,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const def = await reader.get("nonexistent-key");
 
       expect(def).toBeNull();
@@ -344,7 +344,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const keys = await reader.listKeys();
 
       expect(keys).toEqual(["feature-a"]);
@@ -360,7 +360,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs, presets: samplePresets });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const presets = await reader.getPresets();
 
       expect(presets).toEqual(samplePresets);
@@ -374,7 +374,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const presets = await reader.getPresets();
 
       expect(presets).toEqual({});
@@ -388,7 +388,7 @@ describe("SingleSourceHttpReader", () => {
       });
       mockParseYaml.mockResolvedValue({ definitions: sampleDefs, presets: samplePresets });
 
-      const reader = new SingleSourceHttpReader(createSingleSource());
+      const reader = new BundledSourceHttpReader(createBundledSource());
       const presets = await reader.getPresets("some-key");
 
       expect(presets).toEqual(samplePresets);
@@ -396,7 +396,7 @@ describe("SingleSourceHttpReader", () => {
   });
 });
 
-describe("KeyedSourceHttpReader", () => {
+describe("SplitSourceHttpReader", () => {
   describe("fetchSource", () => {
     it("fetches definitions for configured keys", async () => {
       const defAResponse = {
@@ -417,7 +417,7 @@ describe("KeyedSourceHttpReader", () => {
         data: raw,
       }));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchSource();
 
       expect(Object.keys(result.definitions)).toContain("flag-a");
@@ -431,7 +431,7 @@ describe("KeyedSourceHttpReader", () => {
     });
 
     it("throws when no definition keys are configured", async () => {
-      const reader = new KeyedSourceHttpReader(createKeyedSource({ definitionKeys: [] }));
+      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: [] }));
       await expect(reader.fetchSource()).rejects.toThrow("No definition keys configured");
     });
 
@@ -456,7 +456,7 @@ describe("KeyedSourceHttpReader", () => {
           error: { issues: [{ message: "Required" }] },
         });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchSource();
 
       expect(result.keys).toEqual(["flag-a"]);
@@ -479,7 +479,7 @@ describe("KeyedSourceHttpReader", () => {
         data: raw,
       }));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchSource();
 
       expect(result.keys).toEqual(["flag-a"]);
@@ -500,7 +500,7 @@ describe("KeyedSourceHttpReader", () => {
         data: raw,
       }));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchSource();
 
       expect(result.keys).toEqual(["flag-a"]);
@@ -509,7 +509,7 @@ describe("KeyedSourceHttpReader", () => {
     it("throws when all definition fetches fail", async () => {
       fetchMock.mockRejectedValue(new Error("HTTP 500"));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource({ definitionKeys: ["flag-a"] }));
+      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: ["flag-a"] }));
       await expect(reader.fetchSource()).rejects.toThrow("All definition fetches failed");
     });
 
@@ -537,8 +537,8 @@ describe("KeyedSourceHttpReader", () => {
         data: { tier: { type: "string", key: "tier" } },
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({
           definitionKeys: ["flag-a"],
           presetsUrl: "https://r2.example.com/presets.json",
         }),
@@ -562,7 +562,7 @@ describe("KeyedSourceHttpReader", () => {
         data: raw,
       }));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource({ definitionKeys: ["flag-a"] }));
+      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: ["flag-a"] }));
       const result = await reader.fetchSource();
 
       expect(result.presets).toBeUndefined();
@@ -589,8 +589,8 @@ describe("KeyedSourceHttpReader", () => {
       }));
       mockPresetsSafeParse.mockReturnValue({ success: false });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({
           definitionKeys: ["flag-a"],
           presetsUrl: "https://r2.example.com/presets.json",
         }),
@@ -629,7 +629,7 @@ describe("KeyedSourceHttpReader", () => {
         .mockReturnValueOnce({ success: true, data: { tier: { type: "string", key: "tier" } } })
         .mockReturnValue({ success: false });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchSource();
 
       expect(result.definitionPresets).toEqual({
@@ -653,7 +653,7 @@ describe("KeyedSourceHttpReader", () => {
         .mockReturnValueOnce({ success: true, data: { tier: { type: "string", key: "tier" } } })
         .mockReturnValueOnce({ success: true, data: { env: { type: "string", key: "env" } } });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchSource();
 
       expect(result.definitionPresets).toEqual({
@@ -673,7 +673,7 @@ describe("KeyedSourceHttpReader", () => {
       mockDefinitionSafeParse.mockImplementation((raw: unknown) => ({ success: true, data: raw }));
       mockPresetsSafeParse.mockReturnValue({ success: false });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource({ definitionKeys: ["flag-a"] }));
+      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: ["flag-a"] }));
       const result = await reader.fetchSource();
 
       expect(result.definitionPresets).toBeUndefined();
@@ -693,8 +693,8 @@ describe("KeyedSourceHttpReader", () => {
         data: raw,
       }));
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({
           definitionKeys: ["good-key", "__proto__", "constructor"],
         }),
       );
@@ -704,7 +704,7 @@ describe("KeyedSourceHttpReader", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it("parses YAML format in keyed mode", async () => {
+    it("parses YAML format in split mode", async () => {
       const defResponse = {
         ok: true,
         headers: new Headers(),
@@ -718,8 +718,8 @@ describe("KeyedSourceHttpReader", () => {
         data: raw,
       }));
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ format: "yaml", definitionKeys: ["flag-a"] }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ format: "yaml", definitionKeys: ["flag-a"] }),
       );
       const result = await reader.fetchSource();
 
@@ -739,7 +739,7 @@ describe("KeyedSourceHttpReader", () => {
         data: { variations: [{ value: true }] },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const def = await reader.get("flag-a");
 
       expect(def).toEqual({ variations: [{ value: true }] });
@@ -760,7 +760,7 @@ describe("KeyedSourceHttpReader", () => {
         data: { variations: [{ value: true }] },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       await reader.get("flag a/special");
 
       expect(fetchMock).toHaveBeenCalledWith(
@@ -780,7 +780,7 @@ describe("KeyedSourceHttpReader", () => {
         error: { issues: [{ message: "Required" }] },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       await expect(reader.get("flag-a")).rejects.toThrow('Invalid definition for "flag-a"');
     });
   });
@@ -801,7 +801,7 @@ describe("KeyedSourceHttpReader", () => {
       fetchMock.mockResolvedValueOnce(defAResponse).mockResolvedValueOnce(defBResponse);
       mockDefinitionSafeParse.mockImplementation((raw: unknown) => ({ success: true, data: raw }));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const defs = await reader.getAll();
 
       expect(Object.keys(defs)).toContain("flag-a");
@@ -811,19 +811,19 @@ describe("KeyedSourceHttpReader", () => {
     it("throws when all keys fail", async () => {
       fetchMock.mockRejectedValue(new Error("HTTP 500"));
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource({ definitionKeys: ["flag-a"] }));
+      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: ["flag-a"] }));
       await expect(reader.getAll()).rejects.toThrow("All definition fetches failed");
     });
 
     it("throws when no definition keys are configured", async () => {
-      const reader = new KeyedSourceHttpReader(createKeyedSource({ definitionKeys: [] }));
+      const reader = new SplitSourceHttpReader(createSplitSource({ definitionKeys: [] }));
       await expect(reader.getAll()).rejects.toThrow("No definition keys configured");
     });
   });
 
   describe("listKeys", () => {
     it("returns static definitionKeys when no listUrl is configured", async () => {
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const keys = await reader.listKeys();
 
       expect(keys).toEqual(["flag-a", "flag-b"]);
@@ -837,8 +837,8 @@ describe("KeyedSourceHttpReader", () => {
         text: () => Promise.resolve(JSON.stringify({ definitionKeys: ["flag-a", "flag-b"] })),
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ listUrl: "https://r2.example.com/keys.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ listUrl: "https://r2.example.com/keys.json" }),
       );
       const keys = await reader.listKeys();
 
@@ -852,8 +852,8 @@ describe("KeyedSourceHttpReader", () => {
         text: () => Promise.resolve(JSON.stringify(["flag-a", "flag-b"])),
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ listUrl: "https://r2.example.com/keys.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ listUrl: "https://r2.example.com/keys.json" }),
       );
       await expect(reader.listKeys()).rejects.toThrow("definitionKeys");
     });
@@ -865,8 +865,8 @@ describe("KeyedSourceHttpReader", () => {
         text: () => Promise.resolve(JSON.stringify({ not: "right format" })),
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ listUrl: "https://r2.example.com/keys.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ listUrl: "https://r2.example.com/keys.json" }),
       );
       await expect(reader.listKeys()).rejects.toThrow("definitionKeys");
     });
@@ -881,8 +881,8 @@ describe("KeyedSourceHttpReader", () => {
           ),
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ listUrl: "https://r2.example.com/keys.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ listUrl: "https://r2.example.com/keys.json" }),
       );
       const keys = await reader.listKeys();
 
@@ -892,7 +892,7 @@ describe("KeyedSourceHttpReader", () => {
 
   describe("getPresets", () => {
     it("returns empty object when no presetsUrl is configured", async () => {
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const presets = await reader.getPresets();
 
       expect(presets).toEqual({});
@@ -911,8 +911,8 @@ describe("KeyedSourceHttpReader", () => {
         data: { tier: { type: "string", key: "tier" } },
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ presetsUrl: "https://r2.example.com/presets.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ presetsUrl: "https://r2.example.com/presets.json" }),
       );
       const presets = await reader.getPresets();
 
@@ -926,8 +926,8 @@ describe("KeyedSourceHttpReader", () => {
         text: () => Promise.resolve(JSON.stringify({ something: "else" })),
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ presetsUrl: "https://r2.example.com/presets.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ presetsUrl: "https://r2.example.com/presets.json" }),
       );
       const presets = await reader.getPresets();
 
@@ -946,8 +946,8 @@ describe("KeyedSourceHttpReader", () => {
         data: { tier: { type: "string", key: "tier" } },
       });
 
-      const reader = new KeyedSourceHttpReader(
-        createKeyedSource({ presetsUrl: "https://r2.example.com/presets.json" }),
+      const reader = new SplitSourceHttpReader(
+        createSplitSource({ presetsUrl: "https://r2.example.com/presets.json" }),
       );
       const presetsWithKey = await reader.getPresets("some-key");
 
@@ -977,7 +977,7 @@ describe("KeyedSourceHttpReader", () => {
         data: { tier: { type: "string", key: "tier" } },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchDefinitionKey("flag-a");
 
       expect(result.definition).toEqual({ variations: [{ value: true }] });
@@ -995,7 +995,7 @@ describe("KeyedSourceHttpReader", () => {
         data: { variations: [{ value: true }] },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchDefinitionKey("flag-a");
 
       expect(result.filePresets).toBeUndefined();
@@ -1015,7 +1015,7 @@ describe("KeyedSourceHttpReader", () => {
         data: { tier: { type: "string", key: "tier" } },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
 
       expect(presets).toEqual({ tier: { type: "string", key: "tier" } });
@@ -1028,7 +1028,7 @@ describe("KeyedSourceHttpReader", () => {
         text: () => Promise.resolve(JSON.stringify("not-an-object")),
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
 
       expect(presets).toBeUndefined();
@@ -1043,7 +1043,7 @@ describe("KeyedSourceHttpReader", () => {
       });
       mockPresetsSafeParse.mockReturnValue({ success: false });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const presets = await reader.fetchPresets("https://r2.example.com/presets.json", "json");
 
       expect(presets).toBeUndefined();
@@ -1063,7 +1063,7 @@ describe("KeyedSourceHttpReader", () => {
         data: { variations: [{ value: true }] },
       });
 
-      const reader = new KeyedSourceHttpReader(createKeyedSource());
+      const reader = new SplitSourceHttpReader(createSplitSource());
       const result = await reader.fetchDefinitionKey("flag-a");
 
       expect(result.filePresets).toBeUndefined();

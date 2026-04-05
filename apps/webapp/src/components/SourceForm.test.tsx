@@ -106,22 +106,22 @@ describe("SourceFormDialog", () => {
 
   it("renders form in add mode when open", () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.getByText("Add URL source")).toBeDefined();
+    expect(screen.getByText("Add hosted source")).toBeDefined();
     expect(screen.getByText("Label")).toBeDefined();
-    expect(screen.getByText("Single file")).toBeDefined();
+    expect(screen.getByText("Bundled")).toBeDefined();
     expect(screen.getByText("Add source")).toBeDefined();
   });
 
   it("shows Edit title when editing", () => {
     const source = {
       id: "src-1",
-      mode: "single" as const,
+      mode: "bundled" as const,
       label: "Production",
       format: "yaml" as const,
       url: "https://example.com/flags.yaml",
     };
     render(<SourceFormDialog open={true} initial={source} onSave={vi.fn()} onClose={vi.fn()} />);
-    expect(screen.getByText("Edit URL source")).toBeDefined();
+    expect(screen.getByText("Edit hosted source")).toBeDefined();
     expect(screen.getByText("Update")).toBeDefined();
   });
 
@@ -154,7 +154,7 @@ describe("SourceFormDialog", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it("shows validation error for empty URL in single mode", async () => {
+  it("shows validation error for empty URL in bundled mode", async () => {
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await userEvent.type(screen.getByLabelText("source-label"), "Test");
@@ -171,7 +171,7 @@ describe("SourceFormDialog", () => {
     expect(screen.getByText("Must be HTTPS (or localhost for dev)")).toBeDefined();
   });
 
-  it("submits single source successfully", async () => {
+  it("submits bundled source successfully", async () => {
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await userEvent.type(screen.getByLabelText("source-label"), "Production");
@@ -179,52 +179,52 @@ describe("SourceFormDialog", () => {
     await userEvent.click(screen.getByText("Add source"));
     expect(onSave).toHaveBeenCalledWith({
       label: "Production",
-      mode: "single",
+      mode: "bundled",
       format: "yaml",
       url: "https://r2.example.com/flags.yaml",
       headers: undefined,
     });
   });
 
-  it("switches to keyed mode and shows keyed fields", async () => {
+  it("switches to split mode and shows split fields", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
-    await userEvent.click(screen.getByText("Keyed (per-definition)"));
+    await userEvent.click(screen.getByText("Split (per-definition)"));
     expect(screen.getByText("List URL (optional)")).toBeDefined();
     expect(screen.getByText("Base URL")).toBeDefined();
   });
 
-  it("validates keyed mode: missing baseUrl", async () => {
+  it("validates split mode: missing baseUrl", async () => {
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText("source-label"), "Keyed");
-    await userEvent.click(screen.getByText("Keyed (per-definition)"));
+    await userEvent.type(screen.getByLabelText("source-label"), "Split");
+    await userEvent.click(screen.getByText("Split (per-definition)"));
     await userEvent.click(screen.getByText("Add source"));
     expect(screen.getByText("Base URL is required")).toBeDefined();
   });
 
-  it("validates keyed mode: non-HTTPS baseUrl", async () => {
+  it("validates split mode: non-HTTPS baseUrl", async () => {
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
-    await userEvent.type(screen.getByLabelText("source-label"), "Keyed");
-    await userEvent.click(screen.getByText("Keyed (per-definition)"));
+    await userEvent.type(screen.getByLabelText("source-label"), "Split");
+    await userEvent.click(screen.getByText("Split (per-definition)"));
     await userEvent.type(screen.getByLabelText("source-base-url"), "http://evil.com/defs/");
     await userEvent.click(screen.getByText("Add source"));
     expect(screen.getByText("Must be HTTPS (or localhost for dev)")).toBeDefined();
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it("submits keyed source successfully", async () => {
+  it("submits split source successfully", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await user.type(screen.getByLabelText("source-label"), "Staging");
-    await user.click(screen.getByText("Keyed (per-definition)"));
+    await user.click(screen.getByText("Split (per-definition)"));
     await user.type(screen.getByLabelText("source-base-url"), "https://r2.example.com/defs/");
     await user.type(screen.getByLabelText("source-list-url"), "https://r2.example.com/keys.json");
     await user.click(screen.getByText("Add source"));
     expect(onSave).toHaveBeenCalledWith({
       label: "Staging",
-      mode: "keyed",
+      mode: "split",
       format: "yaml",
       baseUrl: "https://r2.example.com/defs/",
       listUrl: "https://r2.example.com/keys.json",
@@ -246,7 +246,7 @@ describe("SourceFormDialog", () => {
   it("populates form with initial values for editing", () => {
     const source = {
       id: "src-1",
-      mode: "single" as const,
+      mode: "bundled" as const,
       label: "Production",
       format: "json" as const,
       url: "https://example.com/flags.json",
@@ -269,27 +269,27 @@ describe("SourceFormDialog", () => {
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ format: "json" }));
   });
 
-  it("switches from keyed back to single mode", async () => {
+  it("switches from split back to bundled mode", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
-    await userEvent.click(screen.getByText("Keyed (per-definition)"));
+    await userEvent.click(screen.getByText("Split (per-definition)"));
     expect(screen.getByText("List URL (optional)")).toBeDefined();
-    await userEvent.click(screen.getByText("Single file"));
+    await userEvent.click(screen.getByText("Bundled"));
     expect(screen.queryByText("List URL (optional)")).toBeNull();
     expect(screen.getByText("URL")).toBeDefined();
   });
 
-  it("shows base URL error text in keyed mode", async () => {
+  it("shows base URL error text in split mode", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
     await userEvent.type(screen.getByLabelText("source-label"), "Test");
-    await userEvent.click(screen.getByText("Keyed (per-definition)"));
+    await userEvent.click(screen.getByText("Split (per-definition)"));
     await userEvent.click(screen.getByText("Add source"));
     expect(screen.getByText("Base URL is required")).toBeDefined();
   });
 
-  it("populates form with keyed source initial values", () => {
+  it("populates form with split source initial values", () => {
     const source = {
       id: "src-2",
-      mode: "keyed" as const,
+      mode: "split" as const,
       label: "Staging",
       format: "json" as const,
       baseUrl: "https://example.com/defs/",
@@ -316,18 +316,18 @@ describe("SourceFormDialog", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it("shows presetsUrl field in keyed mode", async () => {
+  it("shows presetsUrl field in split mode", async () => {
     render(<SourceFormDialog open={true} onSave={vi.fn()} onClose={vi.fn()} />);
-    await userEvent.click(screen.getByText("Keyed (per-definition)"));
+    await userEvent.click(screen.getByText("Split (per-definition)"));
     expect(screen.getByText("Presets URL (optional)")).toBeDefined();
   });
 
-  it("submits keyed source with presetsUrl", async () => {
+  it("submits split source with presetsUrl", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await user.type(screen.getByLabelText("source-label"), "WithPresets");
-    await user.click(screen.getByText("Keyed (per-definition)"));
+    await user.click(screen.getByText("Split (per-definition)"));
     await user.type(screen.getByLabelText("source-base-url"), "https://r2.example.com/defs/");
     await user.type(screen.getByLabelText("source-list-url"), "https://r2.example.com/keys.json");
     await user.type(
@@ -351,7 +351,7 @@ describe("SourceFormDialog", () => {
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await user.type(screen.getByLabelText("source-label"), "Test");
-    await user.click(screen.getByText("Keyed (per-definition)"));
+    await user.click(screen.getByText("Split (per-definition)"));
     await user.type(screen.getByLabelText("source-base-url"), "https://r2.example.com/defs/");
     await user.type(screen.getByLabelText("source-presets-url"), "http://evil.com/presets.json");
     const dialog = screen.getByTestId("dialog");
@@ -361,10 +361,10 @@ describe("SourceFormDialog", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it("populates presetsUrl from keyed source initial values", () => {
+  it("populates presetsUrl from split source initial values", () => {
     const source = {
       id: "src-2",
-      mode: "keyed" as const,
+      mode: "split" as const,
       label: "Staging",
       format: "json" as const,
       baseUrl: "https://example.com/defs/",
@@ -378,12 +378,12 @@ describe("SourceFormDialog", () => {
     );
   });
 
-  it("validates keyed mode: non-HTTPS listUrl", async () => {
+  it("validates split mode: non-HTTPS listUrl", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await user.type(screen.getByLabelText("source-label"), "Test");
-    await user.click(screen.getByText("Keyed (per-definition)"));
+    await user.click(screen.getByText("Split (per-definition)"));
     await user.type(screen.getByLabelText("source-base-url"), "https://r2.example.com/defs/");
     await user.type(screen.getByLabelText("source-list-url"), "http://evil.com/keys.json");
     await user.click(screen.getByText("Add source"));
@@ -391,17 +391,17 @@ describe("SourceFormDialog", () => {
     expect(onSave).not.toHaveBeenCalled();
   });
 
-  it("submits keyed source without listUrl (optional)", async () => {
+  it("submits split source without listUrl (optional)", async () => {
     const user = userEvent.setup();
     const onSave = vi.fn();
     render(<SourceFormDialog open={true} onSave={onSave} onClose={vi.fn()} />);
     await user.type(screen.getByLabelText("source-label"), "NoList");
-    await user.click(screen.getByText("Keyed (per-definition)"));
+    await user.click(screen.getByText("Split (per-definition)"));
     await user.type(screen.getByLabelText("source-base-url"), "https://r2.example.com/defs/");
     await user.click(screen.getByText("Add source"));
     expect(onSave).toHaveBeenCalledWith({
       label: "NoList",
-      mode: "keyed",
+      mode: "split",
       format: "yaml",
       baseUrl: "https://r2.example.com/defs/",
       listUrl: undefined,

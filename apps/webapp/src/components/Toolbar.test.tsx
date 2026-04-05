@@ -147,14 +147,14 @@ describe("Toolbar", () => {
     expect(screen.getByText("flags.yaml")).toBeDefined();
   });
 
-  it("shows active URL source label instead of file name", () => {
+  it("shows active hosted source label instead of file name", () => {
     definitionStoreState = { sourceFileName: "Production" };
     sourceStoreState = {
       activeSourceId: "src-1",
       sources: [
         {
           id: "src-1",
-          mode: "single",
+          mode: "bundled",
           label: "Production API",
           format: "yaml",
           url: "https://example.com/flags.yaml",

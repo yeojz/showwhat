@@ -22,7 +22,7 @@ The `Configurator` component accepts a store prop. Your app provides the store i
 <Configurator store={yourStore} />
 ```
 
-See `apps/webapp` in the repository for a complete example using Zustand with localStorage persistence.
+See `apps/webapp` in the repository for a complete example using Zustand with localStorage persistence, or the [Using the App](/docs/configurator-getting-started) guide for the hosted version.
 
 ## `ConfiguratorStore` interface
 

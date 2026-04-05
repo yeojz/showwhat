@@ -119,7 +119,16 @@ export default defineConfig({
           text: "Configurator",
           items: [
             { text: "Overview", link: "/docs/configurator" },
-            { text: "Using the App", link: "/docs/configurator-using-the-app" },
+            {
+              text: "Using the App",
+              link: "/docs/configurator-getting-started",
+              items: [
+                { text: "Getting Started", link: "/docs/configurator-getting-started" },
+                { text: "Editing Definitions", link: "/docs/configurator-editing" },
+                { text: "Sources", link: "/docs/configurator-sources" },
+                { text: "Presets", link: "/docs/configurator-presets" },
+              ],
+            },
             { text: "Using the Library", link: "/docs/configurator-using-the-library" },
           ],
         },

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
-import type { RemoteSource } from "../store/source-store.js";
+import type { HostedSource } from "../store/source-store.js";
 
 vi.mock("@showwhat/configurator", () => ({
   Badge: ({
@@ -83,22 +83,22 @@ const { SourceDetailPanel, ModeBadge, FormatBadge } = await import("./SourceDeta
 
 // ─── Fixtures ─────────────────────────────────────────────────────
 
-const baseSingleSource: RemoteSource = {
+const baseBundledSource: HostedSource = {
   id: "src-1",
-  mode: "single",
+  mode: "bundled",
   label: "Production",
   format: "yaml",
   url: "https://r2.example.com/flags.yaml",
 };
 
-const singleSourceWithFetched: RemoteSource = {
-  ...baseSingleSource,
+const bundledSourceWithFetched: HostedSource = {
+  ...baseBundledSource,
   lastFetched: Date.now() - 5_000,
 };
 
-const keyedSource: RemoteSource = {
+const splitSource: HostedSource = {
   id: "src-2",
-  mode: "keyed",
+  mode: "split",
   label: "Staging",
   format: "json",
   baseUrl: "https://r2.example.com/defs/{key}.json",
@@ -108,9 +108,9 @@ const keyedSource: RemoteSource = {
   keyFetchedAt: { "flag-a": Date.now() - 120_000 },
 };
 
-const keyedSourceNoList: RemoteSource = {
+const splitSourceNoList: HostedSource = {
   id: "src-3",
-  mode: "keyed",
+  mode: "split",
   label: "Minimal",
   format: "yaml",
   baseUrl: "https://r2.example.com/defs/{key}.yaml",
@@ -119,7 +119,7 @@ const keyedSourceNoList: RemoteSource = {
 
 function defaultProps(overrides: Partial<Parameters<typeof SourceDetailPanel>[0]> = {}) {
   return {
-    source: baseSingleSource as RemoteSource,
+    source: baseBundledSource as HostedSource,
     isLoaded: false,
     dirtyKeys: [] as string[],
     loading: false,
@@ -146,8 +146,8 @@ afterEach(() => {
 
 describe("ModeBadge", () => {
   it("renders mode text", () => {
-    render(<ModeBadge mode="keyed" />);
-    expect(screen.getByText("keyed")).toBeDefined();
+    render(<ModeBadge mode="split" />);
+    expect(screen.getByText("split")).toBeDefined();
   });
 });
 
@@ -158,9 +158,9 @@ describe("FormatBadge", () => {
   });
 });
 
-// ─── SourceDetailPanel (single source) ────────────────────────────
+// ─── SourceDetailPanel (bundled source) ───────────────────────────
 
-describe("SourceDetailPanel (single source)", () => {
+describe("SourceDetailPanel (bundled source)", () => {
   it("shows source label in top bar", () => {
     render(<SourceDetailPanel {...defaultProps()} />);
     expect(screen.getByText("Production")).toBeDefined();
@@ -168,7 +168,7 @@ describe("SourceDetailPanel (single source)", () => {
 
   it("shows mode and format badges", () => {
     render(<SourceDetailPanel {...defaultProps()} />);
-    expect(screen.getByText("single")).toBeDefined();
+    expect(screen.getByText("bundled")).toBeDefined();
     expect(screen.getByText("yaml")).toBeDefined();
   });
 
@@ -215,19 +215,19 @@ describe("SourceDetailPanel (single source)", () => {
     expect(screen.getByText("Delete")).toBeDefined();
   });
 
-  it("shows reload button for single source URL", () => {
+  it("shows reload button for bundled source URL", () => {
     render(<SourceDetailPanel {...defaultProps()} />);
     expect(screen.getByTitle("Reload from url")).toBeDefined();
   });
 
   it("shows last-fetched timestamp next to URL", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: singleSourceWithFetched })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: bundledSourceWithFetched })} />);
     expect(screen.getByText("just now")).toBeDefined();
   });
 
   it("shows 'just now' for recent timestamps", () => {
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       lastFetched: Date.now() - 10_000,
     };
     render(<SourceDetailPanel {...defaultProps({ source })} />);
@@ -235,8 +235,8 @@ describe("SourceDetailPanel (single source)", () => {
   });
 
   it("shows 'Xm ago' for minutes-old timestamps", () => {
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       lastFetched: Date.now() - 5 * 60_000,
     };
     render(<SourceDetailPanel {...defaultProps({ source })} />);
@@ -244,8 +244,8 @@ describe("SourceDetailPanel (single source)", () => {
   });
 
   it("shows 'Xh ago' for hours-old timestamps", () => {
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       lastFetched: Date.now() - 3 * 3_600_000,
     };
     render(<SourceDetailPanel {...defaultProps({ source })} />);
@@ -253,8 +253,8 @@ describe("SourceDetailPanel (single source)", () => {
   });
 
   it("shows 'Xd ago' for days-old timestamps", () => {
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       lastFetched: Date.now() - 2 * 86_400_000,
     };
     render(<SourceDetailPanel {...defaultProps({ source })} />);
@@ -262,45 +262,45 @@ describe("SourceDetailPanel (single source)", () => {
   });
 });
 
-// ─── SourceDetailPanel (keyed source) ─────────────────────────────
+// ─── SourceDetailPanel (split source) ─────────────────────────────
 
-describe("SourceDetailPanel (keyed source)", () => {
+describe("SourceDetailPanel (split source)", () => {
   it("shows Base URL", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource })} />);
     expect(screen.getByText("Base URL")).toBeDefined();
     expect(screen.getByText("https://r2.example.com/defs/{key}.json")).toBeDefined();
   });
 
   it("shows List URL when present", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource })} />);
     expect(screen.getByText("List URL")).toBeDefined();
     expect(screen.getByText("https://r2.example.com/keys.json")).toBeDefined();
   });
 
   it("shows Presets URL when present", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource })} />);
     expect(screen.getByText("Presets URL")).toBeDefined();
     expect(screen.getByText("https://r2.example.com/presets.json")).toBeDefined();
   });
 
   it("does not show List URL when absent", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSourceNoList })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSourceNoList })} />);
     expect(screen.queryByText("List URL")).toBeNull();
   });
 
   it("shows definition key list", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource })} />);
     expect(screen.getByText("flag-a")).toBeDefined();
     expect(screen.getByText("flag-b")).toBeDefined();
   });
 
   it("shows key count badge", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource })} />);
     expect(screen.getByText("2")).toBeDefined();
   });
 
   it("shows reload button per key when loaded", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource, isLoaded: true })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource, isLoaded: true })} />);
     expect(screen.getByTitle("Reload flag-a")).toBeDefined();
     expect(screen.getByTitle("Reload flag-b")).toBeDefined();
   });
@@ -309,7 +309,7 @@ describe("SourceDetailPanel (keyed source)", () => {
     render(
       <SourceDetailPanel
         {...defaultProps({
-          source: keyedSource,
+          source: splitSource,
           isLoaded: true,
           dirtyKeys: ["flag-a"],
         })}
@@ -321,17 +321,17 @@ describe("SourceDetailPanel (keyed source)", () => {
   });
 
   it("shows remove button per key", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource })} />);
     // Each key row has an X button; there are also X buttons from headers potentially
-    // but keyed source has 2 definition keys, so at least 2 icon-x
+    // but split source has 2 definition keys, so at least 2 icon-x
     const xIcons = screen.getAllByTestId("icon-x");
     expect(xIcons.length).toBeGreaterThanOrEqual(2);
   });
 
   it("shows 'No keys configured' with list URL hint when keys empty and listUrl present", () => {
-    const source: RemoteSource = {
+    const source: HostedSource = {
       id: "src-empty",
-      mode: "keyed",
+      mode: "split",
       label: "Empty",
       format: "json",
       baseUrl: "https://example.com/{key}.json",
@@ -345,7 +345,7 @@ describe("SourceDetailPanel (keyed source)", () => {
   });
 
   it("shows 'Add keys manually' when keys empty and no listUrl", () => {
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSourceNoList })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSourceNoList })} />);
     expect(screen.getByText(/No keys configured.*Add keys manually/)).toBeDefined();
   });
 });
@@ -361,8 +361,8 @@ describe("HeadersSection (via SourceDetailPanel)", () => {
   });
 
   it("headers section open by default when headers exist", () => {
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       headers: { Authorization: "Bearer token" },
     };
     render(<SourceDetailPanel {...defaultProps({ source })} />);
@@ -370,8 +370,8 @@ describe("HeadersSection (via SourceDetailPanel)", () => {
   });
 
   it("shows header entries when headers exist", () => {
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       headers: { Authorization: "Bearer token" },
     };
     render(<SourceDetailPanel {...defaultProps({ source })} />);
@@ -419,8 +419,8 @@ describe("HeadersSection (via SourceDetailPanel)", () => {
   it("can remove a header", async () => {
     const user = userEvent.setup();
     const onUpdateHeaders = vi.fn();
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       headers: { Authorization: "Bearer token", "X-Extra": "foo" },
     };
     render(<SourceDetailPanel {...defaultProps({ source, onUpdateHeaders })} />);
@@ -438,8 +438,8 @@ describe("HeadersSection (via SourceDetailPanel)", () => {
   it("removing last header calls onUpdateHeaders(undefined)", async () => {
     const user = userEvent.setup();
     const onUpdateHeaders = vi.fn();
-    const source: RemoteSource = {
-      ...baseSingleSource,
+    const source: HostedSource = {
+      ...baseBundledSource,
       headers: { Authorization: "Bearer token" },
     };
     render(<SourceDetailPanel {...defaultProps({ source, onUpdateHeaders })} />);
@@ -492,7 +492,7 @@ describe("KeyListSection (via SourceDetailPanel)", () => {
   it("can add a key via input and Add button", async () => {
     const user = userEvent.setup();
     const onAddKey = vi.fn();
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource, onAddKey })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource, onAddKey })} />);
 
     const keyInput = screen.getByPlaceholderText("Add definition key...");
     await user.type(keyInput, "new-key");
@@ -507,7 +507,7 @@ describe("KeyListSection (via SourceDetailPanel)", () => {
   it("can add a key via Enter key", async () => {
     const user = userEvent.setup();
     const onAddKey = vi.fn();
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource, onAddKey })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource, onAddKey })} />);
 
     const keyInput = screen.getByPlaceholderText("Add definition key...");
     await user.type(keyInput, "another-key{Enter}");
@@ -518,7 +518,7 @@ describe("KeyListSection (via SourceDetailPanel)", () => {
   it("does not add empty key", async () => {
     const user = userEvent.setup();
     const onAddKey = vi.fn();
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource, onAddKey })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource, onAddKey })} />);
 
     const addButtons = screen.getAllByText("Add");
     await user.click(addButtons[addButtons.length - 1]);
@@ -579,7 +579,7 @@ describe("SourceDetailPanel callbacks", () => {
     const user = userEvent.setup();
     const onReloadKey = vi.fn();
     render(
-      <SourceDetailPanel {...defaultProps({ source: keyedSource, isLoaded: true, onReloadKey })} />,
+      <SourceDetailPanel {...defaultProps({ source: splitSource, isLoaded: true, onReloadKey })} />,
     );
 
     await user.click(screen.getByTitle("Reload flag-a"));
@@ -589,7 +589,7 @@ describe("SourceDetailPanel callbacks", () => {
   it("calls onRemoveKey when per-key remove button is clicked", async () => {
     const user = userEvent.setup();
     const onRemoveKey = vi.fn();
-    render(<SourceDetailPanel {...defaultProps({ source: keyedSource, onRemoveKey })} />);
+    render(<SourceDetailPanel {...defaultProps({ source: splitSource, onRemoveKey })} />);
 
     // Each key row has its own X button; click the first one
     // The X icons in key rows appear after the refresh icons

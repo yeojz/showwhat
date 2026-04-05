@@ -62,7 +62,107 @@ presets:
 Preset names cannot collide with built-in or reserved condition types (`string`, `number`, `bool`, `datetime`, `env`, `startAt`, `endAt`, `and`, `or`).
 :::
 
-## Using presets for evaluation
+## Composite presets
+
+Composite presets use `and`, `or`, or `matchAnnotations` as their type to bake an entire condition tree into a single reusable name. Instead of binding a single context key, they lock a set of conditions via `overrides.conditions`.
+
+::: code-group
+
+```yaml [YAML]
+presets:
+  sg_free:
+    type: and
+    overrides:
+      conditions:
+        - type: string
+          key: region
+          op: eq
+          value: sg
+        - type: string
+          key: tier
+          op: eq
+          value: free
+
+  premium:
+    type: or
+    overrides:
+      conditions:
+        - type: string
+          key: tier
+          op: eq
+          value: pro
+        - type: string
+          key: tier
+          op: eq
+          value: enterprise
+```
+
+```json [JSON]
+{
+  "presets": {
+    "sg_free": {
+      "type": "and",
+      "overrides": {
+        "conditions": [
+          { "type": "string", "key": "region", "op": "eq", "value": "sg" },
+          { "type": "string", "key": "tier", "op": "eq", "value": "free" }
+        ]
+      }
+    },
+    "premium": {
+      "type": "or",
+      "overrides": {
+        "conditions": [
+          { "type": "string", "key": "tier", "op": "eq", "value": "pro" },
+          { "type": "string", "key": "tier", "op": "eq", "value": "enterprise" }
+        ]
+      }
+    }
+  }
+}
+```
+
+:::
+
+| Field                  | Required | Description                                                                                |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------ |
+| `type`                 | Yes      | `and`, `or`, or `matchAnnotations`                                                         |
+| `key`                  | No       | Not used for composite types                                                               |
+| `overrides.conditions` | Yes      | A non-empty array of conditions. Each item is a full [condition](/docs/conditions) object. |
+
+Conditions inside `overrides.conditions` can themselves be composite, allowing arbitrarily deep nesting:
+
+```yaml
+presets:
+  sg_free_or_enterprise:
+    type: or
+    overrides:
+      conditions:
+        - type: and
+          conditions:
+            - type: string
+              key: region
+              op: eq
+              value: sg
+            - type: string
+              key: tier
+              op: eq
+              value: free
+        - type: string
+          key: tier
+          op: eq
+          value: enterprise
+```
+
+This preset matches users who are either on the free tier in Singapore, or on the enterprise tier in any region.
+
+::: warning
+Use-site `conditions` are ignored for composite presets — the conditions locked in `overrides` always win. This is by design: composite presets are meant to be self-contained.
+:::
+
+## Using presets
+
+### Evaluation
 
 Use `createPresetConditions` to generate evaluators from your preset map, then merge them with the default conditions:
 
@@ -72,13 +172,22 @@ import { showwhat, registerEvaluators, createPresetConditions } from "showwhat";
 const presets = {
   tier: { type: "string", key: "tier", overrides: { op: "eq" } },
   age: { type: "number", key: "user_age" },
+  sg_free: {
+    type: "and",
+    overrides: {
+      conditions: [
+        { type: "string", key: "region", op: "eq", value: "sg" },
+        { type: "string", key: "tier", op: "eq", value: "free" },
+      ],
+    },
+  },
 };
 
 const presetConditions = createPresetConditions(presets);
 
 const result = await showwhat({
   keys: ["banner"],
-  context: { tier: "pro", user_age: 25 },
+  context: { region: "sg", tier: "free", user_age: 25 },
   options: {
     data,
     evaluators: registerEvaluators(presetConditions),
@@ -90,12 +199,15 @@ if (!banner.error) {
 }
 ```
 
-Definitions can then use preset types directly. The `key` is already bound by the preset, so you only need to specify the remaining fields. Any fields listed in `overrides` are forced during evaluation and cannot be changed in the Configurator UI:
+Definitions can then use preset types directly. For primitive presets, the `key` is already bound, so you only need to specify the remaining fields. For composite presets, no additional fields are needed — the entire condition tree is baked in:
 
 ```yaml
 definitions:
   banner:
     variations:
+      - value: "Welcome back, local!"
+        conditions:
+          - type: sg_free
       - value: "Welcome back, Pro!"
         conditions:
           - type: tier
@@ -108,9 +220,9 @@ definitions:
       - value: "Upgrade today"
 ```
 
-In this example, `tier` has `overrides: { op: "eq" }` — so `op` is locked to `"eq"` and only `value` needs to be specified. The `age` preset has no overrides, so both `op` and `value` are user-specified.
+In this example, `sg_free` is a composite preset — it carries its full condition tree and needs no extra fields. The `tier` preset has `overrides: { op: "eq" }`, so `op` is locked and only `value` needs to be specified. The `age` preset has no overrides, so both `op` and `value` are user-specified.
 
-## Using presets in the Configurator UI
+### Configurator
 
 Use `createPresetUI` to generate UI extensions from your preset map, then pass them to the `<Configurator>` component:
 
@@ -125,7 +237,7 @@ function App() {
 }
 ```
 
-With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Premium"). Each preset renders a type-specific editor with the key pre-filled and locked. Fields listed in `overrides` are also disabled in the editor.
+With extensions provided, presets appear in the "Add condition" menu with friendly labels (e.g., "Tier", "Age", "Sg Free"). Each preset renders a type-specific editor with the key pre-filled and locked. Fields listed in `overrides` are also disabled in the editor.
 
 ## API reference
 

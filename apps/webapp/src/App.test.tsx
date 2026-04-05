@@ -487,18 +487,18 @@ describe("App", () => {
   });
 
   // -----------------------------------------------------------------------
-  // Export definition (keyed mode)
+  // Export definition (split mode)
   // -----------------------------------------------------------------------
 
-  it("does not pass onExportDefinition when not in keyed mode", () => {
+  it("does not pass onExportDefinition when not in split mode", () => {
     render(<App />);
     expect(capturedOnExportDefinition).toBeNull();
   });
 
-  it("passes onExportDefinition in keyed mode and it calls the correct export function", () => {
+  it("passes onExportDefinition in split mode and it calls the correct export function", () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
-      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+      sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
@@ -511,7 +511,7 @@ describe("App", () => {
   it("exports as JSON when format=json is passed", () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
-      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "json" }],
+      sources: [{ id: "src-1", mode: "split", label: "Split", format: "json" }],
     };
     render(<App />);
 
@@ -522,18 +522,18 @@ describe("App", () => {
   });
 
   // -----------------------------------------------------------------------
-  // Condition extensions resolver (keyed mode)
+  // Condition extensions resolver (split mode)
   // -----------------------------------------------------------------------
 
-  it("does not pass conditionExtensionsResolver when not in keyed mode", () => {
+  it("does not pass conditionExtensionsResolver when not in split mode", () => {
     render(<App />);
     expect(capturedConditionExtensionsResolver).toBeNull();
   });
 
-  it("passes conditionExtensionsResolver in keyed mode that returns preset UI", () => {
+  it("passes conditionExtensionsResolver in split mode that returns preset UI", () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
-      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+      sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
@@ -547,7 +547,7 @@ describe("App", () => {
   it("resolves different keys independently", () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
-      sources: [{ id: "src-1", mode: "keyed", label: "Keyed", format: "yaml" }],
+      sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 

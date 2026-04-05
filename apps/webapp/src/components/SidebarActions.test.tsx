@@ -207,7 +207,7 @@ describe("SidebarActions", () => {
     expect(mockRevertAll).toHaveBeenCalled();
   });
 
-  it("renders Export dropdown when not keyed source and canExport", () => {
+  it("renders Export dropdown when not split source and canExport", () => {
     renderSidebarActions();
     expect(screen.getByText("Export")).toBeDefined();
   });
@@ -243,14 +243,14 @@ describe("SidebarActions", () => {
     expect(mockExportJson).toHaveBeenCalled();
   });
 
-  it("does not show Export when active source is keyed", () => {
+  it("does not show Export when active source is split", () => {
     sourceStoreState = {
       ...sourceStoreState,
       activeSourceId: "src-1",
       sources: [
         {
           id: "src-1",
-          mode: "keyed",
+          mode: "split",
           label: "Staging",
           format: "json",
           baseUrl: "https://example.com",

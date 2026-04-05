@@ -79,7 +79,7 @@ describe("useViewRouter", () => {
     act(() => {
       result.current.setTab("sources");
     });
-    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "?tab=sources");
+    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "/?tab=sources");
     expect(result.current.tab).toBe("sources");
   });
 
@@ -88,7 +88,7 @@ describe("useViewRouter", () => {
     act(() => {
       result.current.setTab("presets");
     });
-    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "?tab=presets");
+    expect(pushStateSpy).toHaveBeenCalledWith(null, "", "/?tab=presets");
     expect(result.current.tab).toBe("presets");
   });
 

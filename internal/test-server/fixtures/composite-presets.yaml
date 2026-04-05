@@ -68,13 +68,12 @@ presets:
             - us
             - eu
         - type: or
-          overrides:
-            conditions:
-              - type: string
-                key: tier
-                op: eq
-                value: pro
-              - type: string
-                key: tier
-                op: eq
-                value: enterprise
+          conditions:
+            - type: string
+              key: tier
+              op: eq
+              value: pro
+            - type: string
+              key: tier
+              op: eq
+              value: enterprise

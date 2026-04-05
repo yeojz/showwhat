@@ -4,6 +4,8 @@ import type { DataValue } from "./value.js";
 
 export type ContextValue = DataValue;
 
-export const ContextSchema = z.record(z.string(), DataValueSchema);
+export const ContextValueSchema = DataValueSchema;
+
+export const ContextSchema = z.record(z.string(), ContextValueSchema);
 
 export type Context = Record<string, ContextValue>;

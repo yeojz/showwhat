@@ -34,7 +34,11 @@ const results = await showwhat({
   context: { env: "prod" },
   options: { data },
 });
-console.log(results.checkout_v2.value); // true
+
+const entry = results["checkout_v2"];
+if (entry.success) {
+  console.log(entry.value); // true
+}
 ```
 
 ## Features

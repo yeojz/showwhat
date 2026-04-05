@@ -4,11 +4,7 @@ import { CONDITION_TYPES } from "./schemas/condition.js";
 import type { Condition } from "./schemas/condition.js";
 import type { Presets } from "./schemas/preset.js";
 
-// ── Reserved names ────────────────────────────────────────────────────────────
-
 const RESERVED_CONDITION_TYPES = new Set([...Object.values(CONDITION_TYPES), "__custom"]);
-
-// ── Factory ───────────────────────────────────────────────────────────────────
 
 export function createPresetConditions(presets: Presets): ConditionEvaluators {
   const result: ConditionEvaluators = {};

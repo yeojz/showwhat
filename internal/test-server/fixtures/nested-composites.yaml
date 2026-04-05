@@ -37,27 +37,25 @@ presets:
     overrides:
       conditions:
         - type: and
-          overrides:
-            conditions:
-              - type: string
-                key: region
-                op: eq
-                value: us
-              - type: string
-                key: tier
-                op: eq
-                value: pro
+          conditions:
+            - type: string
+              key: region
+              op: eq
+              value: us
+            - type: string
+              key: tier
+              op: eq
+              value: pro
         - type: and
-          overrides:
-            conditions:
-              - type: string
-                key: region
-                op: eq
-                value: eu
-              - type: string
-                key: tier
-                op: eq
-                value: enterprise
+          conditions:
+            - type: string
+              key: region
+              op: eq
+              value: eu
+            - type: string
+              key: tier
+              op: eq
+              value: enterprise
 
   # OR of two tier strings — any paid tier
   any_paid_tier:
@@ -83,9 +81,11 @@ presets:
           op: eq
           value: us
         - type: matchAnnotations
-          overrides:
-            annotations:
-              beta: "true"
+          conditions:
+            - type: string
+              key: beta
+              op: eq
+              value: "true"
 
   # Three-level nesting: AND > OR > AND
   # Must be in an allowed region AND
@@ -102,20 +102,20 @@ presets:
             - ca
             - gb
         - type: or
-          overrides:
-            conditions:
-              - type: matchAnnotations
-                overrides:
-                  annotations:
-                    segment: power_user
-              - type: and
-                overrides:
-                  conditions:
-                    - type: string
-                      key: tier
-                      op: eq
-                      value: pro
-                    - type: boolean
-                      key: opted_in
-                      op: eq
-                      value: true
+          conditions:
+            - type: matchAnnotations
+              conditions:
+                - type: string
+                  key: segment
+                  op: eq
+                  value: power_user
+            - type: and
+              conditions:
+                - type: string
+                  key: tier
+                  op: eq
+                  value: pro
+                - type: bool
+                  key: opted_in
+                  op: eq
+                  value: true

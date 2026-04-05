@@ -14,7 +14,7 @@ import {
   Unplug,
   X,
 } from "lucide-react";
-import type { RemoteSource, KeyedSource } from "../store/source-store.js";
+import type { HostedSource, SplitSource } from "../store/source-store.js";
 
 function formatRelativeTime(epoch: number): string {
   const seconds = Math.floor((Date.now() - epoch) / 1000);
@@ -28,8 +28,8 @@ function formatRelativeTime(epoch: number): string {
 }
 
 const modeBadgeStyles: Record<string, string> = {
-  single: "border-border bg-muted/60 text-foreground/50",
-  keyed: "border-border bg-muted/60 text-foreground/50",
+  bundled: "border-border bg-muted/60 text-foreground/50",
+  split: "border-border bg-muted/60 text-foreground/50",
 };
 
 const formatBadgeStyles: Record<string, string> = {
@@ -235,7 +235,7 @@ function KeyListSection({
   onAddKey,
   onRemoveKey,
 }: {
-  source: KeyedSource;
+  source: SplitSource;
   dirtyKeys: string[];
   loading: boolean;
   isLoaded: boolean;
@@ -359,7 +359,7 @@ export function SourceDetailPanel({
   onRemoveKey,
   onUpdateHeaders,
 }: {
-  source: RemoteSource;
+  source: HostedSource;
   isLoaded: boolean;
   dirtyKeys: string[];
   loading: boolean;
@@ -462,7 +462,7 @@ export function SourceDetailPanel({
               Endpoints
             </h3>
             <div className="rounded-md border border-border divide-y divide-border overflow-hidden bg-card">
-              {source.mode === "single" && (
+              {source.mode === "bundled" && (
                 <UrlRow
                   label="URL"
                   url={source.url}
@@ -471,7 +471,7 @@ export function SourceDetailPanel({
                   onReload={onRefreshSingle}
                 />
               )}
-              {source.mode === "keyed" && (
+              {source.mode === "split" && (
                 <>
                   <UrlRow label="Base URL" url={source.baseUrl} loading={loading} />
                   {source.listUrl && (
@@ -500,8 +500,8 @@ export function SourceDetailPanel({
           {/* Headers — secondary, collapsible, grouped with endpoints */}
           <HeadersSection headers={source.headers} onUpdateHeaders={onUpdateHeaders} />
 
-          {/* Key list management (keyed sources only) */}
-          {source.mode === "keyed" && (
+          {/* Key list management (split sources only) */}
+          {source.mode === "split" && (
             <KeyListSection
               source={source}
               dirtyKeys={dirtyKeys}
