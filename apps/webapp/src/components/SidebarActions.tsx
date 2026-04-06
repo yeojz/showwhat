@@ -4,10 +4,10 @@ import {
   Badge,
   Button,
   ConfirmDialog,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuTrigger,
 } from "@showwhat/configurator";
 import { Download, Undo2 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
@@ -155,22 +155,24 @@ export function SidebarActions({
       <div className="flex-1" />
 
       {!isSplit && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 px-2" disabled={!canExport}>
-              <Download className="mr-1 h-3.5 w-3.5" />
-              <span className="text-xs">Export</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => exportYaml(savedDefinitions, filePresets)}>
+        <Menu>
+          <MenuTrigger
+            render={
+              <Button variant="ghost" size="sm" className="h-7 px-2" disabled={!canExport}>
+                <Download className="mr-1 h-3.5 w-3.5" />
+                <span className="text-xs">Export</span>
+              </Button>
+            }
+          />
+          <MenuContent>
+            <MenuItem onClick={() => exportYaml(savedDefinitions, filePresets)}>
               Export as YAML
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => exportJson(savedDefinitions, filePresets)}>
+            </MenuItem>
+            <MenuItem onClick={() => exportJson(savedDefinitions, filePresets)}>
               Export as JSON
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </MenuItem>
+          </MenuContent>
+        </Menu>
       )}
 
       <ConfirmDialog

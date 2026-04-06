@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import {
   Button,
   ConfirmDialog,
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  Menu,
+  MenuContent,
+  MenuItem,
+  MenuTrigger,
 } from "@showwhat/configurator";
 import { cn } from "@showwhat/configurator";
 import { FilePlus2, FileText, Globe, Plus, Unplug } from "lucide-react";
@@ -472,23 +472,25 @@ export function SourceSettings() {
           <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Sources
           </span>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setFormState("add")}>
+          <Menu>
+            <MenuTrigger
+              render={
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              }
+            />
+            <MenuContent align="end">
+              <MenuItem onClick={() => setFormState("add")}>
                 <Globe className="mr-2 h-4 w-4" />
                 From URL
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+              </MenuItem>
+              <MenuItem onClick={() => fileInputRef.current?.click()}>
                 <FileText className="mr-2 h-4 w-4" />
                 From file
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </MenuItem>
+            </MenuContent>
+          </Menu>
         </div>
 
         <input

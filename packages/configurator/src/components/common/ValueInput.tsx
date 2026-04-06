@@ -91,7 +91,7 @@ export function ValueInput({ value, onChange, placeholder }: ValueInputProps) {
 
   return (
     <div className="flex items-start gap-2">
-      <Select value={type} onValueChange={handleTypeChange}>
+      <Select value={type} onValueChange={(v) => handleTypeChange(v as string)}>
         <SelectTrigger className="h-9 w-[110px] shrink-0 text-sm">
           <SelectValue />
         </SelectTrigger>

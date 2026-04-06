@@ -26,14 +26,4 @@ describe("Badge", () => {
     const el = screen.getByText("Styled");
     expect(el.className).toContain("custom-class");
   });
-
-  it("renders as child element when asChild is true", () => {
-    render(
-      <Badge asChild>
-        <a href="/test">Link Badge</a>
-      </Badge>,
-    );
-    const el = screen.getByText("Link Badge");
-    expect(el.tagName).toBe("A");
-  });
 });

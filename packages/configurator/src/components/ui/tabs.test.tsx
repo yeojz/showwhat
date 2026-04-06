@@ -1,18 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs.js";
+import { Tabs, TabsList, TabsTab, TabsPanel } from "./tabs.js";
 
 describe("Tabs components", () => {
   it("renders the default tab content", () => {
     render(
       <Tabs defaultValue="one">
         <TabsList>
-          <TabsTrigger value="one">Tab One</TabsTrigger>
-          <TabsTrigger value="two">Tab Two</TabsTrigger>
+          <TabsTab value="one">Tab One</TabsTab>
+          <TabsTab value="two">Tab Two</TabsTab>
         </TabsList>
-        <TabsContent value="one">Content One</TabsContent>
-        <TabsContent value="two">Content Two</TabsContent>
+        <TabsPanel value="one">Content One</TabsPanel>
+        <TabsPanel value="two">Content Two</TabsPanel>
       </Tabs>,
     );
     expect(screen.getByText("Content One")).toBeDefined();
@@ -20,16 +20,16 @@ describe("Tabs components", () => {
     expect(screen.getByText("Tab Two")).toBeDefined();
   });
 
-  it("switches content when a tab trigger is clicked", async () => {
+  it("switches content when a tab is clicked", async () => {
     const user = userEvent.setup();
     render(
       <Tabs defaultValue="one">
         <TabsList>
-          <TabsTrigger value="one">Tab One</TabsTrigger>
-          <TabsTrigger value="two">Tab Two</TabsTrigger>
+          <TabsTab value="one">Tab One</TabsTab>
+          <TabsTab value="two">Tab Two</TabsTab>
         </TabsList>
-        <TabsContent value="one">Content One</TabsContent>
-        <TabsContent value="two">Content Two</TabsContent>
+        <TabsPanel value="one">Content One</TabsPanel>
+        <TabsPanel value="two">Content Two</TabsPanel>
       </Tabs>,
     );
     await user.click(screen.getByText("Tab Two"));
@@ -40,10 +40,10 @@ describe("Tabs components", () => {
     render(
       <Tabs defaultValue="a" orientation="vertical">
         <TabsList>
-          <TabsTrigger value="a">A</TabsTrigger>
-          <TabsTrigger value="b">B</TabsTrigger>
+          <TabsTab value="a">A</TabsTab>
+          <TabsTab value="b">B</TabsTab>
         </TabsList>
-        <TabsContent value="a">Content A</TabsContent>
+        <TabsPanel value="a">Content A</TabsPanel>
       </Tabs>,
     );
     const list = screen.getByRole("tablist");
@@ -54,52 +54,53 @@ describe("Tabs components", () => {
     render(
       <Tabs defaultValue="a">
         <TabsList>
-          <TabsTrigger value="a">A</TabsTrigger>
+          <TabsTab value="a">A</TabsTab>
         </TabsList>
-        <TabsContent value="a">Content A</TabsContent>
+        <TabsPanel value="a">Content A</TabsPanel>
       </Tabs>,
     );
     const list = screen.getByRole("tablist");
-    expect(list.getAttribute("aria-orientation")).toBe("horizontal");
+    // Base UI omits aria-orientation for horizontal (the default)
+    expect(list.getAttribute("aria-orientation")).toBeNull();
   });
 
   it("passes custom className to TabsList", () => {
     render(
       <Tabs defaultValue="a">
         <TabsList className="custom-list">
-          <TabsTrigger value="a">A</TabsTrigger>
+          <TabsTab value="a">A</TabsTab>
         </TabsList>
-        <TabsContent value="a">Content A</TabsContent>
+        <TabsPanel value="a">Content A</TabsPanel>
       </Tabs>,
     );
     const list = screen.getByRole("tablist");
     expect(list.className).toContain("custom-list");
   });
 
-  it("passes custom className to TabsTrigger", () => {
+  it("passes custom className to TabsTab", () => {
     render(
       <Tabs defaultValue="a">
         <TabsList>
-          <TabsTrigger value="a" className="custom-trigger">
+          <TabsTab value="a" className="custom-trigger">
             A
-          </TabsTrigger>
+          </TabsTab>
         </TabsList>
-        <TabsContent value="a">Content A</TabsContent>
+        <TabsPanel value="a">Content A</TabsPanel>
       </Tabs>,
     );
     const trigger = screen.getByRole("tab");
     expect(trigger.className).toContain("custom-trigger");
   });
 
-  it("passes custom className to TabsContent", () => {
+  it("passes custom className to TabsPanel", () => {
     render(
       <Tabs defaultValue="a">
         <TabsList>
-          <TabsTrigger value="a">A</TabsTrigger>
+          <TabsTab value="a">A</TabsTab>
         </TabsList>
-        <TabsContent value="a" className="custom-content">
+        <TabsPanel value="a" className="custom-content">
           Content A
-        </TabsContent>
+        </TabsPanel>
       </Tabs>,
     );
     const panel = screen.getByRole("tabpanel");
@@ -111,11 +112,11 @@ describe("Tabs components", () => {
     render(
       <Tabs defaultValue="one">
         <TabsList>
-          <TabsTrigger value="one">Tab One</TabsTrigger>
-          <TabsTrigger value="two">Tab Two</TabsTrigger>
+          <TabsTab value="one">Tab One</TabsTab>
+          <TabsTab value="two">Tab Two</TabsTab>
         </TabsList>
-        <TabsContent value="one">Content One</TabsContent>
-        <TabsContent value="two">Content Two</TabsContent>
+        <TabsPanel value="one">Content One</TabsPanel>
+        <TabsPanel value="two">Content Two</TabsPanel>
       </Tabs>,
     );
     await act(async () => {
@@ -130,11 +131,11 @@ describe("Tabs components", () => {
     render(
       <Tabs defaultValue="one" orientation="vertical">
         <TabsList>
-          <TabsTrigger value="one">Tab One</TabsTrigger>
-          <TabsTrigger value="two">Tab Two</TabsTrigger>
+          <TabsTab value="one">Tab One</TabsTab>
+          <TabsTab value="two">Tab Two</TabsTab>
         </TabsList>
-        <TabsContent value="one">Content One</TabsContent>
-        <TabsContent value="two">Content Two</TabsContent>
+        <TabsPanel value="one">Content One</TabsPanel>
+        <TabsPanel value="two">Content Two</TabsPanel>
       </Tabs>,
     );
     await act(async () => {

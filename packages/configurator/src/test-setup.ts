@@ -1,5 +1,11 @@
-// Polyfills for radix-ui components in jsdom
-// These methods are used by radix-ui but not available in jsdom
+// Polyfills for base-ui components in jsdom
+// These methods are used by base-ui but not available in jsdom
+
+if (typeof Element.prototype.getAnimations !== "function") {
+  Element.prototype.getAnimations = function () {
+    return [];
+  };
+}
 
 if (typeof Element.prototype.hasPointerCapture !== "function") {
   Element.prototype.hasPointerCapture = function () {
@@ -19,7 +25,7 @@ if (typeof Element.prototype.scrollIntoView !== "function") {
   Element.prototype.scrollIntoView = function () {};
 }
 
-// ResizeObserver polyfill for radix-ui scroll-area
+// ResizeObserver polyfill for base-ui scroll-area
 if (typeof globalThis.ResizeObserver === "undefined") {
   globalThis.ResizeObserver = class ResizeObserver {
     observe() {}

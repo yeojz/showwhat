@@ -61,20 +61,19 @@ vi.mock("@showwhat/configurator", () => ({
       )}
     </div>
   ),
-  DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-    <>{children}</>
-  ),
-  DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+  Menu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  MenuTrigger: ({
+    children,
+    render,
+  }: {
+    children?: React.ReactNode;
+    render?: React.ReactElement;
+    asChild?: boolean;
+  }) => <>{render ?? children}</>,
+  MenuContent: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dropdown-content">{children}</div>
   ),
-  DropdownMenuItem: ({
-    children,
-    onClick,
-  }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-  }) => (
+  MenuItem: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
     <button data-testid="dropdown-item" onClick={onClick}>
       {children}
     </button>

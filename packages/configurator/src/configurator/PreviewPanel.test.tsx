@@ -626,15 +626,17 @@ describe("PreviewPanel", () => {
     expect(screen.getByPlaceholderText(/env/i)).toBeDefined();
   });
 
-  it("should apply draft value and close the editor dialog", () => {
+  it("should apply draft value and close the editor dialog", async () => {
     renderWithStore(makeStore());
     openJsonEditor();
     const textarea = getJsonEditorTextarea();
     fireEvent.change(textarea, { target: { value: '{"x": 42}' } });
     applyJsonEditor();
 
-    // Dialog should close (textarea no longer visible)
-    expect(screen.queryByPlaceholderText(/env/i)).toBeNull();
+    // Dialog close is async in base-ui
+    await waitFor(() => {
+      expect(screen.queryByPlaceholderText(/env/i)).toBeNull();
+    });
 
     // The context preview should show the new value
     expect(screen.getByText(/42/)).toBeDefined();
@@ -909,7 +911,7 @@ describe("PreviewPanel", () => {
     expect(screen.getByText("Edit Seed Annotations")).toBeDefined();
   });
 
-  it("should show annotations preview text after applying", () => {
+  it("should show annotations preview text after applying", async () => {
     renderWithStore(makeStore());
     openSimulator();
     const editButtons = screen.getAllByText("Edit");
@@ -919,7 +921,9 @@ describe("PreviewPanel", () => {
     fireEvent.change(textarea, { target: { value: '{ "bucket": 42 }' } });
     fireEvent.click(screen.getByRole("button", { name: /apply/i }));
 
-    expect(screen.getByText(/bucket/)).toBeDefined();
+    await waitFor(() => {
+      expect(screen.getByText(/bucket/)).toBeDefined();
+    });
   });
 
   it("should show error for invalid JSON in annotations", () => {

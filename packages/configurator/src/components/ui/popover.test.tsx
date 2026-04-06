@@ -5,7 +5,6 @@ import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-  PopoverAnchor,
   PopoverHeader,
   PopoverTitle,
   PopoverDescription,
@@ -32,19 +31,6 @@ describe("Popover components", () => {
     );
     await user.click(screen.getByText("Open popover"));
     expect(screen.getByText("Popover content here")).toBeDefined();
-  });
-
-  it("renders PopoverAnchor", () => {
-    render(
-      <Popover>
-        <PopoverAnchor>
-          <span>Anchor element</span>
-        </PopoverAnchor>
-        <PopoverTrigger>Open</PopoverTrigger>
-        <PopoverContent>Content</PopoverContent>
-      </Popover>,
-    );
-    expect(screen.getByText("Anchor element")).toBeDefined();
   });
 
   it("renders PopoverHeader, PopoverTitle, and PopoverDescription", async () => {

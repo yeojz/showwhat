@@ -11,7 +11,7 @@ export {
 } from "./components/condition-builder/condition-registry.js";
 export type { ConditionTypeMeta } from "./components/condition-builder/condition-registry.js";
 
-// shadcn primitives
+// UI primitives
 export { Button, buttonVariants } from "./components/ui/button.js";
 export { Input } from "./components/ui/input.js";
 export {
@@ -37,18 +37,12 @@ export {
   DialogTrigger,
   DialogClose,
 } from "./components/ui/dialog.js";
-export {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "./components/ui/dropdown-menu.js";
+export { Menu, MenuContent, MenuItem, MenuTrigger, MenuSeparator } from "./components/ui/menu.js";
 export { Label } from "./components/ui/label.js";
 export { Switch } from "./components/ui/switch.js";
 export { Textarea } from "./components/ui/textarea.js";
 export { Popover, PopoverContent, PopoverTrigger } from "./components/ui/popover.js";
-export { Tabs, TabsList, TabsTrigger, TabsContent } from "./components/ui/tabs.js";
+export { Tabs, TabsList, TabsTab, TabsPanel } from "./components/ui/tabs.js";
 
 // Common components
 export { ValueInput } from "./components/common/ValueInput.js";

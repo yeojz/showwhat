@@ -1,11 +1,5 @@
 import { Plus } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu.js";
+import { Menu, MenuContent, MenuItem, MenuSeparator, MenuTrigger } from "../ui/menu.js";
 import { BUILTIN_CONDITION_TYPES } from "./condition-registry.js";
 import { useConditionExtensions } from "./ConditionExtensionsContext.js";
 export { buildDefaultCondition as getDefaultCondition } from "./utils.js";
@@ -20,42 +14,40 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
   const sugar = BUILTIN_CONDITION_TYPES.filter((m) => ["env", "startAt", "endAt"].includes(m.type));
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded px-3 h-8 text-sm font-medium hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50">
+    <Menu>
+      <MenuTrigger className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded px-3 h-8 text-sm font-medium hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50">
         <Plus className="mr-1 h-3.5 w-3.5" />
         Add condition
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
+      </MenuTrigger>
+      <MenuContent align="start">
         {primitives.map((meta) => (
-          <DropdownMenuItem key={meta.type} onSelect={() => onAdd(meta.type)}>
+          <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
             {meta.label}
-          </DropdownMenuItem>
+          </MenuItem>
         ))}
-        <DropdownMenuSeparator />
+        <MenuSeparator />
         {sugar.map((meta) => (
-          <DropdownMenuItem key={meta.type} onSelect={() => onAdd(meta.type)}>
+          <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
             {meta.label}
-          </DropdownMenuItem>
+          </MenuItem>
         ))}
         {extraTypes.length > 0 && (
           <>
-            <DropdownMenuSeparator />
+            <MenuSeparator />
             {extraTypes.map((meta) => (
-              <DropdownMenuItem key={meta.type} onSelect={() => onAdd(meta.type)}>
+              <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
                 {meta.label}
-              </DropdownMenuItem>
+              </MenuItem>
             ))}
           </>
         )}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => onAdd("and")}>and</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onAdd("or")}>or</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onAdd("matchAnnotations")}>
-          matchAnnotations
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onSelect={() => onAdd("__custom")}>Custom</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        <MenuSeparator />
+        <MenuItem onClick={() => onAdd("and")}>and</MenuItem>
+        <MenuItem onClick={() => onAdd("or")}>or</MenuItem>
+        <MenuItem onClick={() => onAdd("matchAnnotations")}>matchAnnotations</MenuItem>
+        <MenuSeparator />
+        <MenuItem onClick={() => onAdd("__custom")}>Custom</MenuItem>
+      </MenuContent>
+    </Menu>
   );
 }

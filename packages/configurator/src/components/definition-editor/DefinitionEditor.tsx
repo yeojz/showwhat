@@ -3,12 +3,7 @@ import type { Variation } from "showwhat";
 import { AlertTriangle, Download, Plus, Save, Trash2, Undo2 } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConfirmDialog } from "../common/ConfirmDialog.js";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../ui/dropdown-menu.js";
+import { Menu, MenuContent, MenuItem, MenuTrigger } from "../ui/menu.js";
 import { Input } from "../ui/input.js";
 import { Label } from "../ui/label.js";
 import { Switch } from "../ui/switch.js";
@@ -92,18 +87,18 @@ export function DefinitionEditor({
           </Button>
         )}
         {onExport && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={isDirty || isPending}>
-                <Download className="mr-1.5 h-4 w-4" />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onExport("yaml")}>Export as YAML</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onExport("json")}>Export as JSON</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Menu>
+            <MenuTrigger
+              render={<Button variant="ghost" size="sm" disabled={isDirty || isPending} />}
+            >
+              <Download className="mr-1.5 h-4 w-4" />
+              Export
+            </MenuTrigger>
+            <MenuContent>
+              <MenuItem onClick={() => onExport("yaml")}>Export as YAML</MenuItem>
+              <MenuItem onClick={() => onExport("json")}>Export as JSON</MenuItem>
+            </MenuContent>
+          </Menu>
         )}
         {onRemove && (
           <ConfirmDialog
