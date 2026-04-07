@@ -12,8 +12,10 @@ import { PresetEditor, InlinePresetList } from "./components/PresetSettings.js";
 import { useDefinitionStore } from "./store/definition-store.js";
 import { usePresetStore } from "./store/preset-store.js";
 import { useSourceStore } from "./store/source-store.js";
+import type { SplitSource } from "./store/source-store.js";
 import { useViewRouter } from "./hooks/useViewRouter.js";
 import { useFileExport } from "./hooks/useFileExport.js";
+import { useSourceFetch } from "./hooks/useSourceFetch.js";
 
 type Theme = "light" | "dark" | "system";
 
@@ -59,6 +61,43 @@ export function App() {
   const sources = useSourceStore((s) => s.sources);
   const activeSource = activeSourceId ? sources.find((s) => s.id === activeSourceId) : undefined;
   const isSplit = activeSource?.mode === "split";
+  const splitDefinitionKeys =
+    isSplit && activeSource?.mode === "split" ? activeSource.definitionKeys : undefined;
+
+  const [loadingDefinition, setLoadingDefinition] = useState(false);
+  const { reloadDefinitionKey } = useSourceFetch();
+  const upsertDefinition = useDefinitionStore((s) => s.upsertDefinition);
+  const markFetched = useSourceStore((s) => s.markFetched);
+  const definitions = useDefinitionStore((s) => s.definitions);
+
+  const handleBeforeSelect = useCallback(
+    async (key: string) => {
+      if (!isSplit || !activeSource || definitions[key]) return;
+      setLoadingDefinition(true);
+      try {
+        const def = await reloadDefinitionKey(activeSource as SplitSource, key);
+        if (def) {
+          upsertDefinition(key, def);
+          markFetched(activeSource.id, [key]);
+        }
+      } finally {
+        setLoadingDefinition(false);
+      }
+    },
+    [isSplit, activeSource, definitions, reloadDefinitionKey, upsertDefinition, markFetched],
+  );
+
+  const handleRefreshDefinition = useCallback(
+    async (key: string) => {
+      if (!isSplit || !activeSource) return;
+      const def = await reloadDefinitionKey(activeSource as SplitSource, key);
+      if (def) {
+        upsertDefinition(key, def);
+        markFetched(activeSource.id, [key]);
+      }
+    },
+    [isSplit, activeSource, reloadDefinitionKey, upsertDefinition, markFetched],
+  );
 
   const overrides = usePresetStore((s) => s.presets);
   const filePresets = useDefinitionStore((s) => s.filePresets);
@@ -164,6 +203,10 @@ export function App() {
                 <EmptyState onCreateNew={handleCreateNew} onGoToSources={() => setTab("sources")} />
               }
               onExportDefinition={isSplit ? onExportDefinition : undefined}
+              definitionKeys={splitDefinitionKeys}
+              onBeforeSelect={isSplit ? handleBeforeSelect : undefined}
+              onRefreshDefinition={isSplit ? handleRefreshDefinition : undefined}
+              isLoadingDefinition={loadingDefinition}
             />
           </PreviewStateProvider>
         )}

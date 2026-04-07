@@ -30,6 +30,10 @@ let capturedOnExportDefinition:
   | ((key: string, def: unknown, format: "yaml" | "json") => void)
   | null = null;
 let capturedConditionExtensionsResolver: ((key: string) => unknown) | null = null;
+let capturedDefinitionKeys: string[] | undefined = undefined;
+let capturedOnBeforeSelect: ((key: string) => Promise<void> | void) | null = null;
+let capturedOnRefreshDefinition: ((key: string) => void) | null = null;
+let capturedIsLoadingDefinition: boolean | undefined = undefined;
 
 vi.mock("@showwhat/configurator", () => ({
   Configurator: ({
@@ -37,16 +41,28 @@ vi.mock("@showwhat/configurator", () => ({
     emptyState,
     onExportDefinition,
     conditionExtensionsResolver,
+    definitionKeys,
+    onBeforeSelect,
+    onRefreshDefinition,
+    isLoadingDefinition,
   }: {
     store: unknown;
     emptyState?: React.ReactNode;
     onExportDefinition?: (key: string, def: unknown) => void;
     conditionExtensionsResolver?: (key: string) => unknown;
+    definitionKeys?: string[];
+    onBeforeSelect?: (key: string) => Promise<void> | void;
+    onRefreshDefinition?: (key: string) => void;
+    isLoadingDefinition?: boolean;
   }) => {
     capturedStore = store;
     capturedEmptyState = emptyState;
     capturedOnExportDefinition = onExportDefinition ?? null;
     capturedConditionExtensionsResolver = conditionExtensionsResolver ?? null;
+    capturedDefinitionKeys = definitionKeys;
+    capturedOnBeforeSelect = onBeforeSelect ?? null;
+    capturedOnRefreshDefinition = onRefreshDefinition ?? null;
+    capturedIsLoadingDefinition = isLoadingDefinition;
     return <div data-testid="configurator">{emptyState}</div>;
   },
   createPresetUI: (...args: unknown[]) => mockCreatePresetUI(...args),
@@ -164,9 +180,15 @@ const mockSubscribe = vi.fn((listener: () => void) => {
 });
 
 let sourceStoreOverrides: Record<string, unknown> = {};
+const mockMarkFetched = vi.fn();
 vi.mock("./store/source-store.js", () => {
   const useSourceStore = (selector: (s: Record<string, unknown>) => unknown) => {
-    return selector({ activeSourceId: null, sources: [], ...sourceStoreOverrides });
+    return selector({
+      activeSourceId: null,
+      sources: [],
+      markFetched: mockMarkFetched,
+      ...sourceStoreOverrides,
+    });
   };
   return { useSourceStore };
 });
@@ -177,6 +199,17 @@ vi.mock("./hooks/useFileExport.js", () => ({
     exportJson: vi.fn(),
     exportDefinitionYaml: vi.fn(),
     exportDefinitionJson: vi.fn(),
+  }),
+}));
+
+const mockReloadDefinitionKey = vi.fn();
+vi.mock("./hooks/useSourceFetch.js", () => ({
+  useSourceFetch: () => ({
+    fetchSource: vi.fn(),
+    reloadKeyList: vi.fn(),
+    reloadDefinitionKey: mockReloadDefinitionKey,
+    loading: false,
+    error: null,
   }),
 }));
 
@@ -216,7 +249,13 @@ describe("App", () => {
     capturedOnGoToSources = null;
     capturedOnExportDefinition = null;
     capturedConditionExtensionsResolver = null;
+    capturedDefinitionKeys = undefined;
+    capturedOnBeforeSelect = null;
+    capturedOnRefreshDefinition = null;
+    capturedIsLoadingDefinition = undefined;
     sourceStoreOverrides = {};
+    mockMarkFetched.mockReset();
+    mockReloadDefinitionKey.mockReset();
     matchMediaListeners.length = 0;
     subscribers.length = 0;
     mockAddDefinition.mockReset();
@@ -582,5 +621,38 @@ describe("App", () => {
     capturedConditionExtensionsResolver!("key-a");
     capturedConditionExtensionsResolver!("key-b");
     expect(mockCreatePresetUI).toHaveBeenCalledTimes(2);
+  });
+
+  // -----------------------------------------------------------------------
+  // Lazy loading props (split mode)
+  // -----------------------------------------------------------------------
+
+  it("does not pass lazy loading props when not in split mode", () => {
+    render(<App />);
+    expect(capturedDefinitionKeys).toBeUndefined();
+    expect(capturedOnBeforeSelect).toBeNull();
+    expect(capturedOnRefreshDefinition).toBeNull();
+    expect(capturedIsLoadingDefinition).toBe(false);
+  });
+
+  it("passes definitionKeys and callbacks in split mode", () => {
+    sourceStoreOverrides = {
+      activeSourceId: "src-1",
+      sources: [
+        {
+          id: "src-1",
+          mode: "split",
+          label: "Split",
+          format: "yaml",
+          definitionKeys: ["feat-a", "feat-b"],
+        },
+      ],
+    };
+    render(<App />);
+
+    expect(capturedDefinitionKeys).toEqual(["feat-a", "feat-b"]);
+    expect(capturedOnBeforeSelect).not.toBeNull();
+    expect(capturedOnRefreshDefinition).not.toBeNull();
+    expect(capturedIsLoadingDefinition).toBe(false);
   });
 });
