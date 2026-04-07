@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Configurator, createPresetUI } from "@showwhat/configurator";
+import { Configurator, createPresetUI, PreviewStateProvider } from "@showwhat/configurator";
 import type { ConfiguratorStoreSource } from "@showwhat/configurator";
+import { usePreviewStore } from "./store/preview-store.js";
 import { mergePresets } from "showwhat";
 import type { Definition, Presets, PresetReader } from "showwhat";
 import { Toolbar } from "./components/Toolbar.js";
@@ -114,6 +115,8 @@ export function App() {
     };
   }, [isSplit, effectiveReader, overrides, resolvedPresets, resolvedKeyPresets]);
 
+  const previewState = usePreviewStore();
+
   const storeSource: ConfiguratorStoreSource = useMemo(
     () => ({
       getSnapshot: useDefinitionStore.getState,
@@ -150,17 +153,19 @@ export function App() {
       <Toolbar tab={tab} onTabChange={setTab} theme={theme} onThemeToggle={setTheme} />
       <main className="flex-1 overflow-hidden">
         {tab === "definitions" && (
-          <Configurator
-            store={storeSource}
-            className="h-full"
-            conditionExtensions={conditionExtensions}
-            conditionExtensionsResolver={conditionExtensionsResolver}
-            sidebarHeader={<SidebarActions fileInputRef={fileInputRef} />}
-            emptyState={
-              <EmptyState onCreateNew={handleCreateNew} onGoToSources={() => setTab("sources")} />
-            }
-            onExportDefinition={isSplit ? onExportDefinition : undefined}
-          />
+          <PreviewStateProvider value={previewState}>
+            <Configurator
+              store={storeSource}
+              className="h-full"
+              conditionExtensions={conditionExtensions}
+              conditionExtensionsResolver={conditionExtensionsResolver}
+              sidebarHeader={<SidebarActions fileInputRef={fileInputRef} />}
+              emptyState={
+                <EmptyState onCreateNew={handleCreateNew} onGoToSources={() => setTab("sources")} />
+              }
+              onExportDefinition={isSplit ? onExportDefinition : undefined}
+            />
+          </PreviewStateProvider>
         )}
         {tab === "sources" && <SourceSettings />}
         {tab === "presets" && (
