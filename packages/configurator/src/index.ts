@@ -90,3 +90,5 @@ export type {
   ActionState,
 } from "./configurator/types.js";
 export type { PreviewResult } from "./configurator/preview-store.js";
+export { PreviewStateProvider } from "./configurator/preview-context.js";
+export type { PreviewState } from "./configurator/preview-context.js";
