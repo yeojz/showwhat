@@ -119,6 +119,38 @@ describe("Configurator", () => {
     expect(screen.getByText("flag-b")).toBeDefined();
     expect(screen.getByText("flag-c")).toBeDefined();
   });
+
+  it("calls onBeforeSelect before selectDefinition when clicking a sidebar key", async () => {
+    const callOrder: string[] = [];
+    const onBeforeSelect = vi.fn(async () => {
+      callOrder.push("before");
+    });
+    const store = createMockStore({
+      definitions: {
+        "flag-a": baseDef,
+        "flag-b": { variations: [{ value: "off" }] },
+      },
+      selectDefinition: vi.fn(async () => {
+        callOrder.push("select");
+      }),
+    });
+    const user = userEvent.setup();
+    render(<Configurator store={store} onBeforeSelect={onBeforeSelect} />);
+    await user.click(screen.getByText("flag-b"));
+    expect(onBeforeSelect).toHaveBeenCalledWith("flag-b");
+    expect(store.selectDefinition).toHaveBeenCalledWith("flag-b");
+    expect(callOrder).toEqual(["before", "select"]);
+  });
+
+  it("shows loading indicator when isLoadingDefinition is true and no definition is selected", () => {
+    const store = createMockStore({
+      selectedKey: "unfetched-key",
+      definitions: {},
+    });
+    render(<Configurator store={store} isLoadingDefinition={true} />);
+    expect(screen.queryByText("Select a definition to edit")).toBeNull();
+    expect(screen.getByText("Loading definition\u2026")).toBeDefined();
+  });
 });
 
 describe("Configurator editor interactions", () => {

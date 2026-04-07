@@ -95,12 +95,16 @@ function EditorLayout({
   emptyState,
   sidebarHeader,
   definitionKeys,
+  onBeforeSelect,
+  isLoadingDefinition,
   conditionExtensionsResolver,
   onExportDefinition,
 }: {
   emptyState?: React.ReactNode;
   sidebarHeader?: React.ReactNode;
   definitionKeys?: string[];
+  onBeforeSelect?: (key: string) => Promise<void> | void;
+  isLoadingDefinition?: boolean;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
@@ -121,7 +125,7 @@ function EditorLayout({
     [conditionExtensionsResolver, selectedKey],
   );
 
-  if (Object.keys(definitions).length === 0 && emptyState) {
+  if (keysForList.length === 0 && emptyState) {
     return <>{emptyState}</>;
   }
 
@@ -159,6 +163,10 @@ function EditorLayout({
           }
         />
       </div>
+    ) : isLoadingDefinition ? (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        Loading definition…
+      </div>
     ) : (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
         Select a definition to edit
@@ -180,7 +188,10 @@ function EditorLayout({
             validationErrors={validationErrors}
             dirtyKeys={dirtyKeys}
             onSelect={(key) => {
-              runAction(() => getStore().selectDefinition(key)).catch(() => {});
+              runAction(async () => {
+                if (onBeforeSelect) await onBeforeSelect(key);
+                await getStore().selectDefinition(key);
+              }).catch(() => {});
             }}
             onAdd={(key) => runAction(() => getStore().addDefinition(key))}
             onRemove={(key) => {
@@ -217,6 +228,8 @@ export function Configurator({
   emptyState,
   sidebarHeader,
   definitionKeys,
+  onBeforeSelect,
+  isLoadingDefinition,
   conditionExtensions,
   conditionExtensionsResolver,
   fallbackEvaluator,
@@ -227,6 +240,8 @@ export function Configurator({
   emptyState?: React.ReactNode;
   sidebarHeader?: React.ReactNode;
   definitionKeys?: string[];
+  onBeforeSelect?: (key: string) => Promise<void> | void;
+  isLoadingDefinition?: boolean;
   conditionExtensions?: ConditionExtensions;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   fallbackEvaluator?: ConditionEvaluator;
@@ -245,6 +260,8 @@ export function Configurator({
                 emptyState={emptyState}
                 sidebarHeader={sidebarHeader}
                 definitionKeys={definitionKeys}
+                onBeforeSelect={onBeforeSelect}
+                isLoadingDefinition={isLoadingDefinition}
                 conditionExtensionsResolver={conditionExtensionsResolver}
                 onExportDefinition={onExportDefinition}
               />
