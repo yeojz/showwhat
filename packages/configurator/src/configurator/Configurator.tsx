@@ -98,6 +98,7 @@ function EditorLayout({
   onBeforeSelect,
   isLoadingDefinition,
   conditionExtensionsResolver,
+  onRefreshDefinition,
   onExportDefinition,
 }: {
   emptyState?: React.ReactNode;
@@ -106,6 +107,7 @@ function EditorLayout({
   onBeforeSelect?: (key: string) => Promise<void> | void;
   isLoadingDefinition?: boolean;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
+  onRefreshDefinition?: (key: string) => void;
   onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
   const definitions = useConfiguratorSelector(selectDefinitions);
@@ -156,6 +158,9 @@ function EditorLayout({
           onRemove={() => {
             runAction(() => getStore().removeDefinition(selectedKey)).catch(() => {});
           }}
+          onRefresh={
+            onRefreshDefinition && selectedKey ? () => onRefreshDefinition(selectedKey) : undefined
+          }
           onExport={
             onExportDefinition && selectedDefinition
               ? (fmt: "yaml" | "json") => onExportDefinition(selectedKey, selectedDefinition, fmt)
@@ -233,6 +238,7 @@ export function Configurator({
   conditionExtensions,
   conditionExtensionsResolver,
   fallbackEvaluator,
+  onRefreshDefinition,
   onExportDefinition,
 }: {
   store: ConfiguratorStore | ConfiguratorStoreSource;
@@ -245,6 +251,7 @@ export function Configurator({
   conditionExtensions?: ConditionExtensions;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   fallbackEvaluator?: ConditionEvaluator;
+  onRefreshDefinition?: (key: string) => void;
   onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
   const runner = useActionRunner();
@@ -263,6 +270,7 @@ export function Configurator({
                 onBeforeSelect={onBeforeSelect}
                 isLoadingDefinition={isLoadingDefinition}
                 conditionExtensionsResolver={conditionExtensionsResolver}
+                onRefreshDefinition={onRefreshDefinition}
                 onExportDefinition={onExportDefinition}
               />
             </div>

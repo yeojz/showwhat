@@ -142,6 +142,18 @@ describe("Configurator", () => {
     expect(callOrder).toEqual(["before", "select"]);
   });
 
+  it("passes onRefresh to DefinitionEditor when onRefreshDefinition is provided", async () => {
+    const user = userEvent.setup();
+    const onRefreshDefinition = vi.fn();
+    const store = createMockStore({ dirtyKeys: [] });
+    render(<Configurator store={store} onRefreshDefinition={onRefreshDefinition} />);
+    // Open 3-dot menu and click Refresh
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Refresh from server"));
+    expect(onRefreshDefinition).toHaveBeenCalledWith("flag-a");
+  });
+
   it("shows loading indicator when isLoadingDefinition is true and no definition is selected", () => {
     const store = createMockStore({
       selectedKey: "unfetched-key",
