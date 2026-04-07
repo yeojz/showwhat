@@ -3,6 +3,16 @@ import { Badge } from "../ui/badge.js";
 import { cn } from "../../utils/cn.js";
 import type { DefinitionListItemProps } from "../../types.js";
 
+const STATUS_CLASSES = {
+  unfetched: "border-muted-foreground/40 bg-muted-foreground/40",
+  error: "border-status-error bg-status-error",
+  error_dirty: "border-status-error bg-transparent",
+  active: "border-status-active bg-status-active",
+  active_dirty: "border-status-active bg-transparent",
+  inactive: "border-status-inactive bg-status-inactive",
+  inactive_dirty: "border-status-inactive bg-transparent",
+};
+
 export const DefinitionListItem = memo(function DefinitionListItem({
   definitionKey,
   variationCount,
@@ -44,18 +54,18 @@ export const DefinitionListItem = memo(function DefinitionListItem({
         className={cn(
           "h-2 w-2 shrink-0 rounded-full border-[1.5px]",
           isUnfetched
-            ? "border-muted-foreground/40 bg-muted-foreground/40"
+            ? STATUS_CLASSES.unfetched
             : hasErrors
               ? isDirty
-                ? "border-status-error bg-transparent"
-                : "border-status-error bg-status-error"
+                ? STATUS_CLASSES.error_dirty
+                : STATUS_CLASSES.error
               : isActive
                 ? isDirty
-                  ? "border-status-active bg-transparent"
-                  : "border-status-active bg-status-active"
+                  ? STATUS_CLASSES.active_dirty
+                  : STATUS_CLASSES.active
                 : isDirty
-                  ? "border-status-inactive bg-transparent"
-                  : "border-status-inactive bg-status-inactive",
+                  ? STATUS_CLASSES.inactive_dirty
+                  : STATUS_CLASSES.inactive,
         )}
       />
       <span className="min-w-0 flex-1 break-all font-mono text-sm">{definitionKey}</span>
