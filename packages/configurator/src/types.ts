@@ -3,7 +3,7 @@ import type { Condition, Definition, Definitions, Variation } from "showwhat";
 // ── DefinitionList ─────────────────────────────────────────────────────────
 
 export type DefinitionListProps = {
-  keys?: string[];
+  keys: string[];
   definitions: Definitions;
   selectedKey: string | null;
   validationErrors?: Record<string, unknown[]>;

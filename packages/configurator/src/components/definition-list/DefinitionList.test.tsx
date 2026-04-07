@@ -13,6 +13,7 @@ describe("DefinitionList", () => {
   it("should render all definition keys", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -28,6 +29,7 @@ describe("DefinitionList", () => {
   it("should filter definitions by search", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -45,6 +47,7 @@ describe("DefinitionList", () => {
     const onSelect = vi.fn();
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={onSelect}
@@ -59,6 +62,7 @@ describe("DefinitionList", () => {
   it("should show variation count badges", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -73,6 +77,7 @@ describe("DefinitionList", () => {
   it("should show empty state when no definitions match search", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -88,6 +93,7 @@ describe("DefinitionList", () => {
   it("should show empty state when there are no definitions", () => {
     render(
       <DefinitionList
+        keys={[]}
         definitions={{}}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -101,6 +107,7 @@ describe("DefinitionList", () => {
   it("should show the add definition form when New definition is clicked", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -116,6 +123,7 @@ describe("DefinitionList", () => {
     const onAdd = vi.fn(async () => {});
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -136,6 +144,7 @@ describe("DefinitionList", () => {
     const onAdd = vi.fn(async () => {});
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -156,6 +165,7 @@ describe("DefinitionList", () => {
     const onAdd = vi.fn(async () => {});
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -173,6 +183,7 @@ describe("DefinitionList", () => {
   it("should cancel adding with Escape key", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -189,6 +200,7 @@ describe("DefinitionList", () => {
   it("should cancel adding with X button", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -205,6 +217,7 @@ describe("DefinitionList", () => {
     const onAdd = vi.fn(() => Promise.reject(new Error("add failed")));
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey={null}
         onSelect={vi.fn()}
@@ -230,6 +243,7 @@ describe("DefinitionList", () => {
   it("should pass dirtyKeys and validationErrors to list items", () => {
     render(
       <DefinitionList
+        keys={Object.keys(testDefinitions)}
         definitions={testDefinitions}
         selectedKey="feature-a"
         dirtyKeys={["feature-a"]}
@@ -241,5 +255,58 @@ describe("DefinitionList", () => {
     );
     // Should render without error and show the items
     expect(screen.getByText("feature-a")).toBeDefined();
+  });
+
+  it("renders unfetched keys from keys prop that are not in definitions", () => {
+    render(
+      <DefinitionList
+        keys={["feature-a", "feature-b", "feature-c", "feature-d"]}
+        definitions={testDefinitions}
+        selectedKey={null}
+        onSelect={vi.fn()}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    expect(screen.getByText("feature-d")).toBeDefined();
+    const items = screen.getAllByRole("status");
+    const featureDStatus = items.find((el) => el.getAttribute("aria-label")?.includes("feature-d"));
+    expect(featureDStatus?.getAttribute("aria-label")).toContain("unfetched");
+  });
+
+  it("should not call onAdd for keys already in keys array", () => {
+    const onAdd = vi.fn(async () => {});
+    render(
+      <DefinitionList
+        keys={Object.keys(testDefinitions)}
+        definitions={testDefinitions}
+        selectedKey={null}
+        onSelect={vi.fn()}
+        onAdd={onAdd}
+        onRemove={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByText("New definition"));
+    const input = screen.getByPlaceholderText("definition-key");
+    fireEvent.change(input, { target: { value: "feature-a" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it("filters unfetched keys by search", () => {
+    render(
+      <DefinitionList
+        keys={["feature-a", "unfetched-flag"]}
+        definitions={{ "feature-a": testDefinitions["feature-a"] }}
+        selectedKey={null}
+        onSelect={vi.fn()}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    const searchInput = screen.getByPlaceholderText("Search definitions...");
+    fireEvent.change(searchInput, { target: { value: "unfetched" } });
+    expect(screen.queryByText("feature-a")).toBeNull();
+    expect(screen.getByText("unfetched-flag")).toBeDefined();
   });
 });
