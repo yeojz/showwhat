@@ -38,6 +38,7 @@ export type DefinitionEditorProps = {
   onDiscard?: () => void;
   onRemove?: () => void;
   onExport?: (format: "yaml" | "json") => void;
+  onRefresh?: () => void;
 };
 
 // ── VariationEditor ─────────────────────────────────────────────────────────

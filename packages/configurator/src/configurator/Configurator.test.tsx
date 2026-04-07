@@ -172,9 +172,10 @@ describe("Configurator editor interactions", () => {
     const user = userEvent.setup();
     const store = createMockStore();
     render(<Configurator store={store} />);
-    // The Delete button is now in the editor action bar
-    const deleteButton = screen.getByRole("button", { name: /delete/i });
-    await user.click(deleteButton);
+    // Open the 3-dot menu and click Delete
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Delete"));
     // Confirm the deletion
     const confirmButton = await screen.findByRole("button", { name: "Delete" });
     await user.click(confirmButton);
@@ -341,9 +342,10 @@ describe("Configurator async action handling", () => {
       }),
     });
     render(<Configurator store={store} />);
-    // The Delete button is now in the editor action bar
-    const deleteButton = screen.getByRole("button", { name: /delete/i });
-    await user.click(deleteButton);
+    // Open the 3-dot menu and click Delete
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Delete"));
     const confirmButton = await screen.findByRole("button", { name: "Delete" });
     await user.click(confirmButton);
     // The .catch(() => {}) swallows the rejection; component does not crash
