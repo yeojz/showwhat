@@ -108,6 +108,17 @@ describe("Configurator", () => {
     const { container } = render(<Configurator store={store} className="my-custom" />);
     expect(container.querySelector(".my-custom")).toBeDefined();
   });
+
+  it("passes definitionKeys to DefinitionList when provided", () => {
+    const store = createMockStore({
+      definitions: { "flag-a": baseDef },
+      selectedKey: null,
+    });
+    render(<Configurator store={store} definitionKeys={["flag-a", "flag-b", "flag-c"]} />);
+    // flag-b and flag-c should appear in the sidebar even though they're not in definitions
+    expect(screen.getByText("flag-b")).toBeDefined();
+    expect(screen.getByText("flag-c")).toBeDefined();
+  });
 });
 
 describe("Configurator editor interactions", () => {

@@ -94,11 +94,13 @@ function ErrorBanner() {
 function EditorLayout({
   emptyState,
   sidebarHeader,
+  definitionKeys,
   conditionExtensionsResolver,
   onExportDefinition,
 }: {
   emptyState?: React.ReactNode;
   sidebarHeader?: React.ReactNode;
+  definitionKeys?: string[];
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
@@ -110,6 +112,7 @@ function EditorLayout({
   const getStore = useStoreRef();
   const { actionState, runAction } = useActionState();
 
+  const keysForList = definitionKeys ?? Object.keys(definitions);
   const selectedDefinition = selectedKey ? definitions[selectedKey] : null;
 
   const resolvedExtensions = useMemo(
@@ -171,6 +174,7 @@ function EditorLayout({
         <div className="w-72 shrink-0 border-r border-border bg-muted/30">
           {sidebarHeader}
           <DefinitionList
+            keys={keysForList}
             definitions={definitions}
             selectedKey={selectedKey}
             validationErrors={validationErrors}
@@ -212,6 +216,7 @@ export function Configurator({
   className,
   emptyState,
   sidebarHeader,
+  definitionKeys,
   conditionExtensions,
   conditionExtensionsResolver,
   fallbackEvaluator,
@@ -221,6 +226,7 @@ export function Configurator({
   className?: string;
   emptyState?: React.ReactNode;
   sidebarHeader?: React.ReactNode;
+  definitionKeys?: string[];
   conditionExtensions?: ConditionExtensions;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   fallbackEvaluator?: ConditionEvaluator;
@@ -238,6 +244,7 @@ export function Configurator({
               <EditorLayout
                 emptyState={emptyState}
                 sidebarHeader={sidebarHeader}
+                definitionKeys={definitionKeys}
                 conditionExtensionsResolver={conditionExtensionsResolver}
                 onExportDefinition={onExportDefinition}
               />
