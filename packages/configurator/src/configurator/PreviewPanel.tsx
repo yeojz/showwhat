@@ -22,6 +22,7 @@ import { useConfiguratorSelector } from "./useConfiguratorSelector.js";
 import type { PreviewResult } from "./preview-store.js";
 import { selectDefinitions, selectSelectedKey } from "./selectors.js";
 import { useFallbackEvaluator } from "./fallback-context.js";
+import { usePreviewState } from "./preview-context.js";
 
 function ResultBadge({ result, onViewMeta }: { result: PreviewResult; onViewMeta?: () => void }) {
   switch (result.status) {
@@ -211,9 +212,15 @@ export function PreviewPanel() {
   const selectedKey = useConfiguratorSelector(selectSelectedKey);
   const externalFallback = useFallbackEvaluator();
 
-  const [contextText, setContextText] = useState("");
-  const [annotationsText, setAnnotationsText] = useState("");
-  const [evaluatorText, setEvaluatorText] = useState("");
+  const {
+    contextText,
+    setContextText,
+    annotationsText,
+    setAnnotationsText,
+    evaluatorText,
+    setEvaluatorText,
+    resetPreview,
+  } = usePreviewState();
   const [contextError, setContextError] = useState<string | null>(null);
   const [simulatorOpen, setSimulatorOpen] = useState(false);
   const [jsonEditorOpen, setJsonEditorOpen] = useState(false);
@@ -480,6 +487,18 @@ export function PreviewPanel() {
               <Play className="mr-1.5 h-4 w-4" />
             )}
             Resolve
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full"
+            onClick={() => {
+              if (window.confirm("Reset all preview inputs? This cannot be undone.")) {
+                resetPreview();
+              }
+            }}
+          >
+            Reset
           </Button>
 
           {/* Result */}

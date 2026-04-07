@@ -1,11 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import type { Definitions, ConditionEvaluator } from "showwhat";
 import type { ConfiguratorStore, ConfiguratorStoreSource } from "./types.js";
 import { StoreSourceContext, ActionStateContext } from "./context.js";
 import type { ActionStateContextValue } from "./context.js";
 import { FallbackEvaluatorProvider } from "./fallback-context.js";
 import { PreviewPanel } from "./PreviewPanel.js";
+import { PreviewStateProvider } from "./preview-context.js";
+import type { PreviewState } from "./preview-context.js";
 
 // Control resolve timing via deferred promises
 let resolvePromise: (value: unknown) => void;
@@ -87,12 +90,36 @@ const defaultActionState: ActionStateContextValue = {
   clearError: () => {},
 };
 
+function StatefulPreviewProvider({ children }: { children: React.ReactNode }) {
+  const [contextText, setContextText] = useState("");
+  const [annotationsText, setAnnotationsText] = useState("");
+  const [evaluatorText, setEvaluatorText] = useState("");
+
+  const state: PreviewState = {
+    contextText,
+    annotationsText,
+    evaluatorText,
+    setContextText,
+    setAnnotationsText,
+    setEvaluatorText,
+    resetPreview: () => {
+      setContextText("");
+      setAnnotationsText("");
+      setEvaluatorText("");
+    },
+  };
+
+  return <PreviewStateProvider value={state}>{children}</PreviewStateProvider>;
+}
+
 function renderWithStore(store: ConfiguratorStore) {
   const source = makeStoreSource(store);
   return render(
     <StoreSourceContext.Provider value={source}>
       <ActionStateContext.Provider value={defaultActionState}>
-        <PreviewPanel />
+        <StatefulPreviewProvider>
+          <PreviewPanel />
+        </StatefulPreviewProvider>
       </ActionStateContext.Provider>
     </StoreSourceContext.Provider>,
   );
@@ -104,7 +131,9 @@ function renderWithStoreAndFallback(store: ConfiguratorStore, fallback: Conditio
     <StoreSourceContext.Provider value={source}>
       <ActionStateContext.Provider value={defaultActionState}>
         <FallbackEvaluatorProvider value={fallback}>
-          <PreviewPanel />
+          <StatefulPreviewProvider>
+            <PreviewPanel />
+          </StatefulPreviewProvider>
         </FallbackEvaluatorProvider>
       </ActionStateContext.Provider>
     </StoreSourceContext.Provider>,
@@ -180,7 +209,9 @@ describe("PreviewPanel", () => {
     const { rerender } = render(
       <StoreSourceContext.Provider value={source}>
         <ActionStateContext.Provider value={defaultActionState}>
-          <PreviewPanel />
+          <StatefulPreviewProvider>
+            <PreviewPanel />
+          </StatefulPreviewProvider>
         </ActionStateContext.Provider>
       </StoreSourceContext.Provider>,
     );
@@ -195,7 +226,9 @@ describe("PreviewPanel", () => {
     rerender(
       <StoreSourceContext.Provider value={source2}>
         <ActionStateContext.Provider value={defaultActionState}>
-          <PreviewPanel />
+          <StatefulPreviewProvider>
+            <PreviewPanel />
+          </StatefulPreviewProvider>
         </ActionStateContext.Provider>
       </StoreSourceContext.Provider>,
     );
@@ -220,7 +253,9 @@ describe("PreviewPanel", () => {
     const { rerender } = render(
       <StoreSourceContext.Provider value={source}>
         <ActionStateContext.Provider value={defaultActionState}>
-          <PreviewPanel />
+          <StatefulPreviewProvider>
+            <PreviewPanel />
+          </StatefulPreviewProvider>
         </ActionStateContext.Provider>
       </StoreSourceContext.Provider>,
     );
@@ -235,7 +270,9 @@ describe("PreviewPanel", () => {
     rerender(
       <StoreSourceContext.Provider value={source2}>
         <ActionStateContext.Provider value={defaultActionState}>
-          <PreviewPanel />
+          <StatefulPreviewProvider>
+            <PreviewPanel />
+          </StatefulPreviewProvider>
         </ActionStateContext.Provider>
       </StoreSourceContext.Provider>,
     );
@@ -1009,6 +1046,49 @@ describe("PreviewPanel", () => {
     const calls = (mockResolve as ReturnType<typeof vi.fn>).mock.calls;
     const lastCall = calls[calls.length - 1][0];
     expect(lastCall.options.createAnnotations).toBeUndefined();
+  });
+
+  // --- Reset button ---
+
+  it("should reset all inputs after confirmation", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    renderWithStore(makeStore());
+
+    // Enter context
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: '{"env":"prod"}' } });
+    applyJsonEditor();
+
+    // Click reset
+    fireEvent.click(screen.getByRole("button", { name: /reset/i }));
+
+    expect(confirmSpy).toHaveBeenCalledWith("Reset all preview inputs? This cannot be undone.");
+    // Context preview should show placeholder again
+    expect(screen.getByText('{ "env": "production" }')).toBeDefined();
+
+    confirmSpy.mockRestore();
+  });
+
+  it("should not reset inputs when confirmation is cancelled", () => {
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+
+    renderWithStore(makeStore());
+
+    // Enter context
+    openJsonEditor();
+    const textarea = getJsonEditorTextarea();
+    fireEvent.change(textarea, { target: { value: '{"env":"prod"}' } });
+    applyJsonEditor();
+
+    // Click reset but cancel
+    fireEvent.click(screen.getByRole("button", { name: /reset/i }));
+
+    // Context should still show entered value
+    expect(screen.getAllByText(/env.*prod/).length).toBeGreaterThan(0);
+
+    confirmSpy.mockRestore();
   });
 
   // --- Abort controller cleanup on unmount ---
