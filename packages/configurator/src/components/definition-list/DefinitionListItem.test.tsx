@@ -100,4 +100,16 @@ describe("DefinitionListItem", () => {
     expect(status.getAttribute("aria-label")).toContain("inactive");
     expect(status.getAttribute("aria-label")).toContain("unsaved changes");
   });
+
+  it("renders grey unfetched dot when isActive is undefined", () => {
+    render(<DefinitionListItem {...baseProps} isActive={undefined} variationCount={undefined} />);
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-label")).toContain("unfetched");
+  });
+
+  it("does not render variation count badge when variationCount is undefined", () => {
+    render(<DefinitionListItem {...baseProps} isActive={undefined} variationCount={undefined} />);
+    expect(screen.queryByText("3")).toBeNull();
+    expect(screen.queryByText("0")).toBeNull();
+  });
 });
