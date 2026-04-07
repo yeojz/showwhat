@@ -115,15 +115,21 @@ export function SourceSettings() {
   const error = fetchError ?? fileError;
 
   async function handleLoad(source: HostedSource) {
+    if (source.mode === "split") {
+      const keys = await reloadKeyList(source as SplitSource);
+      if (!keys) return;
+      importDefinitions({}, source.label, source.format);
+      setPresetReader(createHttpReader(source));
+      setActiveSource(source.id);
+      setDefinitionKeys(source.id, keys);
+      markListFetched(source.id);
+      setSelection("__active__");
+      return;
+    }
+    // Bundled mode — unchanged
     const result = await fetchSource(source);
     if (!result) return;
-
-    if (source.mode === "split") {
-      importDefinitions(result.definitions, source.label, source.format);
-      setPresetReader(createHttpReader(source));
-    } else {
-      importDefinitions(result.definitions, source.label, source.format, result.presets);
-    }
+    importDefinitions(result.definitions, source.label, source.format, result.presets);
     setActiveSource(source.id);
     markFetched(source.id, result.keys);
     setSelection("__active__");
