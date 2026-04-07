@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
 import { PresetsSchema } from "showwhat";
+import { STORE_VERSION } from "./constants.js";
 import type { Presets } from "showwhat";
 import yaml from "js-yaml";
 
@@ -70,12 +71,15 @@ export function createPresetStore(options: CreatePresetStoreOptions = {}) {
       }),
       {
         name: "showwhat-presets",
-        version: 1,
+        version: STORE_VERSION,
         storage,
         partialize: (state) => ({
           presetYaml: state.presetYaml,
           presets: state.presets,
         }),
+        migrate(persistedState) {
+          return persistedState;
+        },
       },
     ),
   );

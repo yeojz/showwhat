@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
 import { DefinitionsSchema } from "showwhat";
+import { STORE_VERSION } from "./constants.js";
 import type { Definition, Definitions } from "showwhat";
 import type { Presets, PresetReader } from "showwhat";
 import type { ConfiguratorStore, ValidationIssue } from "@showwhat/configurator";
@@ -274,7 +275,7 @@ export function createDefinitionStore(options: CreateDefinitionStoreOptions = {}
       }),
       {
         name: "showwhat-configurator",
-        version: 3,
+        version: STORE_VERSION,
         storage,
         partialize: (state) => ({
           savedDefinitions: state.savedDefinitions,
