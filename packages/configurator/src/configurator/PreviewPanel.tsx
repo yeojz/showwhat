@@ -495,6 +495,8 @@ export function PreviewPanel() {
             onClick={() => {
               if (window.confirm("Reset all preview inputs? This cannot be undone.")) {
                 resetPreview();
+                setPreviewResult(null);
+                setContextError(null);
               }
             }}
           >

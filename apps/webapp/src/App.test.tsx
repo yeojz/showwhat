@@ -50,6 +50,7 @@ vi.mock("@showwhat/configurator", () => ({
     return <div data-testid="configurator">{emptyState}</div>;
   },
   createPresetUI: (...args: unknown[]) => mockCreatePresetUI(...args),
+  PreviewStateProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 // Mock the Toolbar — capture props to verify theme wiring
