@@ -3,17 +3,10 @@ import type { ConditionValueEditorProps } from "../../types.js";
 import { ConditionRow } from "./ConditionRow.js";
 import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
+import { STRING_OPS } from "./operator-labels.js";
 import { TagInput } from "./TagInput.js";
 import { Input } from "../ui/input.js";
 import { buildCustomCondition } from "./condition-builders.js";
-
-export const OP_OPTIONS = [
-  { value: "eq", label: "eq" },
-  { value: "neq", label: "neq" },
-  { value: "in", label: "in" },
-  { value: "nin", label: "nin" },
-  { value: "regex", label: "regex" },
-];
 
 export const meta = {
   type: "string",
@@ -52,16 +45,19 @@ export function StringConditionEditor({ condition, onChange }: ConditionValueEdi
   const isRegex = op === "regex";
 
   return (
-    <ConditionRow>
-      <KeyInput
-        value={String(rec.key ?? "")}
-        onChange={(v) => update("key", v)}
-        placeholder="e.g. userId"
-      />
+    <ConditionRow
+      keySlot={
+        <KeyInput
+          value={String(rec.key ?? "")}
+          onChange={(v) => update("key", v)}
+          placeholder="e.g. userId"
+        />
+      }
+    >
       <OperatorSelect
         value={String(rec.op ?? "eq")}
         onChange={handleOpChange}
-        options={OP_OPTIONS}
+        options={STRING_OPS}
       />
       {isArray ? (
         <TagInput

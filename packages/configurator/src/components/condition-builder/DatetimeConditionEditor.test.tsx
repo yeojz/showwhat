@@ -68,7 +68,7 @@ describe("DatetimeConditionEditor", () => {
     const trigger = screen.getByRole("combobox");
     await userEvent.click(trigger);
     // Pick "gt" from the dropdown options
-    const gtOption = await screen.findByRole("option", { name: "gt" });
+    const gtOption = await screen.findByRole("option", { name: /^more than/ });
     await userEvent.click(gtOption);
     expect(onChange).toHaveBeenCalled();
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
@@ -87,14 +87,14 @@ describe("DatetimeConditionEditor", () => {
     render(<DatetimeConditionEditor condition={condition} onChange={vi.fn()} />);
     // Radix Select shows the value text inside the trigger
     const trigger = screen.getByRole("combobox");
-    expect(trigger.textContent).toContain("eq");
+    expect(trigger.textContent).toContain("equals");
   });
 
   it("renders with undefined key using empty string fallback", () => {
     const condition = { type: "datetime", op: "gt", value: "2025-01-01T00:00:00Z" } as Condition;
     render(<DatetimeConditionEditor condition={condition} onChange={vi.fn()} />);
     const trigger = screen.getByRole("combobox");
-    expect(trigger.textContent).toContain("gt");
+    expect(trigger.textContent).toContain("more than");
   });
 
   it("renders with null key using empty string fallback", () => {
@@ -117,7 +117,7 @@ describe("DatetimeConditionEditor", () => {
     } as unknown as Condition;
     render(<DatetimeConditionEditor condition={condition} onChange={vi.fn()} />);
     const trigger = screen.getByRole("combobox");
-    expect(trigger.textContent).toContain("eq");
+    expect(trigger.textContent).toContain("equals");
   });
 
   it("renders with null value using empty string fallback", () => {

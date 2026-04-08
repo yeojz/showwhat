@@ -48,7 +48,7 @@ describe("StringConditionEditor", () => {
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     expect(opSelect).toBeDefined();
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("neq"));
+    await userEvent.click(await screen.findByRole("option", { name: /^not equals/ }));
     expect(onChange).toHaveBeenCalled();
     expect(onChange.mock.calls[0][0]).toEqual(
       expect.objectContaining({ type: "string", op: "neq" }),
@@ -96,7 +96,7 @@ describe("StringConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("in"));
+    await userEvent.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["hello"] }));
   });
 
@@ -107,7 +107,7 @@ describe("StringConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("eq"));
+    await userEvent.click(await screen.findByRole("option", { name: /^equals/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "alpha" }));
   });
 
@@ -118,7 +118,7 @@ describe("StringConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("eq"));
+    await userEvent.click(await screen.findByRole("option", { name: /^equals/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "" }));
   });
 
@@ -129,7 +129,7 @@ describe("StringConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("in"));
+    await userEvent.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [] }));
   });
 
@@ -140,7 +140,7 @@ describe("StringConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("in"));
+    await userEvent.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["a", "b"] }));
   });
 

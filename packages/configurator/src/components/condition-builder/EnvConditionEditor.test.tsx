@@ -10,21 +10,19 @@ describe("EnvConditionEditor", () => {
     render(<EnvConditionEditor condition={condition} onChange={vi.fn()} />);
     expect(screen.getByText("production")).toBeDefined();
     expect(screen.getByText("staging")).toBeDefined();
-    // Key should be disabled and show "env"
-    expect(screen.getByDisplayValue("env")).toBeDefined();
   });
 
   it("renders with undefined value to hit ?? fallback", () => {
     const condition = { type: "env" } as Condition;
     render(<EnvConditionEditor condition={condition} onChange={vi.fn()} />);
     // Should render without error, falling back to ""
-    expect(screen.getByDisplayValue("env")).toBeDefined();
+    expect(screen.getByPlaceholderText("e.g. production")).toBeDefined();
   });
 
   it("renders with null value to hit ?? fallback", () => {
     const condition = { type: "env", value: null } as unknown as Condition;
     render(<EnvConditionEditor condition={condition} onChange={vi.fn()} />);
-    expect(screen.getByDisplayValue("env")).toBeDefined();
+    expect(screen.getByPlaceholderText("e.g. production")).toBeDefined();
   });
 
   it("calls onChange when tag input value changes", async () => {

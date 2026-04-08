@@ -7,9 +7,8 @@ describe("StartAtConditionEditor", () => {
   it("renders with a startAt condition", () => {
     const condition = { type: "startAt", value: "2025-01-01T00:00:00Z" } as Condition;
     render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
-    const keyInput = screen.getByDisplayValue("at");
-    expect(keyInput).toBeDefined();
-    expect(keyInput).toHaveProperty("disabled", true);
+    // Should render date value
+    expect(screen.getByDisplayValue(/2025/)).toBeDefined();
   });
 
   it("calls onChange when date value changes", () => {
@@ -26,19 +25,20 @@ describe("StartAtConditionEditor", () => {
   it("renders with empty value", () => {
     const condition = { type: "startAt" } as Condition;
     render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
-    expect(screen.getByDisplayValue("at")).toBeDefined();
+    // Should render without error
+    expect(screen.getByPlaceholderText("ISO 8601 datetime")).toBeDefined();
   });
 
   it("renders with explicit undefined value using empty string fallback", () => {
     const condition = { type: "startAt", value: undefined } as unknown as Condition;
     render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
-    expect(screen.getByDisplayValue("at")).toBeDefined();
+    expect(screen.getByPlaceholderText("ISO 8601 datetime")).toBeDefined();
   });
 
   it("renders with null value using empty string fallback", () => {
     const condition = { type: "startAt", value: null } as unknown as Condition;
     render(<StartAtConditionEditor condition={condition} onChange={vi.fn()} />);
-    expect(screen.getByDisplayValue("at")).toBeDefined();
+    expect(screen.getByPlaceholderText("ISO 8601 datetime")).toBeDefined();
   });
 
   it("calls onChange with startAt type when date value is changed from null", () => {

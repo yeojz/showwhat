@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import type { ConditionValueEditorProps } from "../../types.js";
 import { ConditionRow } from "./ConditionRow.js";
-import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
+import { DATETIME_OPS } from "./operator-labels.js";
 import { DateTimeInput } from "../common/DateTimeInput.js";
 import { buildCustomCondition } from "./condition-builders.js";
 
-const OP_OPTIONS = [{ value: "gte", label: "gte" }];
+const STARTAT_OPS = DATETIME_OPS.filter((o) => o.value === "gte");
 
 export const meta = {
   type: "startAt",
@@ -20,8 +20,7 @@ export function StartAtConditionEditor({ condition, onChange }: ConditionValueEd
 
   return (
     <ConditionRow>
-      <KeyInput value="at" disabled />
-      <OperatorSelect value="gte" options={OP_OPTIONS} disabled />
+      <OperatorSelect value="gte" options={STARTAT_OPS} disabled />
       <DateTimeInput
         value={String(rec.value ?? "")}
         onChange={(v) => onChange(buildCustomCondition({ ...rec, value: v, type: "startAt" }))}

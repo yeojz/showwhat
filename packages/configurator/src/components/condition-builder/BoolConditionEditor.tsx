@@ -3,10 +3,9 @@ import type { ConditionValueEditorProps } from "../../types.js";
 import { ConditionRow } from "./ConditionRow.js";
 import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
+import { BOOL_OPS } from "./operator-labels.js";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.js";
 import { buildCustomCondition } from "./condition-builders.js";
-
-export const OP_OPTIONS = [{ value: "eq", label: "eq" }];
 
 export const meta = {
   type: "bool",
@@ -25,13 +24,16 @@ export function BoolConditionEditor({ condition, onChange }: ConditionValueEdito
   );
 
   return (
-    <ConditionRow>
-      <KeyInput
-        value={String(rec.key ?? "")}
-        onChange={(v) => update("key", v)}
-        placeholder="e.g. isAdmin"
-      />
-      <OperatorSelect value="eq" options={OP_OPTIONS} disabled />
+    <ConditionRow
+      keySlot={
+        <KeyInput
+          value={String(rec.key ?? "")}
+          onChange={(v) => update("key", v)}
+          placeholder="e.g. isAdmin"
+        />
+      }
+    >
+      <OperatorSelect value="eq" options={BOOL_OPS} disabled />
       <Select
         value={String(rec.value ?? "true")}
         onValueChange={(v) => update("value", v === "true")}
