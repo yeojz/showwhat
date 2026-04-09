@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { StateStorage } from "zustand/middleware";
+import { STORE_VERSION } from "./constants.js";
 
 export type SourceFormat = "yaml" | "json";
 
@@ -156,12 +157,15 @@ export function createSourceStore(options: CreateSourceStoreOptions = {}) {
       }),
       {
         name: "showwhat-sources",
-        version: 2,
+        version: STORE_VERSION,
         storage,
         partialize: (state) => ({
           sources: state.sources,
           activeSourceId: state.activeSourceId,
         }),
+        migrate(persistedState) {
+          return persistedState;
+        },
       },
     ),
   );
