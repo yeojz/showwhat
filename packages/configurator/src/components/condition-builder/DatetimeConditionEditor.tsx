@@ -3,16 +3,9 @@ import type { ConditionValueEditorProps } from "../../types.js";
 import { ConditionRow } from "./ConditionRow.js";
 import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
+import { DATETIME_OPS } from "./operator-labels.js";
 import { DateTimeInput } from "../common/DateTimeInput.js";
 import { buildCustomCondition } from "./condition-builders.js";
-
-export const OP_OPTIONS = [
-  { value: "eq", label: "eq" },
-  { value: "gt", label: "gt" },
-  { value: "gte", label: "gte" },
-  { value: "lt", label: "lt" },
-  { value: "lte", label: "lte" },
-];
 
 export const meta = {
   type: "datetime",
@@ -31,16 +24,19 @@ export function DatetimeConditionEditor({ condition, onChange }: ConditionValueE
   );
 
   return (
-    <ConditionRow>
-      <KeyInput
-        value={String(rec.key ?? "")}
-        onChange={(v) => update("key", v)}
-        placeholder="e.g. at"
-      />
+    <ConditionRow
+      keySlot={
+        <KeyInput
+          value={String(rec.key ?? "")}
+          onChange={(v) => update("key", v)}
+          placeholder="e.g. at"
+        />
+      }
+    >
       <OperatorSelect
         value={String(rec.op ?? "eq")}
         onChange={(v) => update("op", v)}
-        options={OP_OPTIONS}
+        options={DATETIME_OPS}
       />
       <DateTimeInput value={String(rec.value ?? "")} onChange={(v) => update("value", v)} />
     </ConditionRow>

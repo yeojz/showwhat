@@ -8,11 +8,20 @@ import { ConditionGroup } from "./ConditionGroup.js";
 import { MoveButtons } from "./MoveButtons.js";
 import { getConditionMeta } from "./condition-registry.js";
 import { useConditionExtensions } from "./ConditionExtensionsContext.js";
+import { ConditionBlockProvider } from "./ConditionBlockContext.js";
 import { buildAndCondition, buildOrCondition, buildMatchAnnotationsCondition } from "./utils.js";
 import type { ConditionBlockProps } from "../../types.js";
 
 /** Zod emits "Invalid input" for discriminated union failures — we rephrase for clarity. */
 const GENERIC_ZOD_ERROR = "Invalid input";
+
+function TypeBadge({ label }: { label: string }) {
+  return (
+    <span className="inline-flex h-6 shrink-0 items-center rounded-md bg-muted px-2 text-xs font-medium text-muted-foreground">
+      {label}
+    </span>
+  );
+}
 
 export const ConditionBlock = memo(function ConditionBlock({
   condition,
@@ -60,27 +69,27 @@ export const ConditionBlock = memo(function ConditionBlock({
     extensions?.extraConditionTypes.find((m) => m.type === condition.type);
   const label = meta?.label ?? (condition.type || "Custom");
 
+  const typeBadge = <TypeBadge label={label} />;
+  const controls = (
+    <div className="flex shrink-0 gap-0.5">
+      <MoveButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-destructive/60 hover:bg-destructive/10 hover:text-destructive"
+        onClick={onRemove}
+        aria-label="Remove condition"
+      >
+        <X className="h-3.5 w-3.5" />
+      </Button>
+    </div>
+  );
+
   return (
     <div className="border border-border bg-card p-2 space-y-2">
-      <div className="flex items-center gap-2">
-        <span className="flex h-8 shrink-0 items-center text-sm font-medium text-muted-foreground">
-          {label}
-        </span>
-        <div className="flex-1" />
-        <div className="flex shrink-0 gap-0.5">
-          <MoveButtons onMoveUp={onMoveUp} onMoveDown={onMoveDown} />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive/60 hover:bg-destructive/10 hover:text-destructive"
-            onClick={onRemove}
-            aria-label="Remove condition"
-          >
-            <X className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-      </div>
-      <ConditionValueEditor condition={condition} onChange={handleChange} />
+      <ConditionBlockProvider typeBadge={typeBadge} controls={controls}>
+        <ConditionValueEditor condition={condition} onChange={handleChange} />
+      </ConditionBlockProvider>
       {(errors?.length ?? 0) > 0 && (
         <div className="space-y-0.5">
           {errors!.map((err, i) => {

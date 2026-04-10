@@ -1,12 +1,10 @@
 import { useCallback, useMemo } from "react";
 import type { ConditionValueEditorProps } from "../../types.js";
 import { ConditionRow } from "./ConditionRow.js";
-import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
+import { BOOL_OPS } from "./operator-labels.js";
 import { TagInput } from "./TagInput.js";
 import { buildCustomCondition } from "./condition-builders.js";
-
-const OP_OPTIONS = [{ value: "eq", label: "eq" }];
 
 export const meta = {
   type: "env",
@@ -26,8 +24,7 @@ export function EnvConditionEditor({ condition, onChange }: ConditionValueEditor
 
   return (
     <ConditionRow>
-      <KeyInput value="env" disabled />
-      <OperatorSelect value="eq" options={OP_OPTIONS} disabled />
+      <OperatorSelect value="eq" options={BOOL_OPS} disabled />
       <TagInput
         value={(rec.value as string | string[]) ?? ""}
         onChange={handleChange}

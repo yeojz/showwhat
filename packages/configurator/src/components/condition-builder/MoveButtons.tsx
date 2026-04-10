@@ -8,10 +8,10 @@ type MoveButtonsProps = {
 };
 
 export function MoveButtons({ onMoveUp, onMoveDown, size = "h-8 w-8" }: MoveButtonsProps) {
-  if (!onMoveUp && !onMoveDown) return null;
+  const hidden = !onMoveUp && !onMoveDown;
 
   return (
-    <>
+    <div className={hidden ? "invisible" : undefined}>
       <Button
         variant="ghost"
         size="icon"
@@ -32,6 +32,6 @@ export function MoveButtons({ onMoveUp, onMoveDown, size = "h-8 w-8" }: MoveButt
       >
         <ChevronDown className="h-3.5 w-3.5" />
       </Button>
-    </>
+    </div>
   );
 }

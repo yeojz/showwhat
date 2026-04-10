@@ -52,7 +52,7 @@ describe("NumberConditionEditor", () => {
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     expect(opSelect).toBeDefined();
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("gt"));
+    await userEvent.click(await screen.findByRole("option", { name: /^more than/ }));
     expect(onChange).toHaveBeenCalled();
     expect(onChange.mock.calls[0][0]).toEqual(
       expect.objectContaining({ type: "number", op: "gt" }),
@@ -66,7 +66,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("in"));
+    await userEvent.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalled();
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("in");
@@ -80,7 +80,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("in"));
+    await userEvent.click(await screen.findByRole("option", { name: /^one of/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("in");
     expect(result.value).toEqual([]);
@@ -93,7 +93,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("nin"));
+    await userEvent.click(await screen.findByRole("option", { name: /^not one of/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("nin");
     expect(result.value).toEqual([]);
@@ -106,7 +106,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("eq"));
+    await userEvent.click(await screen.findByRole("option", { name: /^equals/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("eq");
     expect(result.value).toBe(10);
@@ -119,7 +119,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("eq"));
+    await userEvent.click(await screen.findByRole("option", { name: /^equals/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("eq");
     expect(result.value).toBe(0);
@@ -132,7 +132,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("gt"));
+    await userEvent.click(await screen.findByRole("option", { name: /^more than/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("gt");
     expect(result.value).toBe(5);
@@ -162,7 +162,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("nin"));
+    await userEvent.click(await screen.findByRole("option", { name: /^not one of/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("nin");
     expect(result.value).toEqual([3, 6]);
@@ -198,7 +198,7 @@ describe("NumberConditionEditor", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes.find((c) => !c.hasAttribute("disabled"));
     await userEvent.click(opSelect!);
-    await userEvent.click(screen.getByText("lte"));
+    await userEvent.click(await screen.findByRole("option", { name: /^at most/ }));
     const result = onChange.mock.calls[0][0] as Record<string, unknown>;
     expect(result.op).toBe("lte");
     expect(result.value).toBe(50);

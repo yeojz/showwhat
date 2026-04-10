@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { Input } from "../ui/input.js";
 import { Label } from "../ui/label.js";
 import { Textarea } from "../ui/textarea.js";
+import { useConditionBlockChrome } from "./ConditionBlockContext.js";
 import type { ConditionValueEditorProps } from "../../types.js";
 
 function extractArgs(condition: Record<string, unknown>): Record<string, unknown> {
@@ -70,8 +71,17 @@ export function CustomConditionEditor({
     [rec, onChange],
   );
 
+  const chrome = useConditionBlockChrome();
+
   return (
     <div className="flex-1 space-y-2">
+      {chrome && (
+        <div className="flex items-center gap-2">
+          {chrome.typeBadge}
+          <div className="flex-1" />
+          {chrome.controls}
+        </div>
+      )}
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">Type</Label>
         <Input

@@ -188,7 +188,7 @@ describe("ConditionValueEditor", () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByDisplayValue("at")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/2025/)).toBeInTheDocument();
   });
 
   it("renders EndAtConditionEditor for type endAt", () => {
@@ -198,7 +198,7 @@ describe("ConditionValueEditor", () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByDisplayValue("at")).toBeInTheDocument();
+    expect(screen.getByDisplayValue(/2025/)).toBeInTheDocument();
   });
 
   it("shows preset footnote for custom type in extensions context", () => {

@@ -3,20 +3,10 @@ import type { ConditionValueEditorProps } from "../../types.js";
 import { ConditionRow } from "./ConditionRow.js";
 import { KeyInput } from "./KeyInput.js";
 import { OperatorSelect } from "./OperatorSelect.js";
+import { NUMBER_OPS } from "./operator-labels.js";
 import { NumberTagInput } from "./NumberTagInput.js";
 import { Input } from "../ui/input.js";
 import { buildCustomCondition } from "./condition-builders.js";
-
-export const OP_OPTIONS = [
-  { value: "eq", label: "eq" },
-  { value: "neq", label: "neq" },
-  { value: "gt", label: "gt" },
-  { value: "gte", label: "gte" },
-  { value: "lt", label: "lt" },
-  { value: "lte", label: "lte" },
-  { value: "in", label: "in" },
-  { value: "nin", label: "nin" },
-];
 
 export const meta = {
   type: "number",
@@ -54,16 +44,19 @@ export function NumberConditionEditor({ condition, onChange }: ConditionValueEdi
   const isArray = op === "in" || op === "nin";
 
   return (
-    <ConditionRow>
-      <KeyInput
-        value={String(rec.key ?? "")}
-        onChange={(v) => update("key", v)}
-        placeholder="e.g. score"
-      />
+    <ConditionRow
+      keySlot={
+        <KeyInput
+          value={String(rec.key ?? "")}
+          onChange={(v) => update("key", v)}
+          placeholder="e.g. score"
+        />
+      }
+    >
       <OperatorSelect
         value={String(rec.op ?? "eq")}
         onChange={handleOpChange}
-        options={OP_OPTIONS}
+        options={NUMBER_OPS}
       />
       {isArray ? (
         <NumberTagInput

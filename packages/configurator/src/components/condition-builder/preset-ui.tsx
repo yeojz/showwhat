@@ -17,10 +17,7 @@ import { DateTimeInput } from "../common/DateTimeInput.js";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select.js";
 import { buildCustomCondition } from "./condition-builders.js";
 import { createCompositePresetEditor } from "./CompositePresetViewer.js";
-import { OP_OPTIONS as STRING_OPS } from "./StringConditionEditor.js";
-import { OP_OPTIONS as NUMBER_OPS } from "./NumberConditionEditor.js";
-import { OP_OPTIONS as DATETIME_OPS } from "./DatetimeConditionEditor.js";
-import { OP_OPTIONS as BOOL_OPS } from "./BoolConditionEditor.js";
+import { STRING_OPS, NUMBER_OPS, DATETIME_OPS, BOOL_OPS } from "./operator-labels.js";
 
 // ── Default values per built-in type ─────────────────────────────────────────
 
@@ -119,8 +116,7 @@ export function createPresetEditor(
         const opLocked = lockedFields.has("op");
         const valueLocked = lockedFields.has("value");
         return (
-          <ConditionRow>
-            <KeyInput value={presetKey} disabled />
+          <ConditionRow keySlot={<KeyInput value={presetKey} disabled />}>
             <OperatorSelect
               value={String(rec.op ?? "eq")}
               onChange={handleOpChange}
@@ -182,8 +178,7 @@ export function createPresetEditor(
         const numOpLocked = lockedFields.has("op");
         const numValueLocked = lockedFields.has("value");
         return (
-          <ConditionRow>
-            <KeyInput value={presetKey} disabled />
+          <ConditionRow keySlot={<KeyInput value={presetKey} disabled />}>
             <OperatorSelect
               value={String(rec.op ?? "eq")}
               onChange={handleNumOpChange}
@@ -215,8 +210,7 @@ export function createPresetEditor(
       case "bool": {
         const boolValueLocked = lockedFields.has("value");
         return (
-          <ConditionRow>
-            <KeyInput value={presetKey} disabled />
+          <ConditionRow keySlot={<KeyInput value={presetKey} disabled />}>
             <OperatorSelect value="eq" options={BOOL_OPS} disabled />
             <Select
               value={String(rec.value ?? "true")}
@@ -238,8 +232,7 @@ export function createPresetEditor(
         const dtOpLocked = lockedFields.has("op");
         const dtValueLocked = lockedFields.has("value");
         return (
-          <ConditionRow>
-            <KeyInput value={presetKey} disabled />
+          <ConditionRow keySlot={<KeyInput value={presetKey} disabled />}>
             <OperatorSelect
               value={String(rec.op ?? "eq")}
               onChange={(v) => update("op", v)}

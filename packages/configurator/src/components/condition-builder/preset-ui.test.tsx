@@ -245,7 +245,7 @@ describe("PresetConditionEditor interactions", () => {
     const comboboxes = screen.getAllByRole("combobox");
     const opSelect = comboboxes[0];
     await user.click(opSelect);
-    const ltOption = await screen.findByRole("option", { name: "lt" });
+    const ltOption = await screen.findByRole("option", { name: /^less than/ });
     await user.click(ltOption);
     expect(onChange).toHaveBeenCalled();
   });
@@ -292,7 +292,7 @@ describe("PresetConditionEditor interactions", () => {
     const comboboxes = screen.getAllByRole("combobox");
     // The op select is the first non-disabled combobox
     await user.click(comboboxes[0]);
-    const regexOpt = await screen.findByRole("option", { name: "regex" });
+    const regexOpt = await screen.findByRole("option", { name: /^matches/ });
     await user.click(regexOpt);
     expect(onChange).toHaveBeenCalled();
   });
@@ -310,7 +310,7 @@ describe("PresetConditionEditor interactions", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    const ltOpt = await screen.findByRole("option", { name: "lt" });
+    const ltOpt = await screen.findByRole("option", { name: /^less than/ });
     await user.click(ltOpt);
     expect(onChange).toHaveBeenCalled();
   });
@@ -507,7 +507,7 @@ describe("String preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "in" }));
+    await user.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["pro"] }));
   });
 
@@ -524,7 +524,7 @@ describe("String preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "nin" }));
+    await user.click(await screen.findByRole("option", { name: /^not one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "nin", value: [] }));
   });
 
@@ -541,7 +541,7 @@ describe("String preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "in" }));
+    await user.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: ["a", "b"] }));
   });
 
@@ -558,7 +558,7 @@ describe("String preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "eq" }));
+    await user.click(await screen.findByRole("option", { name: /^equals/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "alpha" }));
   });
 
@@ -575,7 +575,7 @@ describe("String preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "eq" }));
+    await user.click(await screen.findByRole("option", { name: /^equals/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: "" }));
   });
 });
@@ -594,7 +594,7 @@ describe("Number preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "in" }));
+    await user.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [42] }));
   });
 
@@ -611,7 +611,7 @@ describe("Number preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "nin" }));
+    await user.click(await screen.findByRole("option", { name: /^not one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "nin", value: [] }));
   });
 
@@ -628,7 +628,7 @@ describe("Number preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "in" }));
+    await user.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [] }));
   });
 
@@ -645,7 +645,7 @@ describe("Number preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "in" }));
+    await user.click(await screen.findByRole("option", { name: /^one of/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "in", value: [1, 2, 3] }));
   });
 
@@ -662,7 +662,7 @@ describe("Number preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "eq" }));
+    await user.click(await screen.findByRole("option", { name: /^equals/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: 10 }));
   });
 
@@ -679,7 +679,7 @@ describe("Number preset op coercion", () => {
     );
     const comboboxes = screen.getAllByRole("combobox");
     await user.click(comboboxes[0]);
-    await user.click(await screen.findByRole("option", { name: "eq" }));
+    await user.click(await screen.findByRole("option", { name: /^equals/ }));
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ op: "eq", value: 0 }));
   });
 });
