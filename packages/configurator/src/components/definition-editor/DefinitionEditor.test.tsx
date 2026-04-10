@@ -459,6 +459,90 @@ describe("DefinitionEditor", () => {
     expect(onExport).toHaveBeenCalledWith("yaml");
   });
 
+  it("renders 3-dot menu with Delete when onRemove is provided", async () => {
+    const user = userEvent.setup();
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    expect(await screen.findByText("Delete")).toBeDefined();
+  });
+
+  it("renders Refresh in 3-dot menu when onRefresh is provided", async () => {
+    const user = userEvent.setup();
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onRemove={vi.fn()}
+        onRefresh={vi.fn()}
+      />,
+    );
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    expect(await screen.findByText("Refresh from server")).toBeDefined();
+  });
+
+  it("calls onRefresh when Refresh from server is clicked", async () => {
+    const user = userEvent.setup();
+    const onRefresh = vi.fn();
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onRemove={vi.fn()}
+        onRefresh={onRefresh}
+      />,
+    );
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Refresh from server"));
+    expect(onRefresh).toHaveBeenCalledOnce();
+  });
+
+  it("disables Refresh when definition is dirty", async () => {
+    const user = userEvent.setup();
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        isDirty={true}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+        onRemove={vi.fn()}
+        onRefresh={vi.fn()}
+      />,
+    );
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    const refreshItem = await screen.findByText("Refresh from server");
+    // Base UI MenuItem renders data-disabled attribute when disabled
+    expect(refreshItem.closest("[data-disabled]")).not.toBeNull();
+  });
+
+  it("does not render 3-dot menu when neither onRemove nor onRefresh is provided", () => {
+    render(
+      <DefinitionEditor
+        definitionKey="my-def"
+        definition={testDefinition}
+        onUpdate={vi.fn()}
+        onRename={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: /more actions/i })).toBeNull();
+  });
+
   it("calls onExport with 'json' when Export as JSON is clicked", async () => {
     const user = userEvent.setup();
     const onExport = vi.fn();

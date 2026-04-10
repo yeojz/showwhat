@@ -94,12 +94,20 @@ function ErrorBanner() {
 function EditorLayout({
   emptyState,
   sidebarHeader,
+  definitionKeys,
+  onBeforeSelect,
+  isLoadingDefinition,
   conditionExtensionsResolver,
+  onRefreshDefinition,
   onExportDefinition,
 }: {
   emptyState?: React.ReactNode;
   sidebarHeader?: React.ReactNode;
+  definitionKeys?: string[];
+  onBeforeSelect?: (key: string) => Promise<void> | void;
+  isLoadingDefinition?: boolean;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
+  onRefreshDefinition?: (key: string) => void;
   onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
   const definitions = useConfiguratorSelector(selectDefinitions);
@@ -110,6 +118,7 @@ function EditorLayout({
   const getStore = useStoreRef();
   const { actionState, runAction } = useActionState();
 
+  const keysForList = definitionKeys ?? Object.keys(definitions);
   const selectedDefinition = selectedKey ? definitions[selectedKey] : null;
 
   const resolvedExtensions = useMemo(
@@ -118,7 +127,7 @@ function EditorLayout({
     [conditionExtensionsResolver, selectedKey],
   );
 
-  if (Object.keys(definitions).length === 0 && emptyState) {
+  if (keysForList.length === 0 && emptyState) {
     return <>{emptyState}</>;
   }
 
@@ -149,12 +158,19 @@ function EditorLayout({
           onRemove={() => {
             runAction(() => getStore().removeDefinition(selectedKey)).catch(() => {});
           }}
+          onRefresh={
+            onRefreshDefinition && selectedKey ? () => onRefreshDefinition(selectedKey) : undefined
+          }
           onExport={
             onExportDefinition && selectedDefinition
               ? (fmt: "yaml" | "json") => onExportDefinition(selectedKey, selectedDefinition, fmt)
               : undefined
           }
         />
+      </div>
+    ) : isLoadingDefinition ? (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        Loading definition…
       </div>
     ) : (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -171,12 +187,16 @@ function EditorLayout({
         <div className="w-72 shrink-0 border-r border-border bg-muted/30">
           {sidebarHeader}
           <DefinitionList
+            keys={keysForList}
             definitions={definitions}
             selectedKey={selectedKey}
             validationErrors={validationErrors}
             dirtyKeys={dirtyKeys}
             onSelect={(key) => {
-              runAction(() => getStore().selectDefinition(key)).catch(() => {});
+              runAction(async () => {
+                if (onBeforeSelect) await onBeforeSelect(key);
+                await getStore().selectDefinition(key);
+              }).catch(() => {});
             }}
             onAdd={(key) => runAction(() => getStore().addDefinition(key))}
             onRemove={(key) => {
@@ -212,18 +232,26 @@ export function Configurator({
   className,
   emptyState,
   sidebarHeader,
+  definitionKeys,
+  onBeforeSelect,
+  isLoadingDefinition,
   conditionExtensions,
   conditionExtensionsResolver,
   fallbackEvaluator,
+  onRefreshDefinition,
   onExportDefinition,
 }: {
   store: ConfiguratorStore | ConfiguratorStoreSource;
   className?: string;
   emptyState?: React.ReactNode;
   sidebarHeader?: React.ReactNode;
+  definitionKeys?: string[];
+  onBeforeSelect?: (key: string) => Promise<void> | void;
+  isLoadingDefinition?: boolean;
   conditionExtensions?: ConditionExtensions;
   conditionExtensionsResolver?: (key: string) => ConditionExtensions;
   fallbackEvaluator?: ConditionEvaluator;
+  onRefreshDefinition?: (key: string) => void;
   onExportDefinition?: (key: string, definition: Definition, format: "yaml" | "json") => void;
 }) {
   const runner = useActionRunner();
@@ -238,7 +266,11 @@ export function Configurator({
               <EditorLayout
                 emptyState={emptyState}
                 sidebarHeader={sidebarHeader}
+                definitionKeys={definitionKeys}
+                onBeforeSelect={onBeforeSelect}
+                isLoadingDefinition={isLoadingDefinition}
                 conditionExtensionsResolver={conditionExtensionsResolver}
+                onRefreshDefinition={onRefreshDefinition}
                 onExportDefinition={onExportDefinition}
               />
             </div>

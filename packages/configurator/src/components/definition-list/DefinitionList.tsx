@@ -7,6 +7,7 @@ import { DefinitionListItem } from "./DefinitionListItem.js";
 import type { DefinitionListProps } from "../../types.js";
 
 export function DefinitionList({
+  keys,
   definitions,
   selectedKey,
   validationErrors,
@@ -19,13 +20,11 @@ export function DefinitionList({
   const [adding, setAdding] = useState(false);
   const [newKey, setNewKey] = useState("");
 
-  const keys = Object.keys(definitions).filter((k) =>
-    k.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filteredKeys = keys.filter((k) => k.toLowerCase().includes(search.toLowerCase()));
 
   async function handleAdd() {
     const trimmed = newKey.trim();
-    if (trimmed && !(trimmed in definitions)) {
+    if (trimmed && !keys.includes(trimmed)) {
       try {
         await onAdd(trimmed);
         setNewKey("");
@@ -54,22 +53,25 @@ export function DefinitionList({
       {/* List */}
       <ScrollArea className="flex-1">
         <div className="px-2">
-          {keys.map((key) => (
-            <DefinitionListItem
-              key={key}
-              definitionKey={key}
-              variationCount={definitions[key].variations.length}
-              isActive={definitions[key].active !== false}
-              hasErrors={
-                !!(validationErrors?.[key] && (validationErrors[key] as unknown[]).length > 0)
-              }
-              isDirty={dirtyKeys?.includes(key)}
-              isSelected={key === selectedKey}
-              onSelect={() => onSelect(key)}
-              onRemove={() => onRemove(key)}
-            />
-          ))}
-          {keys.length === 0 && (
+          {filteredKeys.map((key) => {
+            const def = definitions[key];
+            return (
+              <DefinitionListItem
+                key={key}
+                definitionKey={key}
+                variationCount={def?.variations.length}
+                isActive={def ? def.active !== false : undefined}
+                hasErrors={
+                  !!(validationErrors?.[key] && (validationErrors[key] as unknown[]).length > 0)
+                }
+                isDirty={dirtyKeys?.includes(key)}
+                isSelected={key === selectedKey}
+                onSelect={() => onSelect(key)}
+                onRemove={() => onRemove(key)}
+              />
+            );
+          })}
+          {filteredKeys.length === 0 && (
             <p className="px-3 py-8 text-center text-sm text-muted-foreground">
               {search ? "No definitions match" : "No definitions"}
             </p>

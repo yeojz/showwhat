@@ -108,6 +108,61 @@ describe("Configurator", () => {
     const { container } = render(<Configurator store={store} className="my-custom" />);
     expect(container.querySelector(".my-custom")).toBeDefined();
   });
+
+  it("passes definitionKeys to DefinitionList when provided", () => {
+    const store = createMockStore({
+      definitions: { "flag-a": baseDef },
+      selectedKey: null,
+    });
+    render(<Configurator store={store} definitionKeys={["flag-a", "flag-b", "flag-c"]} />);
+    // flag-b and flag-c should appear in the sidebar even though they're not in definitions
+    expect(screen.getByText("flag-b")).toBeDefined();
+    expect(screen.getByText("flag-c")).toBeDefined();
+  });
+
+  it("calls onBeforeSelect before selectDefinition when clicking a sidebar key", async () => {
+    const callOrder: string[] = [];
+    const onBeforeSelect = vi.fn(async () => {
+      callOrder.push("before");
+    });
+    const store = createMockStore({
+      definitions: {
+        "flag-a": baseDef,
+        "flag-b": { variations: [{ value: "off" }] },
+      },
+      selectDefinition: vi.fn(async () => {
+        callOrder.push("select");
+      }),
+    });
+    const user = userEvent.setup();
+    render(<Configurator store={store} onBeforeSelect={onBeforeSelect} />);
+    await user.click(screen.getByText("flag-b"));
+    expect(onBeforeSelect).toHaveBeenCalledWith("flag-b");
+    expect(store.selectDefinition).toHaveBeenCalledWith("flag-b");
+    expect(callOrder).toEqual(["before", "select"]);
+  });
+
+  it("passes onRefresh to DefinitionEditor when onRefreshDefinition is provided", async () => {
+    const user = userEvent.setup();
+    const onRefreshDefinition = vi.fn();
+    const store = createMockStore({ dirtyKeys: [] });
+    render(<Configurator store={store} onRefreshDefinition={onRefreshDefinition} />);
+    // Open 3-dot menu and click Refresh
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Refresh from server"));
+    expect(onRefreshDefinition).toHaveBeenCalledWith("flag-a");
+  });
+
+  it("shows loading indicator when isLoadingDefinition is true and no definition is selected", () => {
+    const store = createMockStore({
+      selectedKey: "unfetched-key",
+      definitions: {},
+    });
+    render(<Configurator store={store} isLoadingDefinition={true} />);
+    expect(screen.queryByText("Select a definition to edit")).toBeNull();
+    expect(screen.getByText("Loading definition\u2026")).toBeDefined();
+  });
 });
 
 describe("Configurator editor interactions", () => {
@@ -129,9 +184,10 @@ describe("Configurator editor interactions", () => {
     const user = userEvent.setup();
     const store = createMockStore();
     render(<Configurator store={store} />);
-    // The Delete button is now in the editor action bar
-    const deleteButton = screen.getByRole("button", { name: /delete/i });
-    await user.click(deleteButton);
+    // Open the 3-dot menu and click Delete
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Delete"));
     // Confirm the deletion
     const confirmButton = await screen.findByRole("button", { name: "Delete" });
     await user.click(confirmButton);
@@ -298,9 +354,10 @@ describe("Configurator async action handling", () => {
       }),
     });
     render(<Configurator store={store} />);
-    // The Delete button is now in the editor action bar
-    const deleteButton = screen.getByRole("button", { name: /delete/i });
-    await user.click(deleteButton);
+    // Open the 3-dot menu and click Delete
+    const menuTrigger = screen.getByRole("button", { name: /more actions/i });
+    await user.click(menuTrigger);
+    await user.click(await screen.findByText("Delete"));
     const confirmButton = await screen.findByRole("button", { name: "Delete" });
     await user.click(confirmButton);
     // The .catch(() => {}) swallows the rejection; component does not crash

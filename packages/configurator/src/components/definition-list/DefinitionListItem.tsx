@@ -3,6 +3,16 @@ import { Badge } from "../ui/badge.js";
 import { cn } from "../../utils/cn.js";
 import type { DefinitionListItemProps } from "../../types.js";
 
+const STATUS_CLASSES = {
+  unfetched: "border-muted-foreground/40 bg-muted-foreground/40",
+  error: "border-status-error bg-status-error",
+  error_dirty: "border-status-error bg-transparent",
+  active: "border-status-active bg-status-active",
+  active_dirty: "border-status-active bg-transparent",
+  inactive: "border-status-inactive bg-status-inactive",
+  inactive_dirty: "border-status-inactive bg-transparent",
+};
+
 export const DefinitionListItem = memo(function DefinitionListItem({
   definitionKey,
   variationCount,
@@ -12,6 +22,15 @@ export const DefinitionListItem = memo(function DefinitionListItem({
   isDirty,
   onSelect,
 }: DefinitionListItemProps) {
+  const isUnfetched = isActive === undefined;
+
+  function getStatusLabel() {
+    if (isUnfetched) return `${definitionKey} is unfetched`;
+    const state = hasErrors ? "error" : isActive ? "active" : "inactive";
+    const dirty = isDirty ? ", unsaved changes" : "";
+    return `${definitionKey} is ${state}${dirty}`;
+  }
+
   return (
     <div
       tabIndex={0}
@@ -31,26 +50,30 @@ export const DefinitionListItem = memo(function DefinitionListItem({
     >
       <span
         role="status"
-        aria-label={`${definitionKey} is ${hasErrors ? "error" : isActive ? "active" : "inactive"}${isDirty ? ", unsaved changes" : ""}`}
+        aria-label={getStatusLabel()}
         className={cn(
           "h-2 w-2 shrink-0 rounded-full border-[1.5px]",
-          hasErrors
-            ? isDirty
-              ? "border-status-error bg-transparent"
-              : "border-status-error bg-status-error"
-            : isActive
+          isUnfetched
+            ? STATUS_CLASSES.unfetched
+            : hasErrors
               ? isDirty
-                ? "border-status-active bg-transparent"
-                : "border-status-active bg-status-active"
-              : isDirty
-                ? "border-status-inactive bg-transparent"
-                : "border-status-inactive bg-status-inactive",
+                ? STATUS_CLASSES.error_dirty
+                : STATUS_CLASSES.error
+              : isActive
+                ? isDirty
+                  ? STATUS_CLASSES.active_dirty
+                  : STATUS_CLASSES.active
+                : isDirty
+                  ? STATUS_CLASSES.inactive_dirty
+                  : STATUS_CLASSES.inactive,
         )}
       />
       <span className="min-w-0 flex-1 break-all font-mono text-sm">{definitionKey}</span>
-      <Badge variant="secondary" className="text-xs tabular-nums">
-        {variationCount}
-      </Badge>
+      {variationCount !== undefined && (
+        <Badge variant="secondary" className="text-xs tabular-nums">
+          {variationCount}
+        </Badge>
+      )}
     </div>
   );
 });

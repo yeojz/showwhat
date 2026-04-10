@@ -3,6 +3,7 @@ import type { Condition, Definition, Definitions, Variation } from "showwhat";
 // ── DefinitionList ─────────────────────────────────────────────────────────
 
 export type DefinitionListProps = {
+  keys: string[];
   definitions: Definitions;
   selectedKey: string | null;
   validationErrors?: Record<string, unknown[]>;
@@ -14,8 +15,8 @@ export type DefinitionListProps = {
 
 export type DefinitionListItemProps = {
   definitionKey: string;
-  variationCount: number;
-  isActive: boolean;
+  variationCount?: number;
+  isActive?: boolean;
   hasErrors: boolean;
   isSelected: boolean;
   isDirty?: boolean;
@@ -37,6 +38,7 @@ export type DefinitionEditorProps = {
   onDiscard?: () => void;
   onRemove?: () => void;
   onExport?: (format: "yaml" | "json") => void;
+  onRefresh?: () => void;
 };
 
 // ── VariationEditor ─────────────────────────────────────────────────────────

@@ -166,10 +166,10 @@ describe("SidebarActions", () => {
     return render(<SidebarActions fileInputRef={ref} />);
   }
 
-  it("returns null when no definitions are loaded", () => {
+  it("shows idle badge when no definitions are loaded", () => {
     definitionStoreState = { ...definitionStoreState, definitions: {} };
-    const { container } = renderSidebarActions();
-    expect(container.innerHTML).toBe("");
+    renderSidebarActions();
+    expect(screen.getByText("idle")).toBeDefined();
   });
 
   it("renders status badge with 'ready' when clean and no errors", () => {

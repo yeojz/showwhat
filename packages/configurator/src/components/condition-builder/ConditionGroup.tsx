@@ -12,6 +12,22 @@ import { useConditionArray } from "./useConditionArray.js";
 
 import { Fragment, memo } from "react";
 
+const GROUP_TYPE_CLASSES = {
+  and: { border: "border-primary/30", badge: "bg-primary/10 text-primary border-primary/20" },
+  or: {
+    border: "border-amber-500/30",
+    badge: "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400",
+  },
+  default: {
+    border: "border-violet-500/30",
+    badge: "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400",
+  },
+};
+
+function getGroupTypeClasses(type: string) {
+  return GROUP_TYPE_CLASSES[type as keyof typeof GROUP_TYPE_CLASSES] ?? GROUP_TYPE_CLASSES.default;
+}
+
 export const ConditionGroup = memo(function ConditionGroup({
   type,
   conditions: rawConditions,
@@ -33,14 +49,7 @@ export const ConditionGroup = memo(function ConditionGroup({
 
   return (
     <div
-      className={cn(
-        "border-l-3 pl-3 pr-2 py-2 rounded-r-md",
-        type === "and"
-          ? "border-primary/30"
-          : type === "or"
-            ? "border-amber-500/30"
-            : "border-violet-500/30",
-      )}
+      className={cn("border-l-3 pl-3 pr-2 py-2 rounded-r-md", getGroupTypeClasses(type).border)}
       style={{
         backgroundColor: `oklch(from var(--color-muted) l c h / ${Math.min(0.2 + depth * 0.1, 0.5)})`,
       }}
@@ -76,14 +85,7 @@ export const ConditionGroup = memo(function ConditionGroup({
               <div className="flex">
                 <Badge
                   variant="outline"
-                  className={cn(
-                    "select-none font-mono text-xs",
-                    type === "and"
-                      ? "bg-primary/10 text-primary border-primary/20"
-                      : type === "or"
-                        ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400"
-                        : "bg-violet-500/10 text-violet-600 border-violet-500/20 dark:text-violet-400",
-                  )}
+                  className={cn("select-none font-mono text-xs", getGroupTypeClasses(type).badge)}
                 >
                   {type === "matchAnnotations" ? "and" : type}
                 </Badge>

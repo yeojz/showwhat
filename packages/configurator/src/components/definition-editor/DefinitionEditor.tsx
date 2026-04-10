@@ -1,6 +1,15 @@
 import { useRef, useState } from "react";
 import type { Variation } from "showwhat";
-import { AlertTriangle, Download, Plus, Save, Trash2, Undo2 } from "lucide-react";
+import {
+  AlertTriangle,
+  Download,
+  MoreHorizontal,
+  Plus,
+  RefreshCw,
+  Save,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConfirmDialog } from "../common/ConfirmDialog.js";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "../ui/menu.js";
@@ -22,8 +31,10 @@ export function DefinitionEditor({
   onDiscard,
   onRemove,
   onExport,
+  onRefresh,
 }: DefinitionEditorProps) {
   const [editingKey, setEditingKey] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [keyDraft, setKeyDraft] = useState(definitionKey);
   const prevKeyRef = useRef(definitionKey);
   if (prevKeyRef.current !== definitionKey) {
@@ -100,22 +111,40 @@ export function DefinitionEditor({
             </MenuContent>
           </Menu>
         )}
+        {(onRemove || onRefresh) && (
+          <Menu>
+            <MenuTrigger render={<Button variant="ghost" size="sm" aria-label="More actions" />}>
+              <MoreHorizontal className="h-4 w-4" />
+            </MenuTrigger>
+            <MenuContent>
+              {onRefresh && (
+                <MenuItem disabled={isDirty || isPending} onClick={onRefresh}>
+                  <RefreshCw className="mr-1.5 h-4 w-4" />
+                  Refresh from server
+                </MenuItem>
+              )}
+              {onRemove && (
+                <MenuItem
+                  className="text-destructive/60 hover:text-destructive"
+                  onClick={() => setDeleteOpen(true)}
+                >
+                  <Trash2 className="mr-1.5 h-4 w-4" />
+                  Delete
+                </MenuItem>
+              )}
+            </MenuContent>
+          </Menu>
+        )}
         {onRemove && (
           <ConfirmDialog
             title="Delete definition?"
             description={`This will permanently remove "${definitionKey}" and all its variations. This action cannot be undone.`}
             actionLabel="Delete"
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
             onConfirm={onRemove}
           >
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive/60 hover:text-destructive"
-              disabled={isPending}
-            >
-              <Trash2 className="mr-1.5 h-4 w-4" />
-              Delete
-            </Button>
+            <span />
           </ConfirmDialog>
         )}
       </div>

@@ -679,14 +679,9 @@ describe("SourceSettings", () => {
 
   // ─── handleLoad: split mode ─────────────────────────────────────
 
-  it("handleLoad for split source calls importDefinitions without presets, then sets presetReader", async () => {
+  it("handleLoad for split source fetches key list and sets up source metadata", async () => {
     const user = userEvent.setup();
-    const fetchResult = {
-      definitions: { "flag-a": { kind: "boolean" } },
-      keys: ["flag-a"],
-      presets: { env: { dev: {} } },
-    };
-    mockFetchSource.mockResolvedValue(fetchResult);
+    mockReloadKeyList.mockResolvedValue(["flag-a"]);
     const mockReader = { fetchSource: vi.fn() };
     mockCreateHttpReader.mockReturnValue(mockReader);
     sourceStoreState = {
@@ -695,25 +690,20 @@ describe("SourceSettings", () => {
     };
     render(<SourceSettings />);
 
-    // Select the split source first (it should be auto-selected as the only source)
     await user.click(screen.getByTestId("confirm-Load source?"));
 
-    expect(mockFetchSource).toHaveBeenCalledWith(sampleSplitSource);
-    // Split mode: importDefinitions called WITHOUT presets (3 args)
-    expect(mockImportDefinitions).toHaveBeenCalledWith(fetchResult.definitions, "Staging", "json");
+    expect(mockReloadKeyList).toHaveBeenCalled();
+    expect(mockFetchSource).not.toHaveBeenCalled();
+    expect(mockImportDefinitions).toHaveBeenCalledWith({}, "Staging", "json");
     expect(mockSetPresetReader).toHaveBeenCalledWith(mockReader);
     expect(mockSetActiveSource).toHaveBeenCalledWith("src-2");
-    expect(mockMarkFetched).toHaveBeenCalledWith("src-2", ["flag-a"]);
+    expect(mockSetDefinitionKeys).toHaveBeenCalledWith("src-2", ["flag-a"]);
+    expect(mockMarkListFetched).toHaveBeenCalledWith("src-2");
   });
 
-  it("handleLoad for split source without presets still sets presetReader", async () => {
+  it("handleLoad for split source still sets presetReader", async () => {
     const user = userEvent.setup();
-    const fetchResult = {
-      definitions: { "flag-a": { kind: "boolean" } },
-      keys: ["flag-a"],
-      presets: undefined,
-    };
-    mockFetchSource.mockResolvedValue(fetchResult);
+    mockReloadKeyList.mockResolvedValue(["flag-a"]);
     const mockReader = { fetchSource: vi.fn() };
     mockCreateHttpReader.mockReturnValue(mockReader);
     sourceStoreState = {
@@ -725,6 +715,22 @@ describe("SourceSettings", () => {
     await user.click(screen.getByTestId("confirm-Load source?"));
 
     expect(mockSetPresetReader).toHaveBeenCalledWith(mockReader);
+  });
+
+  it("handleLoad for split source does nothing when reloadKeyList returns null", async () => {
+    const user = userEvent.setup();
+    mockReloadKeyList.mockResolvedValue(null);
+    sourceStoreState = {
+      ...sourceStoreState,
+      sources: [sampleSplitSource],
+    };
+    render(<SourceSettings />);
+
+    await user.click(screen.getByTestId("confirm-Load source?"));
+
+    expect(mockReloadKeyList).toHaveBeenCalled();
+    expect(mockImportDefinitions).not.toHaveBeenCalled();
+    expect(mockSetActiveSource).not.toHaveBeenCalled();
   });
 
   // ─── handleUnload ───────────────────────────────────────────────

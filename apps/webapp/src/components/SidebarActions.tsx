@@ -136,8 +136,6 @@ export function SidebarActions({
   );
   const canExport = !hasDirty && !hasErrors;
 
-  if (definitionCount === 0) return null;
-
   return (
     <div className="flex h-12 items-center gap-2 border-b border-border px-3">
       <input
@@ -148,13 +146,22 @@ export function SidebarActions({
         onChange={handleFileChange}
       />
 
-      <StatusBadge hasErrors={hasErrors} hasDirty={hasDirty} onRevert={revertAll} />
+      {definitionCount > 0 ? (
+        <StatusBadge hasErrors={hasErrors} hasDirty={hasDirty} onRevert={revertAll} />
+      ) : (
+        <Badge
+          variant="outline"
+          className="border-muted-foreground/40 bg-muted/10 text-muted-foreground"
+        >
+          idle
+        </Badge>
+      )}
 
       {importError && <span className="text-xs text-destructive">{importError.message}</span>}
 
       <div className="flex-1" />
 
-      {!isSplit && (
+      {definitionCount > 0 && !isSplit && (
         <Menu>
           <MenuTrigger
             render={
