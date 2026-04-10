@@ -12,6 +12,7 @@ Schema and rule engine for **feature flags** and **config** resolution
 
 [![npm version](https://img.shields.io/npm/v/showwhat.svg)](https://www.npmjs.com/package/showwhat)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://github.com/yeojz/showwhat/actions/workflows/ci.yml/badge.svg)](https://github.com/yeojz/showwhat/actions/workflows/ci.yml)
 
 **[Documentation](https://showwhat.yeojz.dev)** | **[Quick Start](https://showwhat.yeojz.dev/docs/)** | **[Concepts](https://showwhat.yeojz.dev/docs/definitions)**
 
@@ -177,9 +178,19 @@ See the [Presets guide](https://showwhat.yeojz.dev/docs/presets.html) for compos
 
 showwhat assumes definition authors are trusted. See the [Security guide](https://showwhat.yeojz.dev/docs/security) for considerations when accepting definitions from untrusted sources.
 
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup, commands, and guidelines.
+
 ## AI Usage Disclosure
 
-The codebase, tests, and documentation was created with AI assistance, with outputs reviewed by humans. See [CONTRIBUTING.md](./CONTRIBUTING.md#ai-usage-guidelines) for guidelines.
+This codebase was developed with the assistance of AI tools:
+
+- Library packages (eg: core, showwhat): Human architected and coded, with AI pair programming and assistance.
+- UI packages (eg: configurator): Human architected and refined. AI-implemented.
+- Tests: AI-implemented.
+
+All outputs are reviewed by humans.
 
 ## License
 
