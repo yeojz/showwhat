@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import type { Definition } from "showwhat";
+import type { Definition, Presets } from "showwhat";
 import type { HostedSource, SplitSource } from "../store/source-store.js";
 import {
   SplitSourceHttpReader,
@@ -62,14 +62,16 @@ export function useSourceFetch() {
   }, []);
 
   const reloadDefinitionKey = useCallback(
-    async (source: SplitSource, key: string): Promise<Definition | null> => {
+    async (
+      source: SplitSource,
+      key: string,
+    ): Promise<{ definition: Definition; filePresets?: Presets } | null> => {
       setLoading(true);
       setError(null);
 
       try {
         const reader = new SplitSourceHttpReader(source);
-        const { definition } = await reader.fetchDefinitionKey(key);
-        return definition;
+        return await reader.fetchDefinitionKey(key);
       } catch (err) {
         setError({ message: formatFetchError(err) });
         return null;

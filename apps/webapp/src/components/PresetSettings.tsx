@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button, Textarea } from "@showwhat/configurator";
-import { ArrowUpCircle, Check, ChevronRight } from "lucide-react";
+import { ArrowUpCircle, Check, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { usePresetStore } from "../store/preset-store.js";
-import type { Presets, PresetReader } from "showwhat";
+import type { Presets } from "showwhat";
 
 export function PresetEditor() {
   const { presetYaml, setPresetYaml } = usePresetStore(
@@ -195,70 +195,56 @@ function PresetGroup({
   );
 }
 
+function formatRelativeTime(epoch: number): string {
+  const seconds = Math.floor((Date.now() - epoch) / 1000);
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 export function InlinePresetList({
-  presetReader,
+  sharedPresets,
+  loading,
+  lastFetched,
+  onRefresh,
   overrides,
-  definitionKeys,
   isSplit,
+  allDefinitionKeys,
+  loadedDefinitionKeys,
+  keyFilePresets,
 }: {
-  presetReader?: PresetReader;
+  sharedPresets: Presets;
+  loading: boolean;
+  lastFetched?: number;
+  onRefresh: () => void;
   overrides: Presets;
-  definitionKeys: string[];
   isSplit: boolean;
+  allDefinitionKeys?: string[];
+  loadedDefinitionKeys: string[];
+  keyFilePresets?: Record<string, Presets>;
 }) {
-  const [sharedPresets, setSharedPresets] = useState<Presets>({});
-  const [perKeyPresets, setPerKeyPresets] = useState<Record<string, Presets>>({});
-
-  useEffect(() => {
-    if (!presetReader) {
-      setSharedPresets({});
-      setPerKeyPresets({});
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      // Fetch shared presets first
-      const shared = await presetReader.getPresets();
-      if (cancelled) return;
-      setSharedPresets(shared);
-
-      // For split mode, fetch per-key presets and extract only key-specific ones
-      if (isSplit && definitionKeys.length > 0) {
-        const results = await Promise.all(
-          definitionKeys.map(async (key) => {
-            const keyPresets = await presetReader.getPresets(key);
-            return { key, presets: keyPresets };
-          }),
-        );
-        if (cancelled) return;
-
-        const map: Record<string, Presets> = {};
-        for (const { key, presets: keyPresets } of results) {
-          const unique: Presets = {};
-          for (const [name, def] of Object.entries(keyPresets)) {
-            if (!(name in shared)) {
-              unique[name] = def;
-            }
-          }
-          if (Object.keys(unique).length > 0) {
-            map[key] = unique;
-          }
-        }
-        setPerKeyPresets(map);
-      } else {
-        setPerKeyPresets({});
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [presetReader, isSplit, definitionKeys]);
-
   const sharedEntries = Object.entries(sharedPresets);
-  const perKeyEntries = Object.entries(perKeyPresets);
+
+  // Per-key presets for loaded definitions (only unique ones not already in shared)
+  const perKeyEntries =
+    isSplit && keyFilePresets
+      ? Object.entries(keyFilePresets)
+          .map(([key, presets]) => {
+            const unique: Presets = {};
+            for (const [name, def] of Object.entries(presets)) {
+              if (!(name in sharedPresets)) {
+                unique[name] = def;
+              }
+            }
+            return [key, unique] as const;
+          })
+          .filter(([, presets]) => Object.keys(presets).length > 0)
+      : [];
+
   const hasAny = sharedEntries.length > 0 || perKeyEntries.length > 0;
 
   const allEntries = [
@@ -268,14 +254,45 @@ export function InlinePresetList({
   const hasOverrides =
     hasAny && Object.keys(overrides).length > 0 && allEntries.some(([name]) => name in overrides);
 
+  // For split mode, determine which keys haven't been loaded yet
+  const unloadedKeys =
+    isSplit && allDefinitionKeys
+      ? allDefinitionKeys.filter((k) => !loadedDefinitionKeys.includes(k))
+      : [];
+
   return (
     <section className="space-y-4">
-      <div>
-        <h2 className="text-base font-semibold text-foreground">From Source</h2>
-        <p className="mt-1 text-xs text-muted-foreground">Presets provided by the active source.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">From Source</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Presets provided by the active source.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {lastFetched && (
+            <span className="text-[10px] text-muted-foreground/60">
+              {formatRelativeTime(lastFetched)}
+            </span>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-muted-foreground"
+            disabled={loading}
+            onClick={onRefresh}
+            title="Refresh presets from source"
+          >
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </div>
       </div>
 
-      {!hasAny && (
+      {!hasAny && !loading && (
         <div className="rounded-md border border-dashed border-border px-4 py-6 text-center">
           <p className="text-sm text-muted-foreground">No presets loaded from source.</p>
           <p className="mt-1 text-xs text-muted-foreground/70">
@@ -305,6 +322,26 @@ export function InlinePresetList({
               customPresets={overrides}
             />
           ))}
+        </div>
+      )}
+
+      {isSplit && unloadedKeys.length > 0 && (
+        <div className="rounded-md border border-dashed border-border px-4 py-4">
+          <p className="text-xs font-medium text-muted-foreground">Per-definition presets</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">
+            Presets embedded in definition files will appear here once loaded from the Definitions
+            tab.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {unloadedKeys.map((key) => (
+              <span
+                key={key}
+                className="inline-block rounded bg-muted/50 px-2 py-0.5 font-mono text-[11px] text-muted-foreground/60"
+              >
+                {key}
+              </span>
+            ))}
+          </div>
         </div>
       )}
 

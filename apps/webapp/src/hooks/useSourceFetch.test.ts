@@ -219,7 +219,7 @@ describe("useSourceFetch", () => {
   });
 
   describe("reloadDefinitionKey", () => {
-    it("returns definition on success", async () => {
+    it("returns definition and filePresets on success", async () => {
       const defResponse = {
         ok: true,
         headers: new Headers(),
@@ -232,19 +232,19 @@ describe("useSourceFetch", () => {
       });
 
       const { result } = renderHook(() => useSourceFetch());
-      let fetched: Definition | null = null;
+      let fetched: { definition: Definition; filePresets?: Record<string, unknown> } | null = null;
       await act(async () => {
         fetched = await result.current.reloadDefinitionKey(createSplitSource(), "flag-a");
       });
 
-      expect(fetched).toEqual({ variations: [{ value: true }] });
+      expect(fetched?.definition).toEqual({ variations: [{ value: true }] });
     });
 
     it("sets error and returns null on failure", async () => {
       fetchMock.mockRejectedValueOnce(new Error("HTTP 500"));
 
       const { result } = renderHook(() => useSourceFetch());
-      let fetched: Definition | null = null;
+      let fetched: { definition: Definition; filePresets?: Record<string, unknown> } | null = null;
       await act(async () => {
         fetched = await result.current.reloadDefinitionKey(createSplitSource(), "flag-a");
       });

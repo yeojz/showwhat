@@ -11,6 +11,7 @@ import { cn } from "@showwhat/configurator";
 import { FilePlus2, FileText, Globe, Plus, Unplug } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { useDefinitionStore } from "../store/definition-store.js";
+import { usePresetStore } from "../store/preset-store.js";
 import { useSourceStore } from "../store/source-store.js";
 import type { HostedSource, SplitSource } from "../store/source-store.js";
 import { createHttpReader } from "../lib/http-reader.js";
@@ -203,13 +204,18 @@ export function SourceSettings() {
     }
   }
 
+  const upsertKeyFilePresets = usePresetStore((s) => s.upsertKeyFilePresets);
+
   async function handleReloadKey(key: string) {
     const source = getRelevantSource();
     if (!source || source.mode !== "split") return;
-    const definition = await reloadDefinitionKey(source as SplitSource, key);
-    if (definition) {
-      upsertDefinition(key, definition);
+    const result = await reloadDefinitionKey(source as SplitSource, key);
+    if (result) {
+      upsertDefinition(key, result.definition);
       markFetched(source.id, [key]);
+      if (result.filePresets && Object.keys(result.filePresets).length > 0) {
+        upsertKeyFilePresets(key, result.filePresets);
+      }
     }
   }
 
