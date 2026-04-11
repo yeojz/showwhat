@@ -23,7 +23,7 @@ import { SourceDetailPanel, ModeBadge, FormatBadge } from "./SourceDetailPanel.j
 type Selection = "__active__" | string;
 
 interface SourceSettingsProps {
-  loadDefinitionKey?: (source: SplitSource, key: string) => Promise<void>;
+  loadDefinitionKey: (source: SplitSource, key: string) => Promise<void>;
 }
 
 export function SourceSettings({ loadDefinitionKey }: SourceSettingsProps) {
@@ -202,7 +202,7 @@ export function SourceSettings({ loadDefinitionKey }: SourceSettingsProps) {
   async function handleReloadKey(key: string) {
     const source = getRelevantSource();
     if (!source || source.mode !== "split") return;
-    await loadDefinitionKey?.(source as SplitSource, key);
+    await loadDefinitionKey(source as SplitSource, key);
   }
 
   async function handleReloadPresets() {
