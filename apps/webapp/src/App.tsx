@@ -303,7 +303,20 @@ export function App() {
             />
           </PreviewStateProvider>
         )}
-        {tab === "sources" && <SourceSettings />}
+        {tab === "sources" && (
+          <SourceSettings
+            loadDefinitionKey={async (source, key) => {
+              const result = await reloadDefinitionKey(source, key);
+              if (result) {
+                upsertDefinition(key, result.definition);
+                markFetched(source.id, [key]);
+                if (result.filePresets && Object.keys(result.filePresets).length > 0) {
+                  upsertKeyFilePresets(key, result.filePresets);
+                }
+              }
+            }}
+          />
+        )}
         {tab === "presets" && (
           <div className="h-full overflow-y-auto">
             <div className="mx-auto max-w-2xl p-8 space-y-8">
