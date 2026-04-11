@@ -79,6 +79,60 @@ describe("preset-store", () => {
     expect(store.getState().presets).toEqual({});
   });
 
+  // ─── Source preset caching ─────────────────────────────────────────
+
+  it("starts with empty source presets", () => {
+    const state = store.getState();
+    expect(state.sourcePresets).toEqual({});
+    expect(state.keyFilePresets).toEqual({});
+    expect(state.sourcePresetsLastFetched).toBeUndefined();
+  });
+
+  it("setSourcePresets updates presets and sets lastFetched timestamp", () => {
+    const before = Date.now();
+    store.getState().setSourcePresets({ env: { type: "string", key: "env" } });
+    const state = store.getState();
+    expect(state.sourcePresets).toHaveProperty("env");
+    expect(state.sourcePresetsLastFetched).toBeGreaterThanOrEqual(before);
+  });
+
+  it("upsertKeyFilePresets merges per-key presets", () => {
+    store.getState().upsertKeyFilePresets("flags", { beta: { type: "boolean", key: "b" } });
+    store.getState().upsertKeyFilePresets("limits", { rate: { type: "number", key: "r" } });
+    const state = store.getState();
+    expect(state.keyFilePresets).toHaveProperty("flags");
+    expect(state.keyFilePresets).toHaveProperty("limits");
+    expect(state.keyFilePresets.flags.beta.type).toBe("boolean");
+  });
+
+  it("clearSourcePresets resets all source preset fields", () => {
+    store.getState().setSourcePresets({ env: { type: "string", key: "env" } });
+    store.getState().upsertKeyFilePresets("flags", { beta: { type: "boolean", key: "b" } });
+    expect(store.getState().sourcePresets).toHaveProperty("env");
+
+    store.getState().clearSourcePresets();
+    const state = store.getState();
+    expect(state.sourcePresets).toEqual({});
+    expect(state.keyFilePresets).toEqual({});
+    expect(state.sourcePresetsLastFetched).toBeUndefined();
+  });
+
+  it("persists source presets across rehydration", async () => {
+    const storage = createTestStorage();
+    const store1 = createPresetStore({ storage });
+    store1.getState().setSourcePresets({ env: { type: "string", key: "env" } });
+    store1.getState().upsertKeyFilePresets("flags", { beta: { type: "boolean", key: "b" } });
+
+    const store2 = createPresetStore({ storage });
+    await new Promise((r) => setTimeout(r, 10));
+    const state2 = store2.getState();
+    expect(state2.sourcePresets).toHaveProperty("env");
+    expect(state2.keyFilePresets).toHaveProperty("flags");
+    expect(state2.sourcePresetsLastFetched).toBeDefined();
+  });
+
+  // ─── Persistence ──────────────────────────────────────────────────
+
   it("persists and rehydrates state", async () => {
     const storage = createTestStorage();
     const store1 = createPresetStore({ storage });
