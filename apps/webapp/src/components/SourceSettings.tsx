@@ -11,7 +11,6 @@ import { cn } from "@showwhat/configurator";
 import { FilePlus2, FileText, Globe, Plus, Unplug } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 import { useDefinitionStore } from "../store/definition-store.js";
-import { usePresetStore } from "../store/preset-store.js";
 import { useSourceStore } from "../store/source-store.js";
 import type { HostedSource, SplitSource } from "../store/source-store.js";
 import { createHttpReader } from "../lib/http-reader.js";
@@ -23,14 +22,17 @@ import { SourceDetailPanel, ModeBadge, FormatBadge } from "./SourceDetailPanel.j
 // Selection can be: the active source ("__active__"), or a source id from the list
 type Selection = "__active__" | string;
 
-export function SourceSettings() {
+interface SourceSettingsProps {
+  loadDefinitionKey?: (source: SplitSource, key: string) => Promise<void>;
+}
+
+export function SourceSettings({ loadDefinitionKey }: SourceSettingsProps) {
   const {
     sourceFileName,
     sourceFormat,
     definitions,
     dirtyKeys,
     importDefinitions,
-    upsertDefinition,
     setPresetReader,
     clearAll,
   } = useDefinitionStore(
@@ -40,7 +42,6 @@ export function SourceSettings() {
       definitions: s.definitions,
       dirtyKeys: s.dirtyKeys,
       importDefinitions: s.importDefinitions,
-      upsertDefinition: s.upsertDefinition,
       setPresetReader: s.setPresetReader,
       clearAll: s.clearAll,
     })),
@@ -76,13 +77,7 @@ export function SourceSettings() {
     })),
   );
 
-  const {
-    fetchSource,
-    reloadKeyList,
-    reloadDefinitionKey,
-    loading,
-    error: fetchError,
-  } = useSourceFetch();
+  const { fetchSource, reloadKeyList, loading, error: fetchError } = useSourceFetch();
   const { importFile, error: fileError } = useFileImport();
   const [formState, setFormState] = useState<"add" | HostedSource | null>(null);
   const [pendingFileImport, setPendingFileImport] = useState<{
@@ -204,19 +199,10 @@ export function SourceSettings() {
     }
   }
 
-  const upsertKeyFilePresets = usePresetStore((s) => s.upsertKeyFilePresets);
-
   async function handleReloadKey(key: string) {
     const source = getRelevantSource();
     if (!source || source.mode !== "split") return;
-    const result = await reloadDefinitionKey(source as SplitSource, key);
-    if (result) {
-      upsertDefinition(key, result.definition);
-      markFetched(source.id, [key]);
-      if (result.filePresets && Object.keys(result.filePresets).length > 0) {
-        upsertKeyFilePresets(key, result.filePresets);
-      }
-    }
+    await loadDefinitionKey?.(source as SplitSource, key);
   }
 
   async function handleReloadPresets() {

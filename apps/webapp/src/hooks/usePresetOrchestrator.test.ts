@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import type { Definition, Presets } from "showwhat";
 import type { SplitSource } from "../store/source-store.js";
 
@@ -19,6 +19,12 @@ vi.mock("showwhat", () => ({
 vi.mock("@showwhat/configurator", () => ({
   createPresetUI: (...args: unknown[]) =>
     mockCreatePresetUI(...(args as Parameters<typeof mockCreatePresetUI>)),
+}));
+
+const mockCreateHttpReader = vi.fn(() => ({ getPresets: vi.fn(async () => ({})) }));
+vi.mock("../lib/http-reader.js", () => ({
+  createHttpReader: (...args: unknown[]) =>
+    mockCreateHttpReader(...(args as Parameters<typeof mockCreateHttpReader>)),
 }));
 
 vi.mock("./useSourceFetch.js", () => ({
@@ -121,6 +127,8 @@ describe("usePresetOrchestrator", () => {
     mockUpsertKeyFilePresets.mockReset();
     mockClearSourcePresets.mockReset();
     mockReloadDefinitionKey.mockReset();
+    mockCreateHttpReader.mockReset();
+    mockCreateHttpReader.mockReturnValue({ getPresets: vi.fn(async () => ({})) });
     mockMergePresets.mockReset();
     mockMergePresets.mockResolvedValue({});
     mockCreatePresetUI.mockClear();
@@ -313,6 +321,150 @@ describe("usePresetOrchestrator", () => {
 
       expect(result.current.loadingDefinition).toBe(false);
       expect(mockUpsertDefinition).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // effectiveReader and source preset fetching
+  // -------------------------------------------------------------------------
+  describe("effectiveReader and source preset fetching", () => {
+    it("fetches source presets from filePresets when no presetReader", async () => {
+      const bundledPresets = { bundled: { type: "string", key: "b" } };
+      definitionStoreOverrides = { filePresets: bundledPresets };
+
+      renderHook(() => usePresetOrchestrator());
+
+      await waitFor(() => {
+        expect(mockSetSourcePresets).toHaveBeenCalledWith(bundledPresets);
+      });
+    });
+
+    it("reconstructs presetReader from persisted split source config when null", async () => {
+      const source = createSplitSource();
+      sourceStoreOverrides = {
+        activeSourceId: "src-1",
+        sources: [source],
+      };
+
+      renderHook(() => usePresetOrchestrator());
+
+      await waitFor(() => {
+        expect(mockSetPresetReader).toHaveBeenCalled();
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Source change clearing
+  // -------------------------------------------------------------------------
+  describe("source change clearing", () => {
+    it("clears source presets when activeSourceId changes", async () => {
+      sourceStoreOverrides = { activeSourceId: "src-1" };
+
+      const { rerender } = renderHook(() => usePresetOrchestrator());
+
+      // Change the active source id
+      sourceStoreOverrides = { activeSourceId: "src-2" };
+      rerender();
+
+      await waitFor(() => {
+        expect(mockClearSourcePresets).toHaveBeenCalled();
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // refreshSourcePresets
+  // -------------------------------------------------------------------------
+  describe("refreshSourcePresets", () => {
+    it("calls setSourcePresets with fresh data from effectiveReader", async () => {
+      const bundledPresets = { tier: { type: "string", key: "tier" } };
+      definitionStoreOverrides = { filePresets: bundledPresets };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      // Wait for initial fetch
+      await waitFor(() => {
+        expect(mockSetSourcePresets).toHaveBeenCalledWith(bundledPresets);
+      });
+
+      mockSetSourcePresets.mockClear();
+
+      await act(async () => {
+        await result.current.refreshSourcePresets();
+      });
+
+      expect(mockSetSourcePresets).toHaveBeenCalledWith(bundledPresets);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // cachedPresetReader
+  // -------------------------------------------------------------------------
+  describe("cachedPresetReader", () => {
+    it("returns sourcePresets for base call (no key)", async () => {
+      const sp = { env: { type: "string", key: "env" } };
+      presetStoreOverrides = { sourcePresets: sp };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      const presets = await result.current.cachedPresetReader.getPresets();
+      expect(presets).toEqual(sp);
+    });
+
+    it("merges keyFilePresets for key-specific call", async () => {
+      const sp = { env: { type: "string", key: "env" } };
+      const kfp = { "flag-a": { tier: { type: "string", key: "tier" } } };
+      presetStoreOverrides = { sourcePresets: sp, keyFilePresets: kfp };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      const presets = await result.current.cachedPresetReader.getPresets("flag-a");
+      expect(presets).toEqual({
+        env: { type: "string", key: "env" },
+        tier: { type: "string", key: "tier" },
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // conditionExtensions
+  // -------------------------------------------------------------------------
+  describe("conditionExtensions", () => {
+    it("calls createPresetUI with resolved presets", async () => {
+      const merged = { region: { type: "string", key: "region" } };
+      mockMergePresets.mockResolvedValue(merged);
+
+      renderHook(() => usePresetOrchestrator());
+
+      await waitFor(() => {
+        expect(mockCreatePresetUI).toHaveBeenCalledWith(merged);
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // conditionExtensionsResolver
+  // -------------------------------------------------------------------------
+  describe("conditionExtensionsResolver", () => {
+    it("returns undefined when not in split mode", () => {
+      sourceStoreOverrides = { activeSourceId: null, sources: [] };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      expect(result.current.conditionExtensionsResolver).toBeUndefined();
+    });
+
+    it("returns a function in split mode", () => {
+      const source = createSplitSource();
+      sourceStoreOverrides = {
+        activeSourceId: "src-1",
+        sources: [source],
+      };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      expect(typeof result.current.conditionExtensionsResolver).toBe("function");
     });
   });
 });

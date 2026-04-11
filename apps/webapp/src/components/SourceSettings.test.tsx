@@ -154,14 +154,8 @@ vi.mock("../hooks/useSourceFetch.js", () => ({
   }),
 }));
 
-// Preset store mock
-const mockUpsertKeyFilePresets = vi.fn();
-vi.mock("../store/preset-store.js", () => {
-  const usePresetStore = (selector: (s: Record<string, unknown>) => unknown) => {
-    return selector({ upsertKeyFilePresets: mockUpsertKeyFilePresets });
-  };
-  return { usePresetStore };
-});
+// loadDefinitionKey prop mock
+const mockLoadDefinitionKey = vi.fn();
 
 // http-reader mock
 const mockCreateHttpReader = vi.fn().mockReturnValue({ fetchSource: vi.fn() });
@@ -309,7 +303,7 @@ describe("SourceSettings", () => {
     mockFetchSource.mockReset();
     mockReloadKeyList.mockReset();
     mockReloadDefinitionKey.mockReset();
-    mockUpsertKeyFilePresets.mockReset();
+    mockLoadDefinitionKey.mockReset();
     mockCreateHttpReader.mockReset().mockReturnValue({ fetchSource: vi.fn() });
     mockImportFile.mockReset();
     mockImportDefinitions.mockReset();
@@ -339,7 +333,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource, sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Left pane shows source labels, and detail panel shows selected source label
     const allProduction = screen.getAllByText("Production");
@@ -349,19 +343,19 @@ describe("SourceSettings", () => {
   });
 
   it("shows 'Sources' heading in the left pane", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("Sources")).toBeDefined();
   });
 
   // ─── Empty state ────────────────────────────────────────────────
 
   it("shows 'No sources configured' when no sources exist and no file loaded", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText(/No sources configured/)).toBeDefined();
   });
 
   it("shows 'No source loaded' when nothing is loaded", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     // Appears in both Active section and right pane
     expect(screen.getAllByText("No source loaded").length).toBeGreaterThanOrEqual(1);
   });
@@ -372,7 +366,7 @@ describe("SourceSettings", () => {
       sourceFileName: "flags.yaml",
       sourceFormat: "yaml",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getAllByText("flags.yaml").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Active")).toBeDefined();
   });
@@ -384,7 +378,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource, sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     // Detail panel should show the first source's URL
     expect(screen.getByText(/r2\.example\.com\/flags\.yaml/)).toBeDefined();
   });
@@ -395,7 +389,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource, sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Initially the first source (Production) is selected
     expect(screen.getByText(/r2\.example\.com\/flags\.yaml/)).toBeDefined();
@@ -414,7 +408,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     // The detail panel renders the label
     const allLabels = screen.getAllByText("Production");
     expect(allLabels.length).toBeGreaterThanOrEqual(2); // list + detail
@@ -425,7 +419,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getAllByText("bundled").length).toBeGreaterThanOrEqual(2);
   });
 
@@ -434,7 +428,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getAllByText("yaml").length).toBeGreaterThanOrEqual(2);
   });
 
@@ -443,7 +437,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getAllByText("split").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("json").length).toBeGreaterThanOrEqual(2);
   });
@@ -453,7 +447,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText(/r2\.example\.com\/flags\.yaml/)).toBeDefined();
     expect(screen.getByText("URL")).toBeDefined();
   });
@@ -463,7 +457,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("Base URL")).toBeDefined();
     expect(screen.getByText("List URL")).toBeDefined();
     expect(screen.getByText(/r2\.example\.com\/defs/)).toBeDefined();
@@ -475,7 +469,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource, sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     // Left pane shows "bundled · yaml" and "split · json" under source names
     // Multiple elements may match since mode badges are also in the detail panel
     expect(screen.getAllByText(/bundled/).length).toBeGreaterThanOrEqual(1);
@@ -495,7 +489,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("Active")).toBeDefined();
     // "Production" appears in both Active section and dimmed list entry
     expect(screen.getAllByText("Production").length).toBeGreaterThanOrEqual(1);
@@ -506,7 +500,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.queryByText("loaded")).toBeNull();
   });
 
@@ -516,7 +510,7 @@ describe("SourceSettings", () => {
       sourceFileName: "flags.yaml",
       sourceFormat: "yaml",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getAllByText("flags.yaml").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByTestId("icon-file-text").length).toBeGreaterThanOrEqual(1);
   });
@@ -528,7 +522,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("Load")).toBeDefined();
   });
 
@@ -543,7 +537,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     // Reload icon is rendered next to the URL
     expect(screen.getByTitle(/reload from url/i)).toBeDefined();
   });
@@ -559,7 +553,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("Unload")).toBeDefined();
   });
 
@@ -568,7 +562,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.queryByText("Unload")).toBeNull();
   });
 
@@ -577,21 +571,21 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("Edit")).toBeDefined();
   });
 
   // ─── Add source dropdown ──────────────────────────────────────
 
   it("shows Add source dropdown with URL and File options", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText("From URL")).toBeDefined();
     expect(screen.getByText("From file")).toBeDefined();
   });
 
   it("triggers file input when 'From file' is clicked", async () => {
     const user = userEvent.setup();
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
     const clickSpy = vi.spyOn(fileInput, "click");
     await user.click(screen.getByText("From file"));
@@ -605,7 +599,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     // Timestamp is shown inline next to the URL
     expect(screen.getByText(/ago|just now/)).toBeDefined();
   });
@@ -615,7 +609,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [{ ...sampleBundledSource, lastFetched: Date.now() - 5_000 }],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText(/just now/)).toBeDefined();
   });
 
@@ -626,7 +620,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByTestId("confirm-dialog-Delete source?")).toBeDefined();
   });
 
@@ -636,7 +630,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     await user.click(screen.getByTestId("confirm-Delete source?"));
     expect(mockRemoveSource).toHaveBeenCalledWith("src-1");
   });
@@ -655,7 +649,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click Load confirm button
     await user.click(screen.getByTestId("confirm-Load source?"));
@@ -678,7 +672,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByTestId("confirm-Load source?"));
 
@@ -698,7 +692,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByTestId("confirm-Load source?"));
 
@@ -720,7 +714,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByTestId("confirm-Load source?"));
 
@@ -734,7 +728,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByTestId("confirm-Load source?"));
 
@@ -757,7 +751,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click unload confirm on the loaded source detail panel
     await user.click(screen.getByTestId("confirm-Unload source?"));
@@ -777,7 +771,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click the active section to show the file source right pane
     // The file source should be shown by default since selection starts at __active__
@@ -797,7 +791,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click "From URL" to open the add form
     await user.click(screen.getByText("From URL"));
@@ -815,7 +809,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click Edit to open the form in edit mode
     await user.click(screen.getByText("Edit"));
@@ -830,7 +824,7 @@ describe("SourceSettings", () => {
   it("handleSaveForm closes the form dialog after save", async () => {
     const user = userEvent.setup();
     mockAddSource.mockReturnValue("new-id");
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByText("From URL"));
     expect(screen.getByTestId("source-form-dialog")).toBeDefined();
@@ -843,7 +837,7 @@ describe("SourceSettings", () => {
 
   it("onClose callback from SourceFormDialog closes the form", async () => {
     const user = userEvent.setup();
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByText("From URL"));
     expect(screen.getByTestId("source-form-dialog")).toBeDefined();
@@ -867,7 +861,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The active source detail panel should show the delete button
     await user.click(screen.getByTestId("confirm-Delete source?"));
@@ -884,7 +878,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource, sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Select the first source (auto-selected), then delete it
     await user.click(screen.getByTestId("confirm-Delete source?"));
@@ -908,7 +902,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
     const file = new File(["content"], "test.yaml", { type: "text/yaml" });
@@ -941,7 +935,7 @@ describe("SourceSettings", () => {
       sourceFileName: "existing.yaml",
       sourceFormat: "yaml",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
     const file = new File(["content"], "test.yaml", { type: "text/yaml" });
@@ -968,7 +962,7 @@ describe("SourceSettings", () => {
   });
 
   it("handleFileChange does nothing when no file selected", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
     fireEvent.change(fileInput, { target: { files: [] } });
@@ -978,7 +972,7 @@ describe("SourceSettings", () => {
 
   it("handleFileChange does nothing when importFile returns null", async () => {
     mockImportFile.mockResolvedValue(null);
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
     const file = new File(["content"], "bad.yaml", { type: "text/yaml" });
@@ -995,7 +989,7 @@ describe("SourceSettings", () => {
 
   it("handleConfirmFileImport does nothing when no pending import exists", async () => {
     const user = userEvent.setup();
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The confirm dialog for replace always renders due to mock. Clicking confirm with no pending import should be a no-op.
     await user.click(screen.getByTestId("confirm-Replace current source?"));
@@ -1018,7 +1012,7 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The active split source detail panel should have a reload button for the list URL
     const reloadButtons = screen.getAllByTitle(/reload from list url/i);
@@ -1045,7 +1039,7 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const reloadButtons = screen.getAllByTitle(/reload from list url/i);
     await user.click(reloadButtons[0]);
@@ -1059,10 +1053,9 @@ describe("SourceSettings", () => {
 
   // ─── handleReloadKey ────────────────────────────────────────────
 
-  it("handleReloadKey reloads a definition key and updates store", async () => {
+  it("handleReloadKey delegates to loadDefinitionKey prop", async () => {
     const user = userEvent.setup();
-    const definition = { kind: "boolean", defaultValue: true };
-    mockReloadDefinitionKey.mockResolvedValue({ definition });
+    mockLoadDefinitionKey.mockResolvedValue(undefined);
     definitionStoreState = {
       ...definitionStoreState,
       sourceFileName: "Staging",
@@ -1073,43 +1066,15 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Find reload buttons for individual keys (titled "Reload flag-a" etc.)
     const reloadKeyButtons = screen.getAllByTitle(/^Reload flag-a$/);
     await user.click(reloadKeyButtons[0]);
 
     await vi.waitFor(() => {
-      expect(mockReloadDefinitionKey).toHaveBeenCalled();
+      expect(mockLoadDefinitionKey).toHaveBeenCalledWith(sampleSplitSource, "flag-a");
     });
-
-    expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", definition);
-    expect(mockMarkFetched).toHaveBeenCalledWith("src-2", ["flag-a"]);
-  });
-
-  it("handleReloadKey does nothing when reloadDefinitionKey returns null", async () => {
-    const user = userEvent.setup();
-    mockReloadDefinitionKey.mockResolvedValue(null);
-    definitionStoreState = {
-      ...definitionStoreState,
-      sourceFileName: "Staging",
-      sourceFormat: "json",
-    };
-    sourceStoreState = {
-      ...sourceStoreState,
-      sources: [sampleSplitSource],
-      activeSourceId: "src-2",
-    };
-    render(<SourceSettings />);
-
-    const reloadKeyButtons = screen.getAllByTitle(/^Reload flag-a$/);
-    await user.click(reloadKeyButtons[0]);
-
-    await vi.waitFor(() => {
-      expect(mockReloadDefinitionKey).toHaveBeenCalled();
-    });
-
-    expect(mockUpsertDefinition).not.toHaveBeenCalled();
   });
 
   // ─── handleReloadPresets ────────────────────────────────────────
@@ -1128,7 +1093,7 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSourceWithPresets],
       activeSourceId: "src-3",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The presets URL row should have a reload button
     const reloadButtons = screen.getAllByTitle(/reload from presets url/i);
@@ -1158,7 +1123,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The loaded bundled source detail should have a reload button next to the URL
     const reloadButton = screen.getByTitle(/reload from url/i);
@@ -1190,7 +1155,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const reloadButton = screen.getByTitle(/reload from url/i);
     await user.click(reloadButton);
@@ -1210,7 +1175,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The HeadersSection starts collapsed when no headers exist.
     // Click the "Headers" label/button to open it.
@@ -1239,7 +1204,7 @@ describe("SourceSettings", () => {
       sourceFileName: "config.yaml",
       sourceFormat: "yaml",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getByText("File source loaded")).toBeDefined();
     expect(screen.getByText(/Switch to the Definitions tab/)).toBeDefined();
@@ -1250,7 +1215,7 @@ describe("SourceSettings", () => {
       ...definitionStoreState,
       definitions: { "flag-1": { kind: "boolean" }, "flag-2": { kind: "string" } },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // "Unsaved draft" appears in both left pane active section and right pane
     expect(screen.getAllByText("Unsaved draft").length).toBeGreaterThanOrEqual(1);
@@ -1265,7 +1230,7 @@ describe("SourceSettings", () => {
       ...definitionStoreState,
       definitions: { "flag-1": { kind: "boolean" } },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByTestId("confirm-Discard draft?"));
 
@@ -1274,7 +1239,7 @@ describe("SourceSettings", () => {
   });
 
   it("renders 'No source loaded' right pane message when nothing is loaded and selection is __active__", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // "No source loaded" appears in both left pane active section and right pane
     expect(screen.getAllByText("No source loaded").length).toBeGreaterThanOrEqual(1);
@@ -1286,7 +1251,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The initial selection is the first source. We need a scenario where selectedSource is null
     // but selection is not __active__. This happens if the source was removed but selection wasn't updated.
@@ -1313,7 +1278,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Active section should show the hosted source with mode and format badges
     expect(screen.getByText("Active")).toBeDefined();
@@ -1326,7 +1291,7 @@ describe("SourceSettings", () => {
       ...definitionStoreState,
       definitions: { a: {}, b: {}, c: {} },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getAllByText("Unsaved draft").length).toBeGreaterThanOrEqual(1);
     // "3 definitions" appears in both left pane and right pane
@@ -1338,7 +1303,7 @@ describe("SourceSettings", () => {
       ...definitionStoreState,
       definitions: { a: {} },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getAllByText(/1 definition/).length).toBeGreaterThanOrEqual(1);
   });
@@ -1349,7 +1314,7 @@ describe("SourceSettings", () => {
       sourceFileName: "data.json",
       sourceFormat: "json",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getByText("JSON")).toBeDefined();
   });
@@ -1368,7 +1333,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click a source in the list
     await user.click(screen.getByText("Staging"));
@@ -1397,7 +1362,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The active source in the list should have opacity-40 class
     // We can verify that clicking the active source in the list does nothing
@@ -1421,7 +1386,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // First select Staging
     await user.click(screen.getByText("Staging"));
@@ -1448,7 +1413,7 @@ describe("SourceSettings", () => {
       loading: false,
       error: { message: "Network error: failed to fetch" },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getByText("Network error: failed to fetch")).toBeDefined();
   });
@@ -1461,7 +1426,7 @@ describe("SourceSettings", () => {
         failedKeys: ["broken-key-1", "broken-key-2"],
       },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getByText("Loaded 2 definitions, but 2 failed")).toBeDefined();
     expect(screen.getByText(/Failed keys: broken-key-1, broken-key-2/)).toBeDefined();
@@ -1472,7 +1437,7 @@ describe("SourceSettings", () => {
       loading: false,
       error: { message: "Some error", failedKeys: [] },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getByText("Some error")).toBeDefined();
     expect(screen.queryByText(/Failed keys/)).toBeNull();
@@ -1486,7 +1451,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const loadButton = screen.getByText("Load").closest("button");
     expect(loadButton?.disabled).toBe(true);
@@ -1506,7 +1471,7 @@ describe("SourceSettings", () => {
       sources: [sampleBundledSource, sampleSplitSource],
       activeSourceId: "src-1",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click Staging in the list
     await user.click(screen.getByText("Staging"));
@@ -1522,7 +1487,7 @@ describe("SourceSettings", () => {
   // ─── No sources configured ─────────────────────────────────────
 
   it("shows 'No sources configured.' in the left pane when sources list is empty", () => {
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
     expect(screen.getByText(/No sources configured\./)).toBeDefined();
   });
 
@@ -1533,7 +1498,7 @@ describe("SourceSettings", () => {
       ...definitionStoreState,
       definitions: { x: {}, y: {} },
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     expect(screen.getAllByText(/2 definition/).length).toBeGreaterThanOrEqual(1);
   });
@@ -1552,7 +1517,7 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByText("Edit"));
 
@@ -1573,7 +1538,7 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Type a new key in the "Add definition key..." input and click Add
     const addKeyInput = screen.getByPlaceholderText("Add definition key...");
@@ -1598,7 +1563,7 @@ describe("SourceSettings", () => {
       sources: [sampleSplitSource],
       activeSourceId: "src-2",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Each key row has a remove (X) button. Find and click one.
     // The KeyListSection renders X buttons for each key
@@ -1617,7 +1582,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     await user.click(screen.getByText("Edit"));
 
@@ -1630,7 +1595,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const addKeyInput = screen.getByPlaceholderText("Add definition key...");
     await user.type(addKeyInput, "extra-key");
@@ -1647,7 +1612,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleSplitSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     const removeButtons = screen.getAllByTestId("icon-x");
     await user.click(removeButtons[0].closest("button")!);
@@ -1670,7 +1635,7 @@ describe("SourceSettings", () => {
       sourceFileName: "existing.yaml",
       sourceFormat: "yaml",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Trigger a file change to set pending import
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
@@ -1697,7 +1662,7 @@ describe("SourceSettings", () => {
       sourceFormat: "yaml",
       dirtyKeys: ["flag-1", "flag-2"],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // The ConfirmDialog mock doesn't render description, but the component
     // builds the description string. This path is covered by the description prop
@@ -1722,7 +1687,7 @@ describe("SourceSettings", () => {
       ...sourceStoreState,
       sources: [sampleBundledSource],
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Click the source in the list to change selection away from __active__
     await user.click(screen.getByText("Production"));
@@ -1754,7 +1719,7 @@ describe("SourceSettings", () => {
       sourceFileName: "existing.yaml",
       sourceFormat: "yaml",
     };
-    render(<SourceSettings />);
+    render(<SourceSettings loadDefinitionKey={mockLoadDefinitionKey} />);
 
     // Trigger file import to create pending state
     const fileInput = document.querySelector("input[type='file']") as HTMLInputElement;
