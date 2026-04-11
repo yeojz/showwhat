@@ -16,6 +16,7 @@ import type { SplitSource } from "./store/source-store.js";
 import { useViewRouter } from "./hooks/useViewRouter.js";
 import { useFileExport } from "./hooks/useFileExport.js";
 import { useSourceFetch } from "./hooks/useSourceFetch.js";
+import { createHttpReader } from "./lib/http-reader.js";
 
 type Theme = "light" | "dark" | "system";
 
@@ -70,38 +71,74 @@ export function App() {
   const markFetched = useSourceStore((s) => s.markFetched);
   const definitions = useDefinitionStore((s) => s.definitions);
 
+  const sourcePresets = usePresetStore((s) => s.sourcePresets);
+  const keyFilePresets = usePresetStore((s) => s.keyFilePresets);
+  const sourcePresetsLastFetched = usePresetStore((s) => s.sourcePresetsLastFetched);
+  const setSourcePresets = usePresetStore((s) => s.setSourcePresets);
+  const upsertKeyFilePresets = usePresetStore((s) => s.upsertKeyFilePresets);
+  const clearSourcePresets = usePresetStore((s) => s.clearSourcePresets);
+
   const handleBeforeSelect = useCallback(
     async (key: string) => {
       if (!isSplit || !activeSource || definitions[key]) return;
       setLoadingDefinition(true);
       try {
-        const def = await reloadDefinitionKey(activeSource as SplitSource, key);
-        if (def) {
-          upsertDefinition(key, def);
+        const result = await reloadDefinitionKey(activeSource as SplitSource, key);
+        if (result) {
+          upsertDefinition(key, result.definition);
           markFetched(activeSource.id, [key]);
+          if (result.filePresets && Object.keys(result.filePresets).length > 0) {
+            upsertKeyFilePresets(key, result.filePresets);
+          }
         }
       } finally {
         setLoadingDefinition(false);
       }
     },
-    [isSplit, activeSource, definitions, reloadDefinitionKey, upsertDefinition, markFetched],
+    [
+      isSplit,
+      activeSource,
+      definitions,
+      reloadDefinitionKey,
+      upsertDefinition,
+      markFetched,
+      upsertKeyFilePresets,
+    ],
   );
 
   const handleRefreshDefinition = useCallback(
     async (key: string) => {
       if (!isSplit || !activeSource) return;
-      const def = await reloadDefinitionKey(activeSource as SplitSource, key);
-      if (def) {
-        upsertDefinition(key, def);
+      const result = await reloadDefinitionKey(activeSource as SplitSource, key);
+      if (result) {
+        upsertDefinition(key, result.definition);
         markFetched(activeSource.id, [key]);
+        if (result.filePresets && Object.keys(result.filePresets).length > 0) {
+          upsertKeyFilePresets(key, result.filePresets);
+        }
       }
     },
-    [isSplit, activeSource, reloadDefinitionKey, upsertDefinition, markFetched],
+    [
+      isSplit,
+      activeSource,
+      reloadDefinitionKey,
+      upsertDefinition,
+      markFetched,
+      upsertKeyFilePresets,
+    ],
   );
 
   const overrides = usePresetStore((s) => s.presets);
   const filePresets = useDefinitionStore((s) => s.filePresets);
   const presetReader = useDefinitionStore((s) => s.presetReader);
+  const setPresetReader = useDefinitionStore((s) => s.setPresetReader);
+
+  // Reconstruct presetReader from persisted source config (e.g., after page refresh)
+  useEffect(() => {
+    if (presetReader) return;
+    if (!isSplit || !activeSource || activeSource.mode !== "split") return;
+    setPresetReader(createHttpReader(activeSource));
+  }, [presetReader, isSplit, activeSource, setPresetReader]);
 
   // Build a PresetReader from available sources:
   // - Split mode: presetReader is set (handles presetsUrl + per-key file presets)
@@ -112,19 +149,75 @@ export function App() {
     return { getPresets: async () => filePresets };
   }, [presetReader, filePresets]);
 
+  // Fetch source presets when effectiveReader changes (persisted in preset store)
+  const [sourcePresetsLoading, setSourcePresetsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!effectiveReader) return;
+    let cancelled = false;
+    setSourcePresetsLoading(true);
+    effectiveReader
+      .getPresets()
+      .then((presets) => {
+        if (!cancelled) setSourcePresets(presets);
+      })
+      .catch(() => {
+        // ignore — preset fetch failures are non-critical
+      })
+      .finally(() => {
+        if (!cancelled) setSourcePresetsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [effectiveReader, setSourcePresets]);
+
+  // Clear all cached source presets when the active source changes
+  const prevSourceId = useRef(activeSourceId);
+  useEffect(() => {
+    if (prevSourceId.current !== activeSourceId) {
+      clearSourcePresets();
+      prevSourceId.current = activeSourceId;
+    }
+  }, [activeSourceId, clearSourcePresets]);
+
+  const handleRefreshSourcePresets = useCallback(async () => {
+    if (!effectiveReader) return;
+    setSourcePresetsLoading(true);
+    try {
+      const presets = await effectiveReader.getPresets();
+      setSourcePresets(presets);
+    } finally {
+      setSourcePresetsLoading(false);
+    }
+  }, [effectiveReader, setSourcePresets]);
+
+  // A reader backed by already-cached data — avoids duplicate network requests
+  // when multiple consumers need presets (mergePresets, conditionExtensionsResolver).
+  const cachedPresetReader = useMemo(
+    (): PresetReader => ({
+      getPresets: async (key?: string) => {
+        if (!key) return sourcePresets;
+        const perKey = keyFilePresets[key];
+        return perKey ? { ...sourcePresets, ...perKey } : sourcePresets;
+      },
+    }),
+    [sourcePresets, keyFilePresets],
+  );
+
   // Resolve merged presets (async → state)
   const [resolvedPresets, setResolvedPresets] = useState<Presets>({});
   const [resolvedKeyPresets, setResolvedKeyPresets] = useState<Record<string, Presets>>({});
 
   useEffect(() => {
     let cancelled = false;
-    mergePresets({ presets: effectiveReader, overrides }).then((result) => {
+    mergePresets({ presets: cachedPresetReader, overrides }).then((result) => {
       if (!cancelled) setResolvedPresets(result);
     });
     return () => {
       cancelled = true;
     };
-  }, [effectiveReader, overrides]);
+  }, [cachedPresetReader, overrides]);
 
   const conditionExtensions = useMemo(() => createPresetUI(resolvedPresets), [resolvedPresets]);
 
@@ -141,7 +234,7 @@ export function App() {
 
       // Trigger async resolution for this key if not yet resolved
       if (!keyPresets) {
-        mergePresets({ key, presets: effectiveReader, overrides }).then((result) => {
+        mergePresets({ key, presets: cachedPresetReader, overrides }).then((result) => {
           setResolvedKeyPresets((prev) => ({ ...prev, [key]: result }));
         });
         // Return shared presets as fallback until key-specific ones resolve
@@ -152,7 +245,7 @@ export function App() {
       cache.set(key, { presets: keyPresets, extensions });
       return extensions;
     };
-  }, [isSplit, effectiveReader, overrides, resolvedPresets, resolvedKeyPresets]);
+  }, [isSplit, cachedPresetReader, overrides, resolvedPresets, resolvedKeyPresets]);
 
   const previewState = usePreviewStore();
 
@@ -216,10 +309,15 @@ export function App() {
             <div className="mx-auto max-w-2xl p-8 space-y-8">
               <PresetEditor />
               <InlinePresetList
-                presetReader={effectiveReader}
+                sharedPresets={sourcePresets}
+                loading={sourcePresetsLoading}
+                lastFetched={sourcePresetsLastFetched}
+                onRefresh={handleRefreshSourcePresets}
                 overrides={overrides}
-                definitionKeys={definitionKeysList}
                 isSplit={isSplit}
+                allDefinitionKeys={splitDefinitionKeys}
+                loadedDefinitionKeys={definitionKeysList}
+                keyFilePresets={keyFilePresets}
               />
             </div>
           </div>

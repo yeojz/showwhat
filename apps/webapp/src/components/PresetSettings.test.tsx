@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
+import type { Presets } from "showwhat";
 
 // Mock configurator UI components
 vi.mock("@showwhat/configurator", () => ({
@@ -48,6 +49,8 @@ vi.mock("lucide-react", () => ({
   ArrowUpCircle: () => <span data-testid="icon-arrow-up-circle" />,
   Check: () => <span data-testid="icon-check" />,
   ChevronRight: () => <span data-testid="icon-chevron-right" />,
+  Loader2: () => <span data-testid="icon-loader" />,
+  RefreshCw: () => <span data-testid="icon-refresh" />,
 }));
 
 // Store mocks
@@ -159,138 +162,158 @@ describe("InlinePresetList", () => {
     cleanup();
   });
 
-  const emptyPresets = {};
+  const emptyPresets: Presets = {};
+  const noop = () => {};
 
-  function makeReader(shared: Presets, perKey?: Record<string, Presets>) {
-    return {
-      getPresets: async (key?: string) => {
-        if (key && perKey?.[key]) {
-          return { ...shared, ...perKey[key] };
-        }
-        return shared;
-      },
-    };
+  function renderList(props: Partial<Parameters<typeof InlinePresetList>[0]> = {}) {
+    return render(
+      <InlinePresetList
+        sharedPresets={emptyPresets}
+        loading={false}
+        onRefresh={noop}
+        overrides={emptyPresets}
+        isSplit={false}
+        loadedDefinitionKeys={[]}
+        {...props}
+      />,
+    );
   }
 
-  it("shows empty state when no presetReader", async () => {
-    render(<InlinePresetList overrides={emptyPresets} definitionKeys={[]} isSplit={false} />);
+  it("shows empty state when no shared presets", () => {
+    renderList();
     expect(screen.getByText("No presets loaded from source.")).toBeDefined();
   });
 
-  it("shows shared presets under 'Definition file' group for bundled mode", async () => {
-    const reader = makeReader({ beta: { type: "boolean" } });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={emptyPresets}
-        definitionKeys={[]}
-        isSplit={false}
-      />,
-    );
-    await waitFor(() => {
-      expect(screen.getByText("Definition file")).toBeDefined();
-      expect(screen.getByText("beta")).toBeDefined();
-      expect(screen.getByText("boolean")).toBeDefined();
-    });
+  it("shows refresh button", () => {
+    renderList();
+    expect(screen.getByTestId("icon-refresh")).toBeDefined();
   });
 
-  it("shows shared presets under 'Presets URL' group for split mode", async () => {
-    const reader = makeReader({ env: { type: "string" } });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={emptyPresets}
-        definitionKeys={["flag-a"]}
-        isSplit={true}
-      />,
-    );
-    await waitFor(() => {
-      expect(screen.getByText("Presets URL")).toBeDefined();
-      expect(screen.getByText("env")).toBeDefined();
-    });
+  it("shows loader when loading", () => {
+    renderList({ loading: true });
+    expect(screen.getByTestId("icon-loader")).toBeDefined();
   });
 
-  it("shows per-key presets in separate groups for split mode", async () => {
-    const reader = makeReader(
-      { env: { type: "string" } },
-      { "rate-limits": { rlthis: { type: "number", key: "rate" } } },
-    );
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={emptyPresets}
-        definitionKeys={["rate-limits", "ui-config"]}
-        isSplit={true}
-      />,
-    );
-    await waitFor(() => {
-      expect(screen.getByText("rate-limits")).toBeDefined();
-      expect(screen.getByText("rlthis")).toBeDefined();
-    });
-    // rlthis should NOT appear under a ui-config group
-    expect(screen.queryByText("ui-config")).toBeNull();
+  it("calls onRefresh when refresh button is clicked", async () => {
+    const user = userEvent.setup();
+    const onRefresh = vi.fn();
+    renderList({ onRefresh });
+    await user.click(screen.getByTitle("Refresh presets from source"));
+    expect(onRefresh).toHaveBeenCalledOnce();
   });
 
-  it("shows amber override icon when preset name matches an override", async () => {
-    const reader = makeReader({ tier: { type: "string" } });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={{ tier: { type: "string" } }}
-        definitionKeys={[]}
-        isSplit={false}
-      />,
-    );
-    await waitFor(() => {
-      const icons = screen.getAllByTestId("icon-arrow-up-circle");
-      expect(icons.length).toBeGreaterThanOrEqual(1);
+  it("shows shared presets under 'Definition file' group for bundled mode", () => {
+    renderList({
+      sharedPresets: { beta: { type: "boolean" } },
     });
+    expect(screen.getByText("Definition file")).toBeDefined();
+    expect(screen.getByText("beta")).toBeDefined();
+    expect(screen.getByText("boolean")).toBeDefined();
   });
 
-  it("shows check icon when preset does NOT match an override", async () => {
-    const reader = makeReader({ beta: { type: "boolean" } });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={emptyPresets}
-        definitionKeys={[]}
-        isSplit={false}
-      />,
-    );
-    await waitFor(() => {
-      expect(screen.getByTestId("icon-check")).toBeDefined();
+  it("shows shared presets under 'Presets URL' group for split mode", () => {
+    renderList({
+      sharedPresets: { env: { type: "string" } },
+      isSplit: true,
+      loadedDefinitionKeys: ["flag-a"],
     });
+    expect(screen.getByText("Presets URL")).toBeDefined();
+    expect(screen.getByText("env")).toBeDefined();
   });
 
-  it("shows override footnote when overrides exist", async () => {
-    const reader = makeReader({ tier: { type: "string" } });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={{ tier: { type: "string" } }}
-        definitionKeys={[]}
-        isSplit={false}
-      />,
-    );
-    await waitFor(() => {
-      expect(screen.getByText(/Amber icon indicates/)).toBeDefined();
+  it("shows placeholder for unloaded keys in split mode", () => {
+    renderList({
+      sharedPresets: { env: { type: "string" } },
+      isSplit: true,
+      allDefinitionKeys: ["flag-a", "flag-b", "flag-c"],
+      loadedDefinitionKeys: ["flag-a"],
     });
+    expect(screen.getByText("Per-definition presets")).toBeDefined();
+    expect(
+      screen.getByText(/Presets embedded in definition files will appear here once loaded/),
+    ).toBeDefined();
+    // Unloaded keys shown as badges
+    expect(screen.getByText("flag-b")).toBeDefined();
+    expect(screen.getByText("flag-c")).toBeDefined();
+    // Loaded key should NOT appear in the unloaded list
+    expect(screen.queryByText("flag-a")).toBeNull();
+  });
+
+  it("does not show placeholder when all keys are loaded in split mode", () => {
+    renderList({
+      sharedPresets: { env: { type: "string" } },
+      isSplit: true,
+      allDefinitionKeys: ["flag-a"],
+      loadedDefinitionKeys: ["flag-a"],
+    });
+    expect(screen.queryByText("Per-definition presets")).toBeNull();
+  });
+
+  it("shows per-key file presets for loaded definitions in split mode", () => {
+    renderList({
+      sharedPresets: { env: { type: "string" } },
+      isSplit: true,
+      allDefinitionKeys: ["rate-limits", "ui-config"],
+      loadedDefinitionKeys: ["rate-limits"],
+      keyFilePresets: {
+        "rate-limits": { rlimit: { type: "number", key: "rate" } },
+      },
+    });
+    // Per-key presets group should appear
+    expect(screen.getByText("rate-limits")).toBeDefined();
+    expect(screen.getByText("rlimit")).toBeDefined();
+    // Shared preset should also be present
+    expect(screen.getByText("env")).toBeDefined();
+    // Unloaded key shown in placeholder
+    expect(screen.getByText("ui-config")).toBeDefined();
+  });
+
+  it("excludes per-key presets that duplicate shared presets", () => {
+    renderList({
+      sharedPresets: { env: { type: "string" } },
+      isSplit: true,
+      allDefinitionKeys: ["flag-a"],
+      loadedDefinitionKeys: ["flag-a"],
+      keyFilePresets: {
+        "flag-a": { env: { type: "string" } }, // same as shared — should be excluded
+      },
+    });
+    // No per-key group should appear since all presets duplicate shared
+    expect(screen.queryByText("flag-a")).toBeNull();
+  });
+
+  it("shows amber override icon when preset name matches an override", () => {
+    renderList({
+      sharedPresets: { tier: { type: "string" } },
+      overrides: { tier: { type: "string" } },
+    });
+    const icons = screen.getAllByTestId("icon-arrow-up-circle");
+    expect(icons.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows check icon when preset does NOT match an override", () => {
+    renderList({
+      sharedPresets: { beta: { type: "boolean" } },
+    });
+    expect(screen.getByTestId("icon-check")).toBeDefined();
+  });
+
+  it("shows override footnote when overrides exist", () => {
+    renderList({
+      sharedPresets: { tier: { type: "string" } },
+      overrides: { tier: { type: "string" } },
+    });
+    expect(screen.getByText(/Amber icon indicates/)).toBeDefined();
   });
 
   it("clicking a preset row with details expands to show formatted YAML", async () => {
     const user = userEvent.setup();
-    const reader = makeReader({
-      tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+    renderList({
+      sharedPresets: {
+        tier: { type: "string", key: "tier", overrides: { op: "eq", value: "free" } },
+      },
     });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={emptyPresets}
-        definitionKeys={[]}
-        isSplit={false}
-      />,
-    );
-    await waitFor(() => expect(screen.getByText("tier")).toBeDefined());
+    expect(screen.getByText("tier")).toBeDefined();
     expect(screen.queryByText(/key: tier/)).toBeNull();
 
     await user.click(screen.getByText("tier"));
@@ -302,16 +325,10 @@ describe("InlinePresetList", () => {
 
   it("clicking a preset row without details does NOT expand", async () => {
     const user = userEvent.setup();
-    const reader = makeReader({ simple: { type: "boolean" } });
-    render(
-      <InlinePresetList
-        presetReader={reader}
-        overrides={emptyPresets}
-        definitionKeys={[]}
-        isSplit={false}
-      />,
-    );
-    await waitFor(() => expect(screen.getByText("simple")).toBeDefined());
+    renderList({
+      sharedPresets: { simple: { type: "boolean" } },
+    });
+    expect(screen.getByText("simple")).toBeDefined();
     await user.click(screen.getByText("simple"));
     expect(document.querySelectorAll("pre")).toHaveLength(0);
   });

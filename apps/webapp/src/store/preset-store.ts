@@ -7,11 +7,25 @@ import type { Presets } from "showwhat";
 import yaml from "js-yaml";
 
 type PresetStoreState = {
+  /** User-defined preset overrides (highest priority). */
   presets: Presets;
   presetYaml: string;
   parseError: string | null;
   setPresetYaml: (yaml: string) => void;
   setPresets: (presets: Presets) => void;
+
+  /** Cached shared presets from the active source (presetsUrl or file). */
+  sourcePresets: Presets;
+  /** Per-key file presets from lazy-loaded split definitions. */
+  keyFilePresets: Record<string, Presets>;
+  /** When sourcePresets were last fetched from the network. */
+  sourcePresetsLastFetched?: number;
+  /** Replace cached source presets and update the timestamp. */
+  setSourcePresets: (presets: Presets) => void;
+  /** Store file presets from a lazy-loaded split definition key. */
+  upsertKeyFilePresets: (key: string, presets: Presets) => void;
+  /** Clear all source preset caches (e.g., when switching sources). */
+  clearSourcePresets: () => void;
 };
 
 function parseAndValidate(
@@ -56,6 +70,10 @@ export function createPresetStore(options: CreatePresetStoreOptions = {}) {
         presetYaml: "",
         parseError: null,
 
+        sourcePresets: {},
+        keyFilePresets: {},
+        sourcePresetsLastFetched: undefined,
+
         setPresetYaml(yaml: string) {
           const { presets, error } = parseAndValidate(yaml);
           if (error) {
@@ -68,6 +86,24 @@ export function createPresetStore(options: CreatePresetStoreOptions = {}) {
         setPresets(presets: Presets) {
           set({ presets, presetYaml: "", parseError: null });
         },
+
+        setSourcePresets(presets: Presets) {
+          set({ sourcePresets: presets, sourcePresetsLastFetched: Date.now() });
+        },
+
+        upsertKeyFilePresets(key: string, presets: Presets) {
+          set((state) => ({
+            keyFilePresets: { ...state.keyFilePresets, [key]: presets },
+          }));
+        },
+
+        clearSourcePresets() {
+          set({
+            sourcePresets: {},
+            keyFilePresets: {},
+            sourcePresetsLastFetched: undefined,
+          });
+        },
       }),
       {
         name: "showwhat-presets",
@@ -76,9 +112,17 @@ export function createPresetStore(options: CreatePresetStoreOptions = {}) {
         partialize: (state) => ({
           presetYaml: state.presetYaml,
           presets: state.presets,
+          sourcePresets: state.sourcePresets,
+          keyFilePresets: state.keyFilePresets,
+          sourcePresetsLastFetched: state.sourcePresetsLastFetched,
         }),
         migrate(persistedState) {
           return persistedState;
+        },
+        onRehydrateStorage: () => (state) => {
+          if (!state) return;
+          state.sourcePresets = state.sourcePresets ?? {};
+          state.keyFilePresets = state.keyFilePresets ?? {};
         },
       },
     ),

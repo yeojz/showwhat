@@ -156,6 +156,7 @@ const defaultState: Record<string, unknown> = {
   savedDefinitions: {},
   filePresets: {},
   presetReader: null,
+  setPresetReader: vi.fn(),
   sourceFileName: null,
   sourceFormat: null,
   selectedKey: null,
@@ -213,9 +214,28 @@ vi.mock("./hooks/useSourceFetch.js", () => ({
   }),
 }));
 
+const mockSetSourcePresets = vi.fn();
+const mockUpsertKeyFilePresets = vi.fn();
+const mockClearSourcePresets = vi.fn();
+
+const defaultPresetState: Record<string, unknown> = {
+  presets: {},
+  presetYaml: "",
+  parseError: null,
+  setPresetYaml: vi.fn(),
+  sourcePresets: {},
+  keyFilePresets: {},
+  sourcePresetsLastFetched: undefined,
+  setSourcePresets: mockSetSourcePresets,
+  upsertKeyFilePresets: mockUpsertKeyFilePresets,
+  clearSourcePresets: mockClearSourcePresets,
+};
+
+let presetStoreOverrides: Record<string, unknown> = {};
+
 vi.mock("./store/preset-store.js", () => {
   const usePresetStore = (selector: (s: Record<string, unknown>) => unknown) => {
-    return selector({ presets: {}, presetYaml: "", parseError: null, setPresetYaml: vi.fn() });
+    return selector({ ...defaultPresetState, ...presetStoreOverrides });
   };
   return { usePresetStore };
 });
@@ -254,8 +274,12 @@ describe("App", () => {
     capturedOnRefreshDefinition = null;
     capturedIsLoadingDefinition = undefined;
     sourceStoreOverrides = {};
+    presetStoreOverrides = {};
     mockMarkFetched.mockReset();
     mockReloadDefinitionKey.mockReset();
+    mockSetSourcePresets.mockReset();
+    mockUpsertKeyFilePresets.mockReset();
+    mockClearSourcePresets.mockReset();
     matchMediaListeners.length = 0;
     subscribers.length = 0;
     mockAddDefinition.mockReset();
@@ -531,8 +555,8 @@ describe("App", () => {
   // -----------------------------------------------------------------------
 
   it("resolves presets via mergePresets and passes them to createPresetUI", async () => {
-    stateOverrides = {
-      filePresets: { file: { type: "string", key: "file" } },
+    presetStoreOverrides = {
+      sourcePresets: { file: { type: "string", key: "file" } },
     };
     render(<App />);
 

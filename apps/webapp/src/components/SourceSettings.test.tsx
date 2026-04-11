@@ -154,6 +154,15 @@ vi.mock("../hooks/useSourceFetch.js", () => ({
   }),
 }));
 
+// Preset store mock
+const mockUpsertKeyFilePresets = vi.fn();
+vi.mock("../store/preset-store.js", () => {
+  const usePresetStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector({ upsertKeyFilePresets: mockUpsertKeyFilePresets });
+  };
+  return { usePresetStore };
+});
+
 // http-reader mock
 const mockCreateHttpReader = vi.fn().mockReturnValue({ fetchSource: vi.fn() });
 vi.mock("../lib/http-reader.js", () => ({
@@ -300,6 +309,7 @@ describe("SourceSettings", () => {
     mockFetchSource.mockReset();
     mockReloadKeyList.mockReset();
     mockReloadDefinitionKey.mockReset();
+    mockUpsertKeyFilePresets.mockReset();
     mockCreateHttpReader.mockReset().mockReturnValue({ fetchSource: vi.fn() });
     mockImportFile.mockReset();
     mockImportDefinitions.mockReset();
@@ -1052,7 +1062,7 @@ describe("SourceSettings", () => {
   it("handleReloadKey reloads a definition key and updates store", async () => {
     const user = userEvent.setup();
     const definition = { kind: "boolean", defaultValue: true };
-    mockReloadDefinitionKey.mockResolvedValue(definition);
+    mockReloadDefinitionKey.mockResolvedValue({ definition });
     definitionStoreState = {
       ...definitionStoreState,
       sourceFileName: "Staging",
