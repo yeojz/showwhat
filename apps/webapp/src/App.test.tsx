@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, act, cleanup, waitFor } from "@testing-library/react";
+import { render, act, cleanup } from "@testing-library/react";
 
 // Stub window.matchMedia for jsdom (used by applyTheme for "system" theme)
 const matchMediaListeners: Array<() => void> = [];
@@ -23,8 +23,7 @@ Object.defineProperty(window, "matchMedia", {
 // to verify App wires them correctly
 let capturedStore: unknown = null;
 let capturedEmptyState: React.ReactNode = null;
-
-const mockCreatePresetUI = vi.fn(() => ({ extraConditionTypes: [], editorOverrides: new Map() }));
+let capturedConditionExtensions: unknown = null;
 
 let capturedOnExportDefinition:
   | ((key: string, def: unknown, format: "yaml" | "json") => void)
@@ -39,6 +38,7 @@ vi.mock("@showwhat/configurator", () => ({
   Configurator: ({
     store,
     emptyState,
+    conditionExtensions,
     onExportDefinition,
     conditionExtensionsResolver,
     definitionKeys,
@@ -48,6 +48,7 @@ vi.mock("@showwhat/configurator", () => ({
   }: {
     store: unknown;
     emptyState?: React.ReactNode;
+    conditionExtensions?: unknown;
     onExportDefinition?: (key: string, def: unknown) => void;
     conditionExtensionsResolver?: (key: string) => unknown;
     definitionKeys?: string[];
@@ -57,6 +58,7 @@ vi.mock("@showwhat/configurator", () => ({
   }) => {
     capturedStore = store;
     capturedEmptyState = emptyState;
+    capturedConditionExtensions = conditionExtensions;
     capturedOnExportDefinition = onExportDefinition ?? null;
     capturedConditionExtensionsResolver = conditionExtensionsResolver ?? null;
     capturedDefinitionKeys = definitionKeys;
@@ -65,7 +67,6 @@ vi.mock("@showwhat/configurator", () => ({
     capturedIsLoadingDefinition = isLoadingDefinition;
     return <div data-testid="configurator">{emptyState}</div>;
   },
-  createPresetUI: (...args: unknown[]) => mockCreatePresetUI(...args),
   PreviewStateProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
@@ -114,9 +115,15 @@ vi.mock("./components/SidebarActions.js", () => ({
   SidebarActions: () => <div data-testid="sidebar-actions" />,
 }));
 
-// Mock SourceSettings
+// Mock SourceSettings — capture loadDefinitionKey prop
+let capturedSourceSettingsLoadDefKey:
+  | ((source: unknown, key: string, opts?: unknown) => Promise<void>)
+  | null = null;
 vi.mock("./components/SourceSettings.js", () => ({
-  SourceSettings: () => {
+  SourceSettings: (props: {
+    loadDefinitionKey?: (source: unknown, key: string, opts?: unknown) => Promise<void>;
+  }) => {
+    capturedSourceSettingsLoadDefKey = props.loadDefinitionKey ?? null;
     return <div data-testid="source-settings" />;
   },
 }));
@@ -131,24 +138,26 @@ vi.mock("./components/PresetSettings.js", () => ({
   },
 }));
 
-// Mock mergePresets from showwhat
-const mockMergePresets = vi.fn(
-  async ({
-    presets,
-    overrides,
-  }: {
-    key?: string;
-    presets?: { getPresets: (key?: string) => Promise<Record<string, unknown>> };
-    overrides?: Record<string, unknown>;
-  }) => {
-    const base = presets ? await presets.getPresets() : {};
-    return { ...base, ...(overrides ?? {}) };
-  },
-);
+// Mock usePresetOrchestrator hook
+const mockLoadDefinitionKey = vi.fn();
+const mockRefreshSourcePresets = vi.fn();
+let orchestratorOverrides: Record<string, unknown> = {};
 
-vi.mock("showwhat", () => ({
-  mergePresets: (...args: unknown[]) =>
-    mockMergePresets(...(args as Parameters<typeof mockMergePresets>)),
+const defaultOrchestrator = {
+  conditionExtensions: { extraConditionTypes: [], editorOverrides: new Map() },
+  conditionExtensionsResolver: undefined as ((key: string) => unknown) | undefined,
+  sourcePresets: {},
+  keyFilePresets: {},
+  sourcePresetsLastFetched: undefined,
+  sourcePresetsLoading: false,
+  overrides: {},
+  refreshSourcePresets: mockRefreshSourcePresets,
+  loadDefinitionKey: mockLoadDefinitionKey,
+  loadingDefinition: false,
+};
+
+vi.mock("./hooks/usePresetOrchestrator.js", () => ({
+  usePresetOrchestrator: () => ({ ...defaultOrchestrator, ...orchestratorOverrides }),
 }));
 
 // Minimal store state
@@ -158,15 +167,11 @@ const defaultState: Record<string, unknown> = {
   addDefinition: mockAddDefinition,
   definitions: {},
   savedDefinitions: {},
-  filePresets: {},
-  presetReader: null,
-  setPresetReader: vi.fn(),
+  selectedKey: null,
   sourceFileName: null,
   sourceFormat: null,
-  selectedKey: null,
   validationErrors: {},
   importDefinitions: vi.fn(),
-  upsertDefinition: vi.fn(),
   revertAll: vi.fn(),
   clearAll: vi.fn(),
 };
@@ -185,13 +190,11 @@ const mockSubscribe = vi.fn((listener: () => void) => {
 });
 
 let sourceStoreOverrides: Record<string, unknown> = {};
-const mockMarkFetched = vi.fn();
 vi.mock("./store/source-store.js", () => {
   const useSourceStore = (selector: (s: Record<string, unknown>) => unknown) => {
     return selector({
       activeSourceId: null,
       sources: [],
-      markFetched: mockMarkFetched,
       ...sourceStoreOverrides,
     });
   };
@@ -206,43 +209,6 @@ vi.mock("./hooks/useFileExport.js", () => ({
     exportDefinitionJson: vi.fn(),
   }),
 }));
-
-const mockReloadDefinitionKey = vi.fn();
-vi.mock("./hooks/useSourceFetch.js", () => ({
-  useSourceFetch: () => ({
-    fetchSource: vi.fn(),
-    reloadKeyList: vi.fn(),
-    reloadDefinitionKey: mockReloadDefinitionKey,
-    loading: false,
-    error: null,
-  }),
-}));
-
-const mockSetSourcePresets = vi.fn();
-const mockUpsertKeyFilePresets = vi.fn();
-const mockClearSourcePresets = vi.fn();
-
-const defaultPresetState: Record<string, unknown> = {
-  presets: {},
-  presetYaml: "",
-  parseError: null,
-  setPresetYaml: vi.fn(),
-  sourcePresets: {},
-  keyFilePresets: {},
-  sourcePresetsLastFetched: undefined,
-  setSourcePresets: mockSetSourcePresets,
-  upsertKeyFilePresets: mockUpsertKeyFilePresets,
-  clearSourcePresets: mockClearSourcePresets,
-};
-
-let presetStoreOverrides: Record<string, unknown> = {};
-
-vi.mock("./store/preset-store.js", () => {
-  const usePresetStore = (selector: (s: Record<string, unknown>) => unknown) => {
-    return selector({ ...defaultPresetState, ...presetStoreOverrides });
-  };
-  return { usePresetStore };
-});
 
 vi.mock("./store/definition-store.js", () => {
   const useDefinitionStore = Object.assign(
@@ -266,6 +232,7 @@ describe("App", () => {
     stateOverrides = {};
     capturedStore = null;
     capturedEmptyState = null;
+    capturedConditionExtensions = null;
     capturedTheme = null;
     capturedOnThemeToggle = null;
     capturedOnTabChange = null;
@@ -278,18 +245,14 @@ describe("App", () => {
     capturedOnRefreshDefinition = null;
     capturedIsLoadingDefinition = undefined;
     sourceStoreOverrides = {};
-    presetStoreOverrides = {};
-    mockMarkFetched.mockReset();
-    mockReloadDefinitionKey.mockReset();
-    mockSetSourcePresets.mockReset();
-    mockUpsertKeyFilePresets.mockReset();
-    mockClearSourcePresets.mockReset();
+    orchestratorOverrides = {};
+    capturedSourceSettingsLoadDefKey = null;
     matchMediaListeners.length = 0;
     subscribers.length = 0;
     capturedOnRefreshPresets = null;
     mockAddDefinition.mockReset();
-    mockCreatePresetUI.mockClear();
-    mockMergePresets.mockClear();
+    mockLoadDefinitionKey.mockReset();
+    mockRefreshSourcePresets.mockReset();
     vi.spyOn(history, "pushState").mockImplementation(() => {});
     Object.defineProperty(window, "location", {
       writable: true,
@@ -556,23 +519,18 @@ describe("App", () => {
   });
 
   // -----------------------------------------------------------------------
-  // Preset merging
+  // Condition extensions from hook are passed to Configurator
   // -----------------------------------------------------------------------
 
-  it("resolves presets via mergePresets and passes them to createPresetUI", async () => {
-    presetStoreOverrides = {
-      sourcePresets: { file: { type: "string", key: "file" } },
+  it("passes conditionExtensions from usePresetOrchestrator to Configurator", () => {
+    const customExtensions = {
+      extraConditionTypes: [{ kind: "test" }],
+      editorOverrides: new Map(),
     };
+    orchestratorOverrides = { conditionExtensions: customExtensions };
     render(<App />);
 
-    await waitFor(() => {
-      expect(mockMergePresets).toHaveBeenCalled();
-    });
-    await waitFor(() => {
-      expect(mockCreatePresetUI).toHaveBeenCalledWith(
-        expect.objectContaining({ file: { type: "string", key: "file" } }),
-      );
-    });
+    expect(capturedConditionExtensions).toBe(customExtensions);
   });
 
   // -----------------------------------------------------------------------
@@ -619,37 +577,37 @@ describe("App", () => {
     expect(capturedConditionExtensionsResolver).toBeNull();
   });
 
-  it("passes conditionExtensionsResolver in split mode that returns preset UI", async () => {
+  it("passes conditionExtensionsResolver from hook to Configurator in split mode", () => {
+    const mockResolver = vi.fn(() => ({
+      extraConditionTypes: [],
+      editorOverrides: new Map(),
+    }));
+    orchestratorOverrides = { conditionExtensionsResolver: mockResolver };
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
-    await waitFor(() => {
-      expect(capturedConditionExtensionsResolver).not.toBeNull();
-    });
-    mockCreatePresetUI.mockClear();
-    const result = capturedConditionExtensionsResolver!("some-key");
-    expect(result).toBeDefined();
-    // Falls back to createPresetUI with resolvedPresets while key-specific presets load
-    expect(mockCreatePresetUI).toHaveBeenCalled();
+    expect(capturedConditionExtensionsResolver).toBe(mockResolver);
   });
 
-  it("resolves different keys independently", async () => {
+  it("resolver from hook is callable and returns extensions", () => {
+    const mockResolver = vi.fn(() => ({
+      extraConditionTypes: [{ kind: "per-key" }],
+      editorOverrides: new Map(),
+    }));
+    orchestratorOverrides = { conditionExtensionsResolver: mockResolver };
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
-    await waitFor(() => {
-      expect(capturedConditionExtensionsResolver).not.toBeNull();
-    });
-    mockCreatePresetUI.mockClear();
-    capturedConditionExtensionsResolver!("key-a");
-    capturedConditionExtensionsResolver!("key-b");
-    expect(mockCreatePresetUI).toHaveBeenCalledTimes(2);
+    expect(capturedConditionExtensionsResolver).not.toBeNull();
+    const result = capturedConditionExtensionsResolver!("some-key");
+    expect(result).toBeDefined();
+    expect(mockResolver).toHaveBeenCalledWith("some-key");
   });
 
   // -----------------------------------------------------------------------
@@ -686,192 +644,87 @@ describe("App", () => {
   });
 
   // -----------------------------------------------------------------------
-  // handleBeforeSelect stores definition + file presets
+  // handleBeforeSelect delegates to loadDefinitionKey with skipIfLoaded
   // -----------------------------------------------------------------------
 
-  it("handleBeforeSelect upserts definition and file presets", async () => {
-    const mockUpsertDef = vi.fn();
-    stateOverrides = { definitions: {}, upsertDefinition: mockUpsertDef };
+  it("handleBeforeSelect calls loadDefinitionKey with skipIfLoaded", async () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [
         { id: "src-1", mode: "split", label: "Split", format: "yaml", definitionKeys: ["k"] },
       ],
     };
-    const filePresets = { beta: { type: "boolean", key: "b" } };
-    mockReloadDefinitionKey.mockResolvedValue({
-      definition: { variations: [{ value: true }] },
-      filePresets,
-    });
+    mockLoadDefinitionKey.mockResolvedValue(undefined);
 
     render(<App />);
     await act(async () => {
       await capturedOnBeforeSelect!("k");
     });
 
-    expect(mockUpsertDef).toHaveBeenCalledWith("k", { variations: [{ value: true }] });
-    expect(mockMarkFetched).toHaveBeenCalledWith("src-1", ["k"]);
-    expect(mockUpsertKeyFilePresets).toHaveBeenCalledWith("k", filePresets);
+    expect(mockLoadDefinitionKey).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "src-1", mode: "split" }),
+      "k",
+      { skipIfLoaded: true },
+    );
   });
 
-  it("handleBeforeSelect skips if key already loaded", async () => {
-    stateOverrides = { definitions: { k: { variations: [{ value: false }] } } };
-    sourceStoreOverrides = {
-      activeSourceId: "src-1",
-      sources: [
-        { id: "src-1", mode: "split", label: "Split", format: "yaml", definitionKeys: ["k"] },
-      ],
-    };
+  it("handleBeforeSelect does nothing when not in split mode", async () => {
     render(<App />);
-    await act(async () => {
-      await capturedOnBeforeSelect!("k");
-    });
-
-    expect(mockReloadDefinitionKey).not.toHaveBeenCalled();
+    // Not in split mode — onBeforeSelect is not passed
+    expect(capturedOnBeforeSelect).toBeNull();
   });
 
   // -----------------------------------------------------------------------
-  // handleRefreshDefinition
+  // handleRefreshDefinition delegates to loadDefinitionKey (no skipIfLoaded)
   // -----------------------------------------------------------------------
 
-  it("handleRefreshDefinition upserts definition and file presets", async () => {
-    const mockUpsertDef = vi.fn();
-    stateOverrides = { upsertDefinition: mockUpsertDef };
+  it("handleRefreshDefinition calls loadDefinitionKey without skipIfLoaded", async () => {
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [
         { id: "src-1", mode: "split", label: "Split", format: "yaml", definitionKeys: ["k"] },
       ],
     };
-    const filePresets = { tier: { type: "string", key: "t" } };
-    mockReloadDefinitionKey.mockResolvedValue({
-      definition: { variations: [{ value: "v2" }] },
-      filePresets,
-    });
+    mockLoadDefinitionKey.mockResolvedValue(undefined);
 
     render(<App />);
     await act(async () => {
       await capturedOnRefreshDefinition!("k");
     });
 
-    expect(mockUpsertDef).toHaveBeenCalledWith("k", { variations: [{ value: "v2" }] });
-    expect(mockUpsertKeyFilePresets).toHaveBeenCalledWith("k", filePresets);
+    expect(mockLoadDefinitionKey).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "src-1", mode: "split" }),
+      "k",
+    );
+    // Should NOT have been called with skipIfLoaded
+    expect(mockLoadDefinitionKey.mock.calls[0]).toHaveLength(2);
   });
 
-  it("handleRefreshDefinition does nothing when reloadDefinitionKey returns null", async () => {
-    const mockUpsertDef = vi.fn();
-    stateOverrides = { upsertDefinition: mockUpsertDef };
-    sourceStoreOverrides = {
-      activeSourceId: "src-1",
-      sources: [
-        { id: "src-1", mode: "split", label: "Split", format: "yaml", definitionKeys: ["k"] },
-      ],
-    };
-    mockReloadDefinitionKey.mockResolvedValue(null);
-
+  it("handleRefreshDefinition does nothing when not in split mode", () => {
     render(<App />);
-    await act(async () => {
-      await capturedOnRefreshDefinition!("k");
-    });
-
-    expect(mockUpsertDef).not.toHaveBeenCalled();
-    expect(mockUpsertKeyFilePresets).not.toHaveBeenCalled();
-  });
-
-  it("handleRefreshDefinition skips filePresets when empty", async () => {
-    const mockUpsertDef = vi.fn();
-    stateOverrides = { upsertDefinition: mockUpsertDef };
-    sourceStoreOverrides = {
-      activeSourceId: "src-1",
-      sources: [
-        { id: "src-1", mode: "split", label: "Split", format: "yaml", definitionKeys: ["k"] },
-      ],
-    };
-    mockReloadDefinitionKey.mockResolvedValue({
-      definition: { variations: [{ value: true }] },
-      filePresets: undefined,
-    });
-
-    render(<App />);
-    await act(async () => {
-      await capturedOnRefreshDefinition!("k");
-    });
-
-    expect(mockUpsertDef).toHaveBeenCalled();
-    expect(mockUpsertKeyFilePresets).not.toHaveBeenCalled();
+    expect(capturedOnRefreshDefinition).toBeNull();
   });
 
   // -----------------------------------------------------------------------
-  // effectiveReader uses filePresets in bundled mode
+  // SourceSettings receives loadDefinitionKey prop
   // -----------------------------------------------------------------------
 
-  it("creates effectiveReader from filePresets when presetReader is null", async () => {
-    stateOverrides = {
-      filePresets: { bundled: { type: "string", key: "b" } },
-    };
+  it("passes loadDefinitionKey from hook to SourceSettings", () => {
     render(<App />);
 
-    await waitFor(() => {
-      expect(mockMergePresets).toHaveBeenCalled();
+    // Switch to sources tab so SourceSettings mounts
+    act(() => {
+      capturedOnTabChange!("sources");
     });
-    // The effectiveReader wraps filePresets → fetch effect calls setSourcePresets
-    await waitFor(() => {
-      expect(mockSetSourcePresets).toHaveBeenCalled();
-    });
-  });
 
-  // -----------------------------------------------------------------------
-  // Reconstruction effect rebuilds presetReader in split mode
-  // -----------------------------------------------------------------------
-
-  it("reconstructs presetReader from source config when null in split mode", async () => {
-    const mockSetPR = vi.fn();
-    stateOverrides = { presetReader: null, setPresetReader: mockSetPR };
-    sourceStoreOverrides = {
-      activeSourceId: "src-1",
-      sources: [
-        {
-          id: "src-1",
-          mode: "split",
-          label: "Split",
-          format: "yaml",
-          baseUrl: "https://example.com/",
-          definitionKeys: ["k"],
-        },
-      ],
-    };
-    render(<App />);
-
-    await waitFor(() => {
-      expect(mockSetPR).toHaveBeenCalled();
-    });
-  });
-
-  // -----------------------------------------------------------------------
-  // Source change clearing effect
-  // -----------------------------------------------------------------------
-
-  it("clears source presets when activeSourceId changes", async () => {
-    sourceStoreOverrides = { activeSourceId: "src-1", sources: [] };
-    const { rerender } = render(<App />);
-
-    // Change source ID
-    sourceStoreOverrides = { activeSourceId: "src-2", sources: [] };
-    rerender(<App />);
-
-    await waitFor(() => {
-      expect(mockClearSourcePresets).toHaveBeenCalled();
-    });
+    expect(capturedSourceSettingsLoadDefKey).toBe(mockLoadDefinitionKey);
   });
 
   // -----------------------------------------------------------------------
   // handleRefreshSourcePresets via InlinePresetList.onRefresh
   // -----------------------------------------------------------------------
 
-  it("handleRefreshSourcePresets calls setSourcePresets", async () => {
-    stateOverrides = {
-      filePresets: { env: { type: "string", key: "e" } },
-    };
+  it("InlinePresetList onRefresh delegates to refreshSourcePresets from hook", () => {
     render(<App />);
 
     // Switch to presets tab so InlinePresetList mounts and captures onRefresh
@@ -879,40 +732,21 @@ describe("App", () => {
       capturedOnTabChange!("presets");
     });
 
-    expect(capturedOnRefreshPresets).not.toBeNull();
-    mockSetSourcePresets.mockClear();
-    await act(async () => {
-      await capturedOnRefreshPresets!();
-    });
-    expect(mockSetSourcePresets).toHaveBeenCalled();
+    expect(capturedOnRefreshPresets).toBe(mockRefreshSourcePresets);
   });
 
   // -----------------------------------------------------------------------
-  // cachedPresetReader returns per-key presets from store
+  // loadingDefinition from hook is passed through
   // -----------------------------------------------------------------------
 
-  it("conditionExtensionsResolver uses keyFilePresets for cached per-key presets", async () => {
-    presetStoreOverrides = {
-      sourcePresets: { shared: { type: "string", key: "s" } },
-      keyFilePresets: { "my-key": { local: { type: "boolean", key: "l" } } },
-    };
+  it("passes loadingDefinition=true from hook to Configurator", () => {
+    orchestratorOverrides = { loadingDefinition: true };
     sourceStoreOverrides = {
       activeSourceId: "src-1",
       sources: [{ id: "src-1", mode: "split", label: "Split", format: "yaml" }],
     };
     render(<App />);
 
-    await waitFor(() => {
-      expect(capturedConditionExtensionsResolver).not.toBeNull();
-    });
-
-    // When calling mergePresets with key, cachedPresetReader should
-    // combine sourcePresets + keyFilePresets[key]
-    mockCreatePresetUI.mockClear();
-    capturedConditionExtensionsResolver!("my-key");
-
-    await waitFor(() => {
-      expect(mockMergePresets).toHaveBeenCalledWith(expect.objectContaining({ key: "my-key" }));
-    });
+    expect(capturedIsLoadingDefinition).toBe(true);
   });
 });
