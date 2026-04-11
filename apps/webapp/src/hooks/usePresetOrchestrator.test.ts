@@ -273,5 +273,46 @@ describe("usePresetOrchestrator", () => {
       expect(mockUpsertDefinition).toHaveBeenCalledTimes(1);
       expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", freshDefinition);
     });
+
+    it("loadingDefinition stays true while any key is still in-flight (concurrent different keys)", async () => {
+      const source = createSplitSource({ definitionKeys: ["key-a", "key-b"] });
+      const defA: Definition = { variations: [{ value: "a" }] };
+      const defB: Definition = { variations: [{ value: "b" }] };
+
+      // key-a resolves immediately, key-b resolves slowly
+      let resolveB!: (v: { definition: Definition } | null) => void;
+      const promiseB = new Promise<{ definition: Definition } | null>((r) => {
+        resolveB = r;
+      });
+
+      mockReloadDefinitionKey
+        .mockResolvedValueOnce({ definition: defA })
+        .mockReturnValueOnce(promiseB);
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      // Fire both calls concurrently
+      let pA: Promise<void>;
+      let pB: Promise<void>;
+      await act(async () => {
+        pA = result.current.loadDefinitionKey(source, "key-a");
+        pB = result.current.loadDefinitionKey(source, "key-b");
+
+        // key-a resolves immediately
+        await pA;
+      });
+
+      // key-a is done but key-b is still in-flight — loading should still be true
+      expect(result.current.loadingDefinition).toBe(true);
+
+      // Now resolve key-b
+      await act(async () => {
+        resolveB({ definition: defB });
+        await pB!;
+      });
+
+      expect(result.current.loadingDefinition).toBe(false);
+      expect(mockUpsertDefinition).toHaveBeenCalledTimes(2);
+    });
   });
 });

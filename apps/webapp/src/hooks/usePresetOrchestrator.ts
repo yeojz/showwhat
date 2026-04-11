@@ -56,7 +56,7 @@ export function usePresetOrchestrator() {
     if (!activeSource || activeSource.mode !== "split") return;
 
     const reader = createHttpReader(activeSource);
-    setPresetReader(reader as PresetReader);
+    setPresetReader(reader);
   }, [presetReader, activeSource, setPresetReader]);
 
   // ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ export function usePresetOrchestrator() {
     if (filePresets && Object.keys(filePresets).length > 0) {
       return {
         getPresets: async () => filePresets,
-      } as PresetReader;
+      };
     }
 
     return undefined;
@@ -198,6 +198,7 @@ export function usePresetOrchestrator() {
   // loadDefinitionKey with per-key sequence counter
   // ---------------------------------------------------------------------------
   const [loadingDefinition, setLoadingDefinition] = useState(false);
+  const loadingCountRef = useRef(0);
   const sequenceCounterRef = useRef(new Map<string, number>());
 
   const loadDefinitionKey = useCallback(
@@ -209,6 +210,7 @@ export function usePresetOrchestrator() {
       const seq = (counter.get(key) ?? 0) + 1;
       counter.set(key, seq);
 
+      loadingCountRef.current++;
       setLoadingDefinition(true);
       try {
         const result = await reloadDefKey(source, key);
@@ -225,8 +227,10 @@ export function usePresetOrchestrator() {
           upsertKeyFilePresets(key, result.filePresets);
         }
       } finally {
-        // Only clear loading if this is still the latest call for any key
-        setLoadingDefinition(false);
+        loadingCountRef.current--;
+        if (loadingCountRef.current === 0) {
+          setLoadingDefinition(false);
+        }
       }
     },
     [definitions, reloadDefKey, upsertDefinition, markFetched, upsertKeyFilePresets],
