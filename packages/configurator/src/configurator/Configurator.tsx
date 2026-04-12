@@ -184,7 +184,7 @@ function EditorLayout({
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <div className="w-72 shrink-0 border-r border-border bg-muted/30">
+        <div className="flex w-72 shrink-0 flex-col overflow-hidden border-r border-border bg-muted/30">
           {sidebarHeader}
           <DefinitionList
             keys={keysForList}
