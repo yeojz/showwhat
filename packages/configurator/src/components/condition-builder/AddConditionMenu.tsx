@@ -8,10 +8,9 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
   const extensions = useConditionExtensions();
   const extraTypes = extensions?.extraConditionTypes ?? [];
 
-  const primitives = BUILTIN_CONDITION_TYPES.filter((m) =>
-    ["string", "number", "datetime", "bool"].includes(m.type),
+  const builtins = BUILTIN_CONDITION_TYPES.filter((m) =>
+    ["string", "number", "datetime", "bool", "env", "startAt", "endAt"].includes(m.type),
   );
-  const sugar = BUILTIN_CONDITION_TYPES.filter((m) => ["env", "startAt", "endAt"].includes(m.type));
 
   return (
     <Menu>
@@ -19,20 +18,11 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         <Plus className="mr-1 h-3.5 w-3.5" />
         Add condition
       </MenuTrigger>
-      <MenuContent align="start">
+      <MenuContent align="start" className="max-h-[70vh] overflow-y-auto">
         <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-          Primitives
+          Built-in
         </span>
-        {primitives.map((meta) => (
-          <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
-            {meta.label}
-          </MenuItem>
-        ))}
-        <MenuSeparator />
-        <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-          Shortcuts
-        </span>
-        {sugar.map((meta) => (
+        {builtins.map((meta) => (
           <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
             {meta.label}
           </MenuItem>
@@ -52,14 +42,10 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         )}
         <MenuSeparator />
         <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-          Composites
+          Groups
         </span>
         <MenuItem onClick={() => onAdd("and")}>and</MenuItem>
         <MenuItem onClick={() => onAdd("or")}>or</MenuItem>
-        <MenuSeparator />
-        <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
-          Modifiers
-        </span>
         <MenuItem onClick={() => onAdd("checkAnnotations")}>checkAnnotations</MenuItem>
         <MenuSeparator />
         <MenuItem onClick={() => onAdd("__custom")}>Custom</MenuItem>

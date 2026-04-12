@@ -28,7 +28,7 @@ describe("AddConditionMenu", () => {
     expect(screen.getByText("endAt")).toBeDefined();
   });
 
-  it("opens dropdown and shows group types, match annotations, and custom", async () => {
+  it("opens dropdown and shows group types, checkAnnotations, and custom", async () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
