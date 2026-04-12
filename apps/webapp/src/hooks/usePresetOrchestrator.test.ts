@@ -1,0 +1,470 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act, waitFor } from "@testing-library/react";
+import type { Definition, Presets } from "showwhat";
+import type { SplitSource } from "../store/source-store.js";
+
+// ---------------------------------------------------------------------------
+// Mocks
+// ---------------------------------------------------------------------------
+
+const mockMergePresets = vi.fn(async () => ({}));
+const mockCreatePresetUI = vi.fn(() => ({ extraConditionTypes: [], editorOverrides: new Map() }));
+const mockReloadDefinitionKey = vi.fn();
+
+vi.mock("showwhat", () => ({
+  mergePresets: (...args: unknown[]) =>
+    mockMergePresets(...(args as Parameters<typeof mockMergePresets>)),
+}));
+
+vi.mock("@showwhat/configurator", () => ({
+  createPresetUI: (...args: unknown[]) =>
+    mockCreatePresetUI(...(args as Parameters<typeof mockCreatePresetUI>)),
+}));
+
+const mockCreateHttpReader = vi.fn(() => ({ getPresets: vi.fn(async () => ({})) }));
+vi.mock("../lib/http-reader.js", () => ({
+  createHttpReader: (...args: unknown[]) =>
+    mockCreateHttpReader(...(args as Parameters<typeof mockCreateHttpReader>)),
+}));
+
+vi.mock("./useSourceFetch.js", () => ({
+  useSourceFetch: () => ({
+    fetchSource: vi.fn(),
+    reloadKeyList: vi.fn(),
+    reloadDefinitionKey: mockReloadDefinitionKey,
+    loading: false,
+    error: null,
+  }),
+}));
+
+// Mutable state objects for store mocks
+const mockUpsertDefinition = vi.fn();
+const mockSetPresetReader = vi.fn();
+const mockMarkFetched = vi.fn();
+const mockSetSourcePresets = vi.fn();
+const mockUpsertKeyFilePresets = vi.fn();
+const mockClearSourcePresets = vi.fn();
+
+let definitionStoreOverrides: Record<string, unknown> = {};
+const defaultDefinitionState: Record<string, unknown> = {
+  definitions: {},
+  filePresets: {},
+  presetReader: null,
+  setPresetReader: mockSetPresetReader,
+  upsertDefinition: mockUpsertDefinition,
+};
+
+vi.mock("../store/definition-store.js", () => {
+  const useDefinitionStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector({ ...defaultDefinitionState, ...definitionStoreOverrides });
+  };
+  return { useDefinitionStore };
+});
+
+let presetStoreOverrides: Record<string, unknown> = {};
+const defaultPresetState: Record<string, unknown> = {
+  presets: {},
+  sourcePresets: {},
+  keyFilePresets: {},
+  sourcePresetsLastFetched: undefined,
+  setSourcePresets: mockSetSourcePresets,
+  upsertKeyFilePresets: mockUpsertKeyFilePresets,
+  clearSourcePresets: mockClearSourcePresets,
+};
+
+vi.mock("../store/preset-store.js", () => {
+  const usePresetStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector({ ...defaultPresetState, ...presetStoreOverrides });
+  };
+  return { usePresetStore };
+});
+
+let sourceStoreOverrides: Record<string, unknown> = {};
+const defaultSourceState: Record<string, unknown> = {
+  activeSourceId: null,
+  sources: [],
+  markFetched: mockMarkFetched,
+};
+
+vi.mock("../store/source-store.js", () => {
+  const useSourceStore = (selector: (s: Record<string, unknown>) => unknown) => {
+    return selector({ ...defaultSourceState, ...sourceStoreOverrides });
+  };
+  return { useSourceStore };
+});
+
+const { usePresetOrchestrator } = await import("./usePresetOrchestrator.js");
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function createSplitSource(overrides?: Partial<SplitSource>): SplitSource {
+  return {
+    id: "src-1",
+    mode: "split",
+    label: "Staging",
+    format: "json",
+    baseUrl: "https://r2.example.com/defs/",
+    definitionKeys: ["flag-a", "flag-b"],
+    ...overrides,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Tests: loadDefinitionKey
+// ---------------------------------------------------------------------------
+
+describe("usePresetOrchestrator", () => {
+  beforeEach(() => {
+    definitionStoreOverrides = {};
+    presetStoreOverrides = {};
+    sourceStoreOverrides = {};
+    mockUpsertDefinition.mockReset();
+    mockSetPresetReader.mockReset();
+    mockMarkFetched.mockReset();
+    mockSetSourcePresets.mockReset();
+    mockUpsertKeyFilePresets.mockReset();
+    mockClearSourcePresets.mockReset();
+    mockReloadDefinitionKey.mockReset();
+    mockCreateHttpReader.mockReset();
+    mockCreateHttpReader.mockReturnValue({ getPresets: vi.fn(async () => ({})) });
+    mockMergePresets.mockReset();
+    mockMergePresets.mockResolvedValue({});
+    mockCreatePresetUI.mockClear();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("loadDefinitionKey", () => {
+    it("calls reloadDefinitionKey, upserts definition, marks fetched, stores file presets", async () => {
+      const source = createSplitSource();
+      const definition: Definition = { variations: [{ value: true }] };
+      const filePresets: Presets = { tier: { type: "string", key: "tier" } };
+      mockReloadDefinitionKey.mockResolvedValue({ definition, filePresets });
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      await act(async () => {
+        await result.current.loadDefinitionKey(source, "flag-a");
+      });
+
+      expect(mockReloadDefinitionKey).toHaveBeenCalledWith(source, "flag-a");
+      expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", definition);
+      expect(mockMarkFetched).toHaveBeenCalledWith("src-1", ["flag-a"]);
+      expect(mockUpsertKeyFilePresets).toHaveBeenCalledWith("flag-a", filePresets);
+      expect(result.current.loadingDefinition).toBe(false);
+    });
+
+    it("skips when skipIfLoaded=true and definition exists", async () => {
+      const source = createSplitSource();
+      definitionStoreOverrides = {
+        definitions: { "flag-a": { variations: [{ value: false }] } },
+      };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      await act(async () => {
+        await result.current.loadDefinitionKey(source, "flag-a", { skipIfLoaded: true });
+      });
+
+      expect(mockReloadDefinitionKey).not.toHaveBeenCalled();
+    });
+
+    it("does not skip when skipIfLoaded=true but definition doesn't exist", async () => {
+      const source = createSplitSource();
+      definitionStoreOverrides = { definitions: {} };
+      const definition: Definition = { variations: [{ value: true }] };
+      mockReloadDefinitionKey.mockResolvedValue({ definition });
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      await act(async () => {
+        await result.current.loadDefinitionKey(source, "flag-a", { skipIfLoaded: true });
+      });
+
+      expect(mockReloadDefinitionKey).toHaveBeenCalledWith(source, "flag-a");
+      expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", definition);
+    });
+
+    it("does not upsert filePresets when they are undefined", async () => {
+      const source = createSplitSource();
+      const definition: Definition = { variations: [{ value: true }] };
+      mockReloadDefinitionKey.mockResolvedValue({ definition, filePresets: undefined });
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      await act(async () => {
+        await result.current.loadDefinitionKey(source, "flag-a");
+      });
+
+      expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", definition);
+      expect(mockUpsertKeyFilePresets).not.toHaveBeenCalled();
+    });
+
+    it("does not upsert filePresets when they are empty", async () => {
+      const source = createSplitSource();
+      const definition: Definition = { variations: [{ value: true }] };
+      mockReloadDefinitionKey.mockResolvedValue({ definition, filePresets: {} });
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      await act(async () => {
+        await result.current.loadDefinitionKey(source, "flag-a");
+      });
+
+      expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", definition);
+      expect(mockUpsertKeyFilePresets).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when reloadDefinitionKey returns null", async () => {
+      const source = createSplitSource();
+      mockReloadDefinitionKey.mockResolvedValue(null);
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      await act(async () => {
+        await result.current.loadDefinitionKey(source, "flag-a");
+      });
+
+      expect(mockReloadDefinitionKey).toHaveBeenCalledWith(source, "flag-a");
+      expect(mockUpsertDefinition).not.toHaveBeenCalled();
+      expect(mockMarkFetched).not.toHaveBeenCalled();
+      expect(mockUpsertKeyFilePresets).not.toHaveBeenCalled();
+    });
+
+    it("ignores stale responses via sequence counter (two rapid calls for same key)", async () => {
+      const source = createSplitSource();
+      const staleDefinition: Definition = { variations: [{ value: "stale" }] };
+      const freshDefinition: Definition = { variations: [{ value: "fresh" }] };
+
+      // First call resolves slowly, second call resolves immediately
+      let resolveFirst!: (value: { definition: Definition; filePresets?: Presets } | null) => void;
+      const firstPromise = new Promise<{ definition: Definition; filePresets?: Presets } | null>(
+        (resolve) => {
+          resolveFirst = resolve;
+        },
+      );
+
+      mockReloadDefinitionKey
+        .mockReturnValueOnce(firstPromise)
+        .mockResolvedValueOnce({ definition: freshDefinition });
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      // Fire both calls rapidly — don't await the first
+      let firstDone = false;
+      let secondDone = false;
+
+      await act(async () => {
+        const p1 = result.current.loadDefinitionKey(source, "flag-a").then(() => {
+          firstDone = true;
+        });
+        const p2 = result.current.loadDefinitionKey(source, "flag-a").then(() => {
+          secondDone = true;
+        });
+
+        // Second call resolves immediately (mockResolvedValueOnce)
+        // Now resolve the first (stale) call
+        resolveFirst({ definition: staleDefinition });
+
+        await Promise.all([p1, p2]);
+      });
+
+      expect(firstDone).toBe(true);
+      expect(secondDone).toBe(true);
+
+      // Only the fresh definition should have been upserted
+      // The stale first call should have been discarded
+      expect(mockUpsertDefinition).toHaveBeenCalledTimes(1);
+      expect(mockUpsertDefinition).toHaveBeenCalledWith("flag-a", freshDefinition);
+    });
+
+    it("loadingDefinition stays true while any key is still in-flight (concurrent different keys)", async () => {
+      const source = createSplitSource({ definitionKeys: ["key-a", "key-b"] });
+      const defA: Definition = { variations: [{ value: "a" }] };
+      const defB: Definition = { variations: [{ value: "b" }] };
+
+      // key-a resolves immediately, key-b resolves slowly
+      let resolveB!: (v: { definition: Definition } | null) => void;
+      const promiseB = new Promise<{ definition: Definition } | null>((r) => {
+        resolveB = r;
+      });
+
+      mockReloadDefinitionKey
+        .mockResolvedValueOnce({ definition: defA })
+        .mockReturnValueOnce(promiseB);
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      // Fire both calls concurrently
+      let pA: Promise<void>;
+      let pB: Promise<void>;
+      await act(async () => {
+        pA = result.current.loadDefinitionKey(source, "key-a");
+        pB = result.current.loadDefinitionKey(source, "key-b");
+
+        // key-a resolves immediately
+        await pA;
+      });
+
+      // key-a is done but key-b is still in-flight — loading should still be true
+      expect(result.current.loadingDefinition).toBe(true);
+
+      // Now resolve key-b
+      await act(async () => {
+        resolveB({ definition: defB });
+        await pB!;
+      });
+
+      expect(result.current.loadingDefinition).toBe(false);
+      expect(mockUpsertDefinition).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // effectiveReader and source preset fetching
+  // -------------------------------------------------------------------------
+  describe("effectiveReader and source preset fetching", () => {
+    it("fetches source presets from filePresets when no presetReader", async () => {
+      const bundledPresets = { bundled: { type: "string", key: "b" } };
+      definitionStoreOverrides = { filePresets: bundledPresets };
+
+      renderHook(() => usePresetOrchestrator());
+
+      await waitFor(() => {
+        expect(mockSetSourcePresets).toHaveBeenCalledWith(bundledPresets);
+      });
+    });
+
+    it("reconstructs presetReader from persisted split source config when null", async () => {
+      const source = createSplitSource();
+      sourceStoreOverrides = {
+        activeSourceId: "src-1",
+        sources: [source],
+      };
+
+      renderHook(() => usePresetOrchestrator());
+
+      await waitFor(() => {
+        expect(mockSetPresetReader).toHaveBeenCalled();
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // Source change clearing
+  // -------------------------------------------------------------------------
+  describe("source change clearing", () => {
+    it("clears source presets when activeSourceId changes", async () => {
+      sourceStoreOverrides = { activeSourceId: "src-1" };
+
+      const { rerender } = renderHook(() => usePresetOrchestrator());
+
+      // Change the active source id
+      sourceStoreOverrides = { activeSourceId: "src-2" };
+      rerender();
+
+      await waitFor(() => {
+        expect(mockClearSourcePresets).toHaveBeenCalled();
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // refreshSourcePresets
+  // -------------------------------------------------------------------------
+  describe("refreshSourcePresets", () => {
+    it("calls setSourcePresets with fresh data from effectiveReader", async () => {
+      const bundledPresets = { tier: { type: "string", key: "tier" } };
+      definitionStoreOverrides = { filePresets: bundledPresets };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      // Wait for initial fetch
+      await waitFor(() => {
+        expect(mockSetSourcePresets).toHaveBeenCalledWith(bundledPresets);
+      });
+
+      mockSetSourcePresets.mockClear();
+
+      await act(async () => {
+        await result.current.refreshSourcePresets();
+      });
+
+      expect(mockSetSourcePresets).toHaveBeenCalledWith(bundledPresets);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // cachedPresetReader
+  // -------------------------------------------------------------------------
+  describe("cachedPresetReader", () => {
+    it("returns sourcePresets for base call (no key)", async () => {
+      const sp = { env: { type: "string", key: "env" } };
+      presetStoreOverrides = { sourcePresets: sp };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      const presets = await result.current.cachedPresetReader.getPresets();
+      expect(presets).toEqual(sp);
+    });
+
+    it("merges keyFilePresets for key-specific call", async () => {
+      const sp = { env: { type: "string", key: "env" } };
+      const kfp = { "flag-a": { tier: { type: "string", key: "tier" } } };
+      presetStoreOverrides = { sourcePresets: sp, keyFilePresets: kfp };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      const presets = await result.current.cachedPresetReader.getPresets("flag-a");
+      expect(presets).toEqual({
+        env: { type: "string", key: "env" },
+        tier: { type: "string", key: "tier" },
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // conditionExtensions
+  // -------------------------------------------------------------------------
+  describe("conditionExtensions", () => {
+    it("calls createPresetUI with resolved presets", async () => {
+      const merged = { region: { type: "string", key: "region" } };
+      mockMergePresets.mockResolvedValue(merged);
+
+      renderHook(() => usePresetOrchestrator());
+
+      await waitFor(() => {
+        expect(mockCreatePresetUI).toHaveBeenCalledWith(merged);
+      });
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // conditionExtensionsResolver
+  // -------------------------------------------------------------------------
+  describe("conditionExtensionsResolver", () => {
+    it("returns undefined when not in split mode", () => {
+      sourceStoreOverrides = { activeSourceId: null, sources: [] };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      expect(result.current.conditionExtensionsResolver).toBeUndefined();
+    });
+
+    it("returns a function in split mode", () => {
+      const source = createSplitSource();
+      sourceStoreOverrides = {
+        activeSourceId: "src-1",
+        sources: [source],
+      };
+
+      const { result } = renderHook(() => usePresetOrchestrator());
+
+      expect(typeof result.current.conditionExtensionsResolver).toBe("function");
+    });
+  });
+});
