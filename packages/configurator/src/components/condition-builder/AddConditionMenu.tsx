@@ -78,8 +78,8 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         <Plus className="mr-1 h-3.5 w-3.5" />
         Add condition
       </MenuTrigger>
-      <MenuContent align="start" className="max-h-[70vh] overflow-y-auto">
-        <div className="sticky top-0 z-10 bg-popover px-1 pb-1">
+      <MenuContent align="start" className="flex max-h-[70vh] flex-col overflow-hidden">
+        <div className="shrink-0 px-1 pb-1">
           <div className="flex items-center gap-1.5 rounded-sm border border-input px-2 py-1">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
             <input
@@ -94,44 +94,46 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
           </div>
         </div>
 
-        {filtered ? (
-          filtered.length > 0 ? (
-            filtered.map((item) => (
-              <MenuItem key={item.type} onClick={() => handleSelect(item.type)}>
-                {item.label}
-              </MenuItem>
-            ))
+        <div className="overflow-y-auto">
+          {filtered ? (
+            filtered.length > 0 ? (
+              filtered.map((item) => (
+                <MenuItem key={item.type} onClick={() => handleSelect(item.type)}>
+                  {item.label}
+                </MenuItem>
+              ))
+            ) : (
+              <span className="block px-2 py-1.5 text-sm text-muted-foreground">No matches</span>
+            )
           ) : (
-            <span className="block px-2 py-1.5 text-sm text-muted-foreground">No matches</span>
-          )
-        ) : (
-          <>
-            <SectionLabel>Built-in</SectionLabel>
-            {builtins.map((meta) => (
-              <MenuItem key={meta.type} onClick={() => handleSelect(meta.type)}>
-                {meta.label}
-              </MenuItem>
-            ))}
-            {extraTypes.length > 0 && (
-              <>
-                <MenuSeparator />
-                <SectionLabel>Presets</SectionLabel>
-                {extraTypes.map((meta) => (
-                  <MenuItem key={meta.type} onClick={() => handleSelect(meta.type)}>
-                    {meta.label}
-                  </MenuItem>
-                ))}
-              </>
-            )}
-            <MenuSeparator />
-            <SectionLabel>Groups</SectionLabel>
-            <MenuItem onClick={() => handleSelect("and")}>and</MenuItem>
-            <MenuItem onClick={() => handleSelect("or")}>or</MenuItem>
-            <MenuItem onClick={() => handleSelect("checkAnnotations")}>checkAnnotations</MenuItem>
-            <MenuSeparator />
-            <MenuItem onClick={() => handleSelect("__custom")}>Custom</MenuItem>
-          </>
-        )}
+            <>
+              <SectionLabel>Built-in</SectionLabel>
+              {builtins.map((meta) => (
+                <MenuItem key={meta.type} onClick={() => handleSelect(meta.type)}>
+                  {meta.label}
+                </MenuItem>
+              ))}
+              {extraTypes.length > 0 && (
+                <>
+                  <MenuSeparator />
+                  <SectionLabel>Presets</SectionLabel>
+                  {extraTypes.map((meta) => (
+                    <MenuItem key={meta.type} onClick={() => handleSelect(meta.type)}>
+                      {meta.label}
+                    </MenuItem>
+                  ))}
+                </>
+              )}
+              <MenuSeparator />
+              <SectionLabel>Groups</SectionLabel>
+              <MenuItem onClick={() => handleSelect("and")}>and</MenuItem>
+              <MenuItem onClick={() => handleSelect("or")}>or</MenuItem>
+              <MenuItem onClick={() => handleSelect("checkAnnotations")}>checkAnnotations</MenuItem>
+              <MenuSeparator />
+              <MenuItem onClick={() => handleSelect("__custom")}>Custom</MenuItem>
+            </>
+          )}
+        </div>
       </MenuContent>
     </Menu>
   );
