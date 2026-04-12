@@ -101,7 +101,7 @@ export async function mergePresets({
   };
 }
 
-const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);
+const COMPOSITE_TYPES = new Set(["and", "or", "checkAnnotations"]);
 
 export function registerEvaluators(extra: ConditionEvaluators): ConditionEvaluators {
   for (const key of Object.keys(extra)) {

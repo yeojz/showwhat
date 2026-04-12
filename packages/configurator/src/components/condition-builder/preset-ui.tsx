@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import type { Presets } from "showwhat";
 
 const PRIMITIVE_TYPES = new Set(["string", "number", "bool", "datetime"]);
-const COMPOSITE_TYPES = new Set(["and", "or", "matchAnnotations"]);
+const COMPOSITE_TYPES = new Set(["and", "or", "checkAnnotations"]);
 import type { ConditionTypeMeta } from "./condition-registry.js";
 import type { ConditionValueEditorProps } from "../../types.js";
 import type { ConditionExtensions } from "./ConditionExtensionsContext.js";

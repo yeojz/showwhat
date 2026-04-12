@@ -1,9 +1,9 @@
-import type { MatchAnnotationsCondition } from "../schemas/condition.js";
+import type { CheckAnnotationsCondition } from "../schemas/condition.js";
 import type { ConditionEvaluator } from "./types.js";
 import { evaluateCondition } from "./evaluate.js";
 
-export const matchAnnotationsEvaluator: ConditionEvaluator = async (args) => {
-  const { conditions } = args.condition as MatchAnnotationsCondition;
+export const checkAnnotationsEvaluator: ConditionEvaluator = async (args) => {
+  const { conditions } = args.condition as CheckAnnotationsCondition;
   const { depth, annotations: annotationsAsContext } = args;
 
   for (let i = 0; i < conditions.length; i++) {
@@ -18,7 +18,7 @@ export const matchAnnotationsEvaluator: ConditionEvaluator = async (args) => {
     });
 
     if (!result) {
-      args.logger?.debug("matchAnnotations condition short-circuited (child returned false)", {
+      args.logger?.debug("checkAnnotations condition short-circuited (child returned false)", {
         childType: conditions[i].type,
         depth: childDepth,
       });

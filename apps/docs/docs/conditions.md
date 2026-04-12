@@ -308,7 +308,7 @@ conditions:
 
 Modifiers alter how nested conditions are evaluated without changing their semantics.
 
-### `matchAnnotations`
+### `checkAnnotations`
 
 Evaluates nested conditions against the [annotations](/docs/annotations) object instead of the regular context. Use this to verify that previous evaluators set expected annotation values.
 
@@ -316,7 +316,7 @@ Evaluates nested conditions against the [annotations](/docs/annotations) object 
 conditions:
   - type: rollout
     value: 50
-  - type: matchAnnotations
+  - type: checkAnnotations
     conditions:
       - type: number
         key: bucket
@@ -324,7 +324,7 @@ conditions:
         value: 50
 ```
 
-Nested conditions are implicitly AND'd. See [Annotations](/docs/annotations#the-matchannotations-condition) for details.
+Nested conditions are implicitly AND'd. See [Annotations](/docs/annotations#the-checkannotations-condition) for details.
 
 ## Custom types
 

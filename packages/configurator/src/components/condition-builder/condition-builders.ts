@@ -1,4 +1,4 @@
-import type { Condition, AndCondition, OrCondition, MatchAnnotationsCondition } from "showwhat";
+import type { Condition, AndCondition, OrCondition, CheckAnnotationsCondition } from "showwhat";
 
 /** Build an AND composite condition. */
 export function buildAndCondition(conditions: Condition[], id?: string): AndCondition {
@@ -10,14 +10,14 @@ export function buildOrCondition(conditions: Condition[], id?: string): OrCondit
   return id ? { id, type: "or", conditions } : { type: "or", conditions };
 }
 
-/** Build a matchAnnotations composite condition. */
-export function buildMatchAnnotationsCondition(
+/** Build a checkAnnotations composite condition. */
+export function buildCheckAnnotationsCondition(
   conditions: Condition[],
   id?: string,
-): MatchAnnotationsCondition {
+): CheckAnnotationsCondition {
   return id
-    ? { id, type: "matchAnnotations", conditions }
-    : { type: "matchAnnotations", conditions };
+    ? { id, type: "checkAnnotations", conditions }
+    : { type: "checkAnnotations", conditions };
 }
 
 /**

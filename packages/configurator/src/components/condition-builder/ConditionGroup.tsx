@@ -87,7 +87,7 @@ export const ConditionGroup = memo(function ConditionGroup({
                   variant="outline"
                   className={cn("select-none font-mono text-xs", getGroupTypeClasses(type).badge)}
                 >
-                  {type === "matchAnnotations" ? "and" : type}
+                  {type === "checkAnnotations" ? "and" : type}
                 </Badge>
               </div>
             )}

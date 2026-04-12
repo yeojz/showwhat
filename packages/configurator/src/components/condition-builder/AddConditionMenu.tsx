@@ -42,9 +42,12 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
           </>
         )}
         <MenuSeparator />
+        <span className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Composites</span>
         <MenuItem onClick={() => onAdd("and")}>and</MenuItem>
         <MenuItem onClick={() => onAdd("or")}>or</MenuItem>
-        <MenuItem onClick={() => onAdd("matchAnnotations")}>matchAnnotations</MenuItem>
+        <MenuSeparator />
+        <span className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Modifiers</span>
+        <MenuItem onClick={() => onAdd("checkAnnotations")}>checkAnnotations</MenuItem>
         <MenuSeparator />
         <MenuItem onClick={() => onAdd("__custom")}>Custom</MenuItem>
       </MenuContent>

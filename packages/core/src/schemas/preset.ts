@@ -10,7 +10,7 @@ export type PresetDefinition = {
 export type Presets = Record<string, PresetDefinition>;
 
 const PRIMITIVE_TYPES = new Set<string>(Object.values(PRIMITIVE_CONDITION_TYPES));
-const COMPOSITE_TYPES = new Set<string>(["and", "or", "matchAnnotations"]);
+const COMPOSITE_TYPES = new Set<string>(["and", "or", "checkAnnotations"]);
 
 const PresetDefinitionSchema = z
   .object({

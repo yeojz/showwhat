@@ -72,19 +72,19 @@ describe("ConditionBlock", () => {
     expect(result.id).toBe("grp-2");
   });
 
-  it("renders a matchAnnotations group via ConditionGroup", () => {
+  it("renders a checkAnnotations group via ConditionGroup", () => {
     const condition: Condition = {
-      type: "matchAnnotations",
+      type: "checkAnnotations",
       conditions: [{ id: "c1", type: "number", key: "bucket", op: "eq", value: 42 }],
     };
     const onChange = vi.fn();
     render(<ConditionBlock condition={condition} onChange={onChange} onRemove={vi.fn()} />);
-    expect(screen.getByText(/matchAnnotations/)).toBeDefined();
+    expect(screen.getByText(/checkAnnotations/)).toBeDefined();
   });
 
-  it("calls onChange with buildMatchAnnotationsCondition when matchAnnotations children change", () => {
+  it("calls onChange with buildCheckAnnotationsCondition when checkAnnotations children change", () => {
     const condition: Condition = {
-      type: "matchAnnotations",
+      type: "checkAnnotations",
       id: "grp-3",
       conditions: [
         { id: "c1", type: "number", key: "bucket", op: "eq", value: 42 },
@@ -97,7 +97,7 @@ describe("ConditionBlock", () => {
     removeButtons[0].click();
     expect(onChange).toHaveBeenCalled();
     const result = onChange.mock.calls[0][0];
-    expect(result.type).toBe("matchAnnotations");
+    expect(result.type).toBe("checkAnnotations");
     expect(result.id).toBe("grp-3");
   });
 

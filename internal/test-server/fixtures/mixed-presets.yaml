@@ -105,14 +105,14 @@ presets:
         - type: segment_match
           audience: power_users
 
-  # Composite using matchAnnotations alongside a custom type
+  # Composite using checkAnnotations alongside a custom type
   sg_power_users:
     type: and
     overrides:
       conditions:
         - type: geo_match
           region: sg
-        - type: matchAnnotations
+        - type: checkAnnotations
           conditions:
             - type: string
               key: feature-access

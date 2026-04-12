@@ -3,7 +3,7 @@ import {
   buildDefaultCondition,
   buildAndCondition,
   buildOrCondition,
-  buildMatchAnnotationsCondition,
+  buildCheckAnnotationsCondition,
   buildCustomCondition,
 } from "./utils.js";
 
@@ -28,14 +28,14 @@ describe("buildDefaultCondition", () => {
     expect(result).toEqual({ id: "my-id", type: "or", conditions: [] });
   });
 
-  it("builds a matchAnnotations condition when type is 'matchAnnotations'", () => {
-    const result = buildDefaultCondition("matchAnnotations");
-    expect(result).toEqual({ type: "matchAnnotations", conditions: [] });
+  it("builds a checkAnnotations condition when type is 'checkAnnotations'", () => {
+    const result = buildDefaultCondition("checkAnnotations");
+    expect(result).toEqual({ type: "checkAnnotations", conditions: [] });
   });
 
-  it("builds a matchAnnotations condition with an id", () => {
-    const result = buildDefaultCondition("matchAnnotations", "my-id");
-    expect(result).toEqual({ id: "my-id", type: "matchAnnotations", conditions: [] });
+  it("builds a checkAnnotations condition with an id", () => {
+    const result = buildDefaultCondition("checkAnnotations", "my-id");
+    expect(result).toEqual({ id: "my-id", type: "checkAnnotations", conditions: [] });
   });
 
   it("builds a custom condition when type is '__custom'", () => {
@@ -131,10 +131,10 @@ describe("re-exported builders", () => {
     expect(buildOrCondition([])).toEqual({ type: "or", conditions: [] });
   });
 
-  it("re-exports buildMatchAnnotationsCondition", () => {
-    expect(buildMatchAnnotationsCondition).toBeTypeOf("function");
-    expect(buildMatchAnnotationsCondition([])).toEqual({
-      type: "matchAnnotations",
+  it("re-exports buildCheckAnnotationsCondition", () => {
+    expect(buildCheckAnnotationsCondition).toBeTypeOf("function");
+    expect(buildCheckAnnotationsCondition([])).toEqual({
+      type: "checkAnnotations",
       conditions: [],
     });
   });

@@ -911,7 +911,7 @@ describe("deps threading", () => {
     expect(receivedDeps).toBe(myDeps);
   });
 
-  it("matchAnnotations condition verifies annotations written by a previous evaluator", async () => {
+  it("checkAnnotations condition verifies annotations written by a previous evaluator", async () => {
     const rolloutEvaluator: ConditionEvaluator = async ({ condition, annotations }) => {
       const c = condition as { threshold: number };
       const bucket = 42;
@@ -928,7 +928,7 @@ describe("deps threading", () => {
           conditions: [
             { type: "rollout", threshold: 80 } as never,
             {
-              type: "matchAnnotations" as const,
+              type: "checkAnnotations" as const,
               conditions: [
                 { type: "number" as const, key: "bucket", op: "gte" as const, value: 0 },
                 { type: "number" as const, key: "threshold", op: "eq" as const, value: 80 },
@@ -947,7 +947,7 @@ describe("deps threading", () => {
     expect(result!.annotations.threshold).toBe(80);
   });
 
-  it("matchAnnotations condition causes variation to fail when verification fails", async () => {
+  it("checkAnnotations condition causes variation to fail when verification fails", async () => {
     const tagEvaluator: ConditionEvaluator = async ({ annotations }) => {
       annotations.source = "experiment";
       return true;
@@ -961,7 +961,7 @@ describe("deps threading", () => {
           conditions: [
             { type: "tag" } as never,
             {
-              type: "matchAnnotations" as const,
+              type: "checkAnnotations" as const,
               conditions: [
                 { type: "string" as const, key: "source", op: "eq" as const, value: "rollout" },
               ],
@@ -1151,14 +1151,14 @@ describe("createAnnotations", () => {
     expect(result!.annotations.bucket).toBe(99);
   });
 
-  it("works with matchAnnotations to verify seeded values", async () => {
+  it("works with checkAnnotations to verify seeded values", async () => {
     const result = await resolveVariation({
       variations: [
         {
           value: "verified",
           conditions: [
             {
-              type: "matchAnnotations" as const,
+              type: "checkAnnotations" as const,
               conditions: [
                 { type: "number" as const, key: "bucket", op: "eq" as const, value: 42 },
               ],

@@ -9,7 +9,7 @@ The **showwhat configurator** is a browser-based visual editor for creating and 
 ## What it does
 
 - Create, edit, rename, and delete definitions
-- Build conditions visually (string, number, datetime, bool, env, startAt, endAt, and/or groups, matchAnnotations)
+- Build conditions visually (string, number, datetime, bool, env, startAt, endAt, and/or groups, checkAnnotations)
 - Reorder variations with drag-and-drop
 - Preview resolved values against a test context
 - Import and export YAML/JSON files
