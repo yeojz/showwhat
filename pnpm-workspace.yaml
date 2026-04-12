@@ -5,7 +5,3 @@ packages:
 
 # Delay installing newly published versions to reduce risk of compromised packages
 minimumReleaseAge: 4320
-minimumReleaseAgeExclude:
-  - "@turbo/*"
-  - "turbo"
-  - "@types/*"
