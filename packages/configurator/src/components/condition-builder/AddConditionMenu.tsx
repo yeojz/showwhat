@@ -78,7 +78,10 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         <Plus className="mr-1 h-3.5 w-3.5" />
         Add condition
       </MenuTrigger>
-      <MenuContent align="start" className="flex max-h-[70vh] flex-col overflow-hidden">
+      <MenuContent
+        align="start"
+        className="flex max-h-[var(--available-height)] flex-col overflow-hidden"
+      >
         <div className="shrink-0 px-1 pb-1">
           <div className="flex items-center gap-1.5 rounded-sm border border-input px-2 py-1">
             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
