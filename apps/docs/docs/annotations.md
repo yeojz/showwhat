@@ -58,9 +58,9 @@ if (entry.success) {
 }
 ```
 
-## The `matchAnnotations` condition
+## The `checkAnnotations` condition
 
-The `matchAnnotations` condition is a built-in modifier that lets you **verify** annotations set by previous evaluators. It evaluates its nested conditions against the annotations object as context, rather than the regular evaluation context.
+The `checkAnnotations` condition is a built-in modifier that lets you **verify** annotations set by previous evaluators. It evaluates its nested conditions against the annotations object as context, rather than the regular evaluation context.
 
 ```yaml
 definitions:
@@ -71,7 +71,7 @@ definitions:
           - type: rollout
             value: 50
           # Verify that the rollout evaluator wrote the expected annotation
-          - type: matchAnnotations
+          - type: checkAnnotations
             conditions:
               - type: number
                 key: bucket
@@ -85,15 +85,15 @@ definitions:
 1. Nested conditions are evaluated as an implicit AND (same as variation conditions)
 2. The current `annotations` object is used as the `context` for nested conditions
 3. Nested conditions receive a **fresh empty annotations** object — they cannot write back to the parent annotations
-4. Existing condition types (`string`, `number`, `bool`, etc.) work unchanged inside `matchAnnotations`
+4. Existing condition types (`string`, `number`, `bool`, etc.) work unchanged inside `checkAnnotations`
 
 ### Condition order matters
 
-Since variation conditions are evaluated left-to-right, the `matchAnnotations` condition must come **after** the evaluators whose annotations it verifies. Placing it before will find an empty annotations object.
+Since variation conditions are evaluated left-to-right, the `checkAnnotations` condition must come **after** the evaluators whose annotations it verifies. Placing it before will find an empty annotations object.
 
 ### Flat key lookup
 
-Built-in evaluators use direct property access (`annotations[key]`), not dot-notation traversal. When writing annotations for use with the `matchAnnotations` condition, use flat top-level keys:
+Built-in evaluators use direct property access (`annotations[key]`), not dot-notation traversal. When writing annotations for use with the `checkAnnotations` condition, use flat top-level keys:
 
 ```ts
 // Good — evaluators can read these directly

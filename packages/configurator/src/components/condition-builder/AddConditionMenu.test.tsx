@@ -28,13 +28,13 @@ describe("AddConditionMenu", () => {
     expect(screen.getByText("endAt")).toBeDefined();
   });
 
-  it("opens dropdown and shows group types, match annotations, and custom", async () => {
+  it("opens dropdown and shows group types, checkAnnotations, and custom", async () => {
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={vi.fn()} />);
     await user.click(screen.getByText("Add condition"));
     expect(await screen.findByText("and")).toBeDefined();
     expect(screen.getByText("or")).toBeDefined();
-    expect(screen.getByText("matchAnnotations")).toBeDefined();
+    expect(screen.getByText("checkAnnotations")).toBeDefined();
     expect(screen.getByText("Custom")).toBeDefined();
   });
 
@@ -56,13 +56,13 @@ describe("AddConditionMenu", () => {
     expect(onAdd).toHaveBeenCalledWith("or");
   });
 
-  it("calls onAdd with 'matchAnnotations' when matchAnnotations is clicked", async () => {
+  it("calls onAdd with 'checkAnnotations' when checkAnnotations is clicked", async () => {
     const onAdd = vi.fn();
     const user = userEvent.setup();
     render(<AddConditionMenu onAdd={onAdd} />);
     await user.click(screen.getByText("Add condition"));
-    await user.click(await screen.findByText("matchAnnotations"));
-    expect(onAdd).toHaveBeenCalledWith("matchAnnotations");
+    await user.click(await screen.findByText("checkAnnotations"));
+    expect(onAdd).toHaveBeenCalledWith("checkAnnotations");
   });
 
   it("calls onAdd with '__custom' when Custom is clicked", async () => {

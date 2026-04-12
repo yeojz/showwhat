@@ -1,6 +1,6 @@
 import { memo } from "react";
 import type { Condition } from "showwhat";
-import { isAndCondition, isOrCondition, isMatchAnnotationsCondition } from "showwhat";
+import { isAndCondition, isOrCondition, isCheckAnnotationsCondition } from "showwhat";
 import { X } from "lucide-react";
 import { Button } from "../ui/button.js";
 import { ConditionValueEditor } from "./ConditionValueEditor.js";
@@ -9,7 +9,7 @@ import { MoveButtons } from "./MoveButtons.js";
 import { getConditionMeta } from "./condition-registry.js";
 import { useConditionExtensions } from "./ConditionExtensionsContext.js";
 import { ConditionBlockProvider } from "./ConditionBlockContext.js";
-import { buildAndCondition, buildOrCondition, buildMatchAnnotationsCondition } from "./utils.js";
+import { buildAndCondition, buildOrCondition, buildCheckAnnotationsCondition } from "./utils.js";
 import type { ConditionBlockProps } from "../../types.js";
 
 /** Zod emits "Invalid input" for discriminated union failures — we rephrase for clarity. */
@@ -35,15 +35,15 @@ export const ConditionBlock = memo(function ConditionBlock({
   function handleChange(updated: Condition) {
     onChange(updated);
   }
-  // Render AND/OR/matchAnnotations groups recursively
+  // Render AND/OR/checkAnnotations groups recursively
   if (
     isAndCondition(condition) ||
     isOrCondition(condition) ||
-    isMatchAnnotationsCondition(condition)
+    isCheckAnnotationsCondition(condition)
   ) {
     return (
       <ConditionGroup
-        type={condition.type as "and" | "or" | "matchAnnotations"}
+        type={condition.type as "and" | "or" | "checkAnnotations"}
         conditions={condition.conditions}
         onChange={(conditions) =>
           handleChange(
@@ -51,7 +51,7 @@ export const ConditionBlock = memo(function ConditionBlock({
               ? buildAndCondition(conditions, condition.id)
               : condition.type === "or"
                 ? buildOrCondition(conditions, condition.id)
-                : buildMatchAnnotationsCondition(conditions, condition.id),
+                : buildCheckAnnotationsCondition(conditions, condition.id),
           )
         }
         onRemove={onRemove}

@@ -6,7 +6,7 @@ import {
   NumberConditionSchema,
   isAndCondition,
   isOrCondition,
-  isMatchAnnotationsCondition,
+  isCheckAnnotationsCondition,
 } from "./condition.js";
 import type { Condition } from "./condition.js";
 
@@ -74,27 +74,27 @@ describe("ConditionSchema", () => {
     );
   });
 
-  it("accepts valid matchAnnotations condition", () => {
+  it("accepts valid checkAnnotations condition", () => {
     const result = ConditionSchema.safeParse({
-      type: "matchAnnotations",
+      type: "checkAnnotations",
       conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects matchAnnotations condition with empty conditions array", () => {
-    expect(ConditionSchema.safeParse({ type: "matchAnnotations", conditions: [] }).success).toBe(
+  it("rejects checkAnnotations condition with empty conditions array", () => {
+    expect(ConditionSchema.safeParse({ type: "checkAnnotations", conditions: [] }).success).toBe(
       false,
     );
   });
 
-  it("rejects matchAnnotations condition without conditions field", () => {
-    expect(ConditionSchema.safeParse({ type: "matchAnnotations" }).success).toBe(false);
+  it("rejects checkAnnotations condition without conditions field", () => {
+    expect(ConditionSchema.safeParse({ type: "checkAnnotations" }).success).toBe(false);
   });
 
   it("rejects { type: 'withAnnotations' } as a custom condition (reserved)", () => {
     // The open-union arm must not match reserved types
-    const result = ConditionSchema.safeParse({ type: "matchAnnotations", foo: "bar" });
+    const result = ConditionSchema.safeParse({ type: "checkAnnotations", foo: "bar" });
     expect(result.success).toBe(false);
   });
 
@@ -349,8 +349,8 @@ describe("condition type guards", () => {
     type: "or",
     conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
   };
-  const matchAnnotations: Condition = {
-    type: "matchAnnotations",
+  const checkAnnotations: Condition = {
+    type: "checkAnnotations",
     conditions: [{ type: "string", key: "k", op: "eq", value: "v" }],
   };
   const string: Condition = { type: "string", key: "k", op: "eq", value: "v" };
@@ -373,12 +373,12 @@ describe("condition type guards", () => {
     expect(isOrCondition(string)).toBe(false);
   });
 
-  it("isMatchAnnotationsCondition returns true for matchAnnotations conditions", () => {
-    expect(isMatchAnnotationsCondition(matchAnnotations)).toBe(true);
+  it("isCheckAnnotationsCondition returns true for checkAnnotations conditions", () => {
+    expect(isCheckAnnotationsCondition(checkAnnotations)).toBe(true);
   });
 
-  it("isMatchAnnotationsCondition returns false for non-matchAnnotations conditions", () => {
-    expect(isMatchAnnotationsCondition(and)).toBe(false);
-    expect(isMatchAnnotationsCondition(string)).toBe(false);
+  it("isCheckAnnotationsCondition returns false for non-checkAnnotations conditions", () => {
+    expect(isCheckAnnotationsCondition(and)).toBe(false);
+    expect(isCheckAnnotationsCondition(string)).toBe(false);
   });
 });

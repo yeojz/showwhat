@@ -71,7 +71,7 @@ presets:
           op: eq
           value: enterprise
 
-  # AND combining matchAnnotations with a region string check
+  # AND combining checkAnnotations with a region string check
   annotated_sg_beta:
     type: and
     overrides:
@@ -80,7 +80,7 @@ presets:
           key: region
           op: eq
           value: sg
-        - type: matchAnnotations
+        - type: checkAnnotations
           conditions:
             - type: string
               key: beta
@@ -103,7 +103,7 @@ presets:
             - gb
         - type: or
           conditions:
-            - type: matchAnnotations
+            - type: checkAnnotations
               conditions:
                 - type: string
                   key: segment

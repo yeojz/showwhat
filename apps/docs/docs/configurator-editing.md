@@ -117,7 +117,7 @@ When you resolve, any condition whose type appears here uses your override inste
 
 ### Seed annotations
 
-If your conditions use [annotations](/docs/annotations), the preview panel has an annotations input where you can provide seed values as JSON. These are passed to evaluators during resolution, letting you simulate annotation-dependent conditions like `matchAnnotations`.
+If your conditions use [annotations](/docs/annotations), the preview panel has an annotations input where you can provide seed values as JSON. These are passed to evaluators during resolution, letting you simulate annotation-dependent conditions like `checkAnnotations`.
 
 ## Saving and status
 

@@ -19,7 +19,7 @@ export const CONDITION_TYPES = {
   endAt: "endAt",
   and: "and",
   or: "or",
-  matchAnnotations: "matchAnnotations",
+  checkAnnotations: "checkAnnotations",
 } as const;
 
 export const CONTEXT_KEYS = {
@@ -146,7 +146,7 @@ export type Condition =
   | BuiltinCondition
   | { id?: string; type: "and"; conditions: Condition[] }
   | { id?: string; type: "or"; conditions: Condition[] }
-  | { id?: string; type: "matchAnnotations"; conditions: Condition[] }
+  | { id?: string; type: "checkAnnotations"; conditions: Condition[] }
   | { type: string; [key: string]: unknown };
 
 // ── Composite schemas ─────────────────────────────────────────────────────────
@@ -163,9 +163,9 @@ const OrConditionSchema = z.object({
   type: z.literal("or"),
   conditions: z.array(z.lazy(() => ConditionSchema)).min(1),
 });
-const MatchAnnotationsConditionSchema = z.object({
+const CheckAnnotationsConditionSchema = z.object({
   id: z.string().optional(),
-  type: z.literal("matchAnnotations"),
+  type: z.literal("checkAnnotations"),
   conditions: z.array(z.lazy(() => ConditionSchema)).min(1),
 });
 
@@ -183,7 +183,7 @@ export const ConditionSchema: z.ZodType<Condition> = z.union([
   BuiltinConditionSchema,
   AndConditionSchema,
   OrConditionSchema,
-  MatchAnnotationsConditionSchema,
+  CheckAnnotationsConditionSchema,
   z.looseObject({ type: z.string() }).refine((val) => !BLOCKED_OPEN_UNION_TYPES.has(val.type), {
     message: "Reserved condition type",
   }),
@@ -193,8 +193,8 @@ export const ConditionSchema: z.ZodType<Condition> = z.union([
 
 export type AndCondition = z.infer<typeof AndConditionSchema>;
 export type OrCondition = z.infer<typeof OrConditionSchema>;
-export type MatchAnnotationsCondition = z.infer<typeof MatchAnnotationsConditionSchema>;
-export type CompositeCondition = AndCondition | OrCondition | MatchAnnotationsCondition;
+export type CheckAnnotationsCondition = z.infer<typeof CheckAnnotationsConditionSchema>;
+export type CompositeCondition = AndCondition | OrCondition | CheckAnnotationsCondition;
 
 // ── Type guards ───────────────────────────────────────────────────────────────
 
@@ -204,6 +204,6 @@ export function isAndCondition(c: Condition): c is AndCondition {
 export function isOrCondition(c: Condition): c is OrCondition {
   return c.type === CONDITION_TYPES.or;
 }
-export function isMatchAnnotationsCondition(c: Condition): c is MatchAnnotationsCondition {
-  return c.type === CONDITION_TYPES.matchAnnotations;
+export function isCheckAnnotationsCondition(c: Condition): c is CheckAnnotationsCondition {
+  return c.type === CONDITION_TYPES.checkAnnotations;
 }

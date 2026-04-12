@@ -2,7 +2,7 @@ import type { Condition } from "showwhat";
 import {
   buildAndCondition,
   buildOrCondition,
-  buildMatchAnnotationsCondition,
+  buildCheckAnnotationsCondition,
   buildCustomCondition,
 } from "./condition-builders.js";
 import { BUILTIN_CONDITION_TYPES } from "./condition-registry.js";
@@ -11,7 +11,7 @@ import type { ConditionTypeMeta } from "./condition-registry.js";
 export {
   buildAndCondition,
   buildOrCondition,
-  buildMatchAnnotationsCondition,
+  buildCheckAnnotationsCondition,
   buildCustomCondition,
 };
 
@@ -31,8 +31,8 @@ export function buildDefaultCondition(
   if (type === "or") {
     return buildOrCondition([], id);
   }
-  if (type === "matchAnnotations") {
-    return buildMatchAnnotationsCondition([], id);
+  if (type === "checkAnnotations") {
+    return buildCheckAnnotationsCondition([], id);
   }
   if (type === "__custom") {
     return buildCustomCondition({ type: "", ...(id ? { id } : {}) });

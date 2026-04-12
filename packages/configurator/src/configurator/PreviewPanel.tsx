@@ -416,6 +416,11 @@ export function PreviewPanel() {
                 className={`h-3.5 w-3.5 transition-transform ${simulatorOpen ? "rotate-90" : ""}`}
               />
               Condition Simulator
+              {annotationsText.trim() || evaluatorText.trim() ? (
+                <span className="text-amber-500 font-medium">(active)</span>
+              ) : (
+                <span className="text-muted-foreground/50">(inactive)</span>
+              )}
             </button>
             {simulatorOpen && (
               <div className="mt-2 space-y-3">
@@ -453,7 +458,7 @@ export function PreviewPanel() {
                     value={annotationsText}
                     onSave={setAnnotationsText}
                     title="Edit Seed Annotations"
-                    description="JSON object to pre-populate annotations for matchAnnotations conditions."
+                    description="JSON object to pre-populate annotations for checkAnnotations conditions."
                     placeholder={'{\n  "bucket": 42,\n  "threshold": 80\n}'}
                   />
                 </div>

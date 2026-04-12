@@ -4,28 +4,28 @@ import { builtinEvaluators } from "./index.js";
 import type { ConditionEvaluator } from "./index.js";
 import { evaluateCondition } from "./evaluate.js";
 
-describe("matchAnnotations condition", () => {
+describe("checkAnnotations condition", () => {
   describe("schema validation", () => {
-    it("accepts a valid matchAnnotations condition", () => {
+    it("accepts a valid checkAnnotations condition", () => {
       const result = ConditionSchema.safeParse({
-        type: "matchAnnotations",
+        type: "checkAnnotations",
         conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
       });
       expect(result.success).toBe(true);
     });
 
     it("rejects empty conditions array", () => {
-      const result = ConditionSchema.safeParse({ type: "matchAnnotations", conditions: [] });
+      const result = ConditionSchema.safeParse({ type: "checkAnnotations", conditions: [] });
       expect(result.success).toBe(false);
     });
 
     it("rejects missing conditions field", () => {
-      const result = ConditionSchema.safeParse({ type: "matchAnnotations" });
+      const result = ConditionSchema.safeParse({ type: "checkAnnotations" });
       expect(result.success).toBe(false);
     });
 
-    it("rejects { type: 'matchAnnotations' } as a custom condition (reserved)", () => {
-      const result = ConditionSchema.safeParse({ type: "matchAnnotations" });
+    it("rejects { type: 'checkAnnotations' } as a custom condition (reserved)", () => {
+      const result = ConditionSchema.safeParse({ type: "checkAnnotations" });
       expect(result.success).toBe(false);
     });
   });
@@ -37,7 +37,7 @@ describe("matchAnnotations condition", () => {
       const annotations = { source: "rollout", bucket: "42" };
       const result = await evaluateCondition({
         condition: {
-          type: "matchAnnotations",
+          type: "checkAnnotations",
           conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
         },
         context: ctx,
@@ -51,7 +51,7 @@ describe("matchAnnotations condition", () => {
       const annotations = { source: "other" };
       const result = await evaluateCondition({
         condition: {
-          type: "matchAnnotations",
+          type: "checkAnnotations",
           conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
         },
         context: ctx,
@@ -64,7 +64,7 @@ describe("matchAnnotations condition", () => {
     it("returns false when annotation key is missing", async () => {
       const result = await evaluateCondition({
         condition: {
-          type: "matchAnnotations",
+          type: "checkAnnotations",
           conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
         },
         context: ctx,
@@ -85,7 +85,7 @@ describe("matchAnnotations condition", () => {
 
       await evaluateCondition({
         condition: {
-          type: "matchAnnotations",
+          type: "checkAnnotations",
           conditions: [{ type: "spy" }],
         },
         context: ctx,
@@ -111,7 +111,7 @@ describe("matchAnnotations condition", () => {
 
       const result = await evaluateCondition({
         condition: {
-          type: "matchAnnotations",
+          type: "checkAnnotations",
           conditions: [{ type: "tracker" }, { type: "pass" }],
         },
         context: ctx,
@@ -131,7 +131,7 @@ describe("matchAnnotations condition", () => {
           conditions: [
             { type: "env", op: "eq", value: "prod" },
             {
-              type: "matchAnnotations",
+              type: "checkAnnotations",
               conditions: [{ type: "string", key: "source", op: "eq", value: "rollout" }],
             },
           ],
@@ -147,7 +147,7 @@ describe("matchAnnotations condition", () => {
       const annotations = { bucket: 42 };
       const result = await evaluateCondition({
         condition: {
-          type: "matchAnnotations",
+          type: "checkAnnotations",
           conditions: [{ type: "number", key: "bucket", op: "lt", value: 50 }],
         },
         context: ctx,

@@ -64,7 +64,7 @@ Preset names cannot collide with built-in or reserved condition types (`string`,
 
 ## Composite presets
 
-Composite presets use `and`, `or`, or `matchAnnotations` as their type to bake an entire condition tree into a single reusable name. Instead of binding a single context key, they lock a set of conditions via `overrides.conditions`.
+Composite presets use `and`, `or`, or `checkAnnotations` as their type to bake an entire condition tree into a single reusable name. Instead of binding a single context key, they lock a set of conditions via `overrides.conditions`.
 
 ::: code-group
 
@@ -126,7 +126,7 @@ presets:
 
 | Field                  | Required | Description                                                                                |
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------ |
-| `type`                 | Yes      | `and`, `or`, or `matchAnnotations`                                                         |
+| `type`                 | Yes      | `and`, `or`, or `checkAnnotations`                                                         |
 | `key`                  | No       | Not used for composite types                                                               |
 | `overrides.conditions` | Yes      | A non-empty array of conditions. Each item is a full [condition](/docs/conditions) object. |
 

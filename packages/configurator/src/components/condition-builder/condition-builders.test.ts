@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildAndCondition,
   buildOrCondition,
-  buildMatchAnnotationsCondition,
+  buildCheckAnnotationsCondition,
   buildCustomCondition,
 } from "./condition-builders.js";
 
@@ -37,20 +37,20 @@ describe("buildOrCondition", () => {
   });
 });
 
-describe("buildMatchAnnotationsCondition", () => {
-  it("builds a matchAnnotations condition without id", () => {
-    const result = buildMatchAnnotationsCondition([]);
-    expect(result).toEqual({ type: "matchAnnotations", conditions: [] });
+describe("buildCheckAnnotationsCondition", () => {
+  it("builds a checkAnnotations condition without id", () => {
+    const result = buildCheckAnnotationsCondition([]);
+    expect(result).toEqual({ type: "checkAnnotations", conditions: [] });
   });
 
-  it("builds a matchAnnotations condition with id", () => {
-    const result = buildMatchAnnotationsCondition([], "test-id");
-    expect(result).toEqual({ id: "test-id", type: "matchAnnotations", conditions: [] });
+  it("builds a checkAnnotations condition with id", () => {
+    const result = buildCheckAnnotationsCondition([], "test-id");
+    expect(result).toEqual({ id: "test-id", type: "checkAnnotations", conditions: [] });
   });
 
-  it("builds a matchAnnotations condition with child conditions", () => {
+  it("builds a checkAnnotations condition with child conditions", () => {
     const children = [{ type: "number" as const, key: "bucket", op: "eq" as const, value: 42 }];
-    const result = buildMatchAnnotationsCondition(children);
+    const result = buildCheckAnnotationsCondition(children);
     expect(result.conditions).toHaveLength(1);
     expect(result.conditions[0]).toEqual(children[0]);
   });

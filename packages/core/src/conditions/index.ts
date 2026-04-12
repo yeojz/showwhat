@@ -7,7 +7,7 @@ import { startAtEvaluator } from "./start-at.js";
 import { endAtEvaluator } from "./end-at.js";
 import { andEvaluator } from "./and.js";
 import { orEvaluator } from "./or.js";
-import { matchAnnotationsEvaluator } from "./match-annotations.js";
+import { checkAnnotationsEvaluator } from "./check-annotations.js";
 import type { ConditionEvaluators } from "./types.js";
 export {
   noConditionEvaluator,
@@ -39,5 +39,5 @@ export const builtinEvaluators: ConditionEvaluators = {
   endAt: endAtEvaluator,
   and: andEvaluator,
   or: orEvaluator,
-  matchAnnotations: matchAnnotationsEvaluator,
+  checkAnnotations: checkAnnotationsEvaluator,
 };
