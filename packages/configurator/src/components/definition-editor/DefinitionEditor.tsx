@@ -251,16 +251,14 @@ export function DefinitionEditor({
               onChange={(variations: Variation[]) => onUpdate({ ...definition, variations })}
             />
 
-            {definition.variations.length > 2 && (
-              <button
-                type="button"
-                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/60 py-2.5 text-xs text-muted-foreground hover:border-border hover:text-foreground"
-                onClick={handleAddVariation}
-              >
-                <Plus className="h-3 w-3" />
-                Add variation
-              </button>
-            )}
+            <button
+              type="button"
+              className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border/60 py-2.5 text-xs text-muted-foreground hover:border-border hover:text-foreground"
+              onClick={handleAddVariation}
+            >
+              <Plus className="h-3 w-3" />
+              Add variation
+            </button>
           </div>
         </div>
       </div>

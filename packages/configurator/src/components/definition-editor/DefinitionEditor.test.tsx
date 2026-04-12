@@ -303,20 +303,12 @@ describe("DefinitionEditor", () => {
     expect(discardBtn.hasAttribute("disabled")).toBe(true);
   });
 
-  it("should show the bottom Add variation button when there are more than 2 variations and it adds a variation when clicked", () => {
+  it("should always show the bottom Add variation button and it adds a variation when clicked", () => {
     const onUpdate = vi.fn();
-    const threeVarDef: Definition = {
-      description: "test",
-      variations: [
-        { value: "a", description: "First" },
-        { value: "b", description: "Second" },
-        { value: "c", description: "Third" },
-      ],
-    };
     render(
       <DefinitionEditor
         definitionKey="my-def"
-        definition={threeVarDef}
+        definition={testDefinition}
         onUpdate={onUpdate}
         onRename={vi.fn()}
       />,
@@ -325,7 +317,7 @@ describe("DefinitionEditor", () => {
     expect(addVariationBtn).toBeDefined();
     fireEvent.click(addVariationBtn);
     expect(onUpdate).toHaveBeenCalled();
-    expect(onUpdate.mock.calls[0][0].variations).toHaveLength(4);
+    expect(onUpdate.mock.calls[0][0].variations).toHaveLength(testDefinition.variations.length + 1);
   });
 
   it("should clear comment when empty string is entered", () => {
