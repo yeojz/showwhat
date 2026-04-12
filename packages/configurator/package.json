@@ -52,7 +52,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.7.0",
+    "lucide-react": "^1.8.0",
     "showwhat": "workspace:*",
     "tailwind-merge": "^3.5.0"
   },
@@ -63,13 +63,13 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitest/coverage-v8": "^4.1.2",
-    "jsdom": "^29.0.1",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
+    "@vitest/coverage-v8": "^4.1.4",
+    "jsdom": "^29.0.2",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
     "tailwindcss": "^4.2.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.4"
   }
 }
