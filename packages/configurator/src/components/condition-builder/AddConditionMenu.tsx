@@ -20,12 +20,18 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         Add condition
       </MenuTrigger>
       <MenuContent align="start">
+        <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          Primitives
+        </span>
         {primitives.map((meta) => (
           <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
             {meta.label}
           </MenuItem>
         ))}
         <MenuSeparator />
+        <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          Shortcuts
+        </span>
         {sugar.map((meta) => (
           <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
             {meta.label}
@@ -34,6 +40,9 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
         {extraTypes.length > 0 && (
           <>
             <MenuSeparator />
+            <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              Presets
+            </span>
             {extraTypes.map((meta) => (
               <MenuItem key={meta.type} onClick={() => onAdd(meta.type)}>
                 {meta.label}
@@ -42,11 +51,15 @@ export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
           </>
         )}
         <MenuSeparator />
-        <span className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Composites</span>
+        <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          Composites
+        </span>
         <MenuItem onClick={() => onAdd("and")}>and</MenuItem>
         <MenuItem onClick={() => onAdd("or")}>or</MenuItem>
         <MenuSeparator />
-        <span className="px-2 py-1.5 text-xs font-medium text-muted-foreground">Modifiers</span>
+        <span className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          Modifiers
+        </span>
         <MenuItem onClick={() => onAdd("checkAnnotations")}>checkAnnotations</MenuItem>
         <MenuSeparator />
         <MenuItem onClick={() => onAdd("__custom")}>Custom</MenuItem>
