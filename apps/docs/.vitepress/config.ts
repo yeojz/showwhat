@@ -120,6 +120,13 @@ export default defineConfig({
           ],
         },
         {
+          text: "Guides",
+          items: [
+            { text: "Deploying to the Edge", link: "/docs/deploy-edge" },
+            { text: "AI-Assisted Workflows", link: "/docs/ai-agents" },
+          ],
+        },
+        {
           text: "Configurator",
           items: [
             { text: "Overview", link: "/docs/configurator" },
@@ -181,7 +188,7 @@ export default defineConfig({
     socialLinks: [{ icon: "github", link: "https://github.com/yeojz/showwhat" }],
 
     footer: {
-      copyright: "\u00A9 2026 Gerald Yeo. MIT Licensed.",
+      copyright: "© 2026 Gerald Yeo. MIT Licensed.",
     },
   },
 });
