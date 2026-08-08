@@ -33,8 +33,11 @@ Schema and rule engine for **feature flags** and **config** resolution
 - Ability to define [presets](https://showwhat.yeojz.dev/docs/presets.html) for condition reuse.
 - Extensible with [custom conditions](https://showwhat.yeojz.dev/docs/custom-conditions).
 - Store definitions in files and manage them in version control or serve them from an API.
+- Evaluation is in-process on every runtime — Node, Bun, Deno, [edge runtimes](https://showwhat.yeojz.dev/docs/deploy-edge), the browser, and your tests. No per-request network call.
 
 A browser based schema [configurator](https://showwhat.yeojz.dev/configurator/) is also provided / available.
+
+Shipping code with AI agents? Flags defined in showwhat land in the same pull request as the code they gate — see [AI-assisted workflows](https://showwhat.yeojz.dev/docs/ai-agents).
 
 ## Packages
 
