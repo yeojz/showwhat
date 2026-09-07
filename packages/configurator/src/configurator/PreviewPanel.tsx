@@ -151,13 +151,16 @@ function JsonEditorDialog({
   const [draft, setDraft] = useState(value);
   const [formatError, setFormatError] = useState<string | null>(null);
 
-  // Sync draft when dialog opens
-  useEffect(() => {
+  // Reset the draft on each open. Deriving this during render rather than in an effect
+  // also stops a `value` change arriving mid-edit from discarding the current draft.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
       setDraft(value);
       setFormatError(null);
     }
-  }, [open, value]);
+  }
 
   function handleFormat() {
     const trimmed = draft.trim();
@@ -234,6 +237,8 @@ export function PreviewPanel() {
   useEffect(() => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    // Clearing the stale result belongs with the abort it accompanies.
+    // oxlint-disable-next-line react/set-state-in-effect
     setPreviewResult(null);
 
     return () => {

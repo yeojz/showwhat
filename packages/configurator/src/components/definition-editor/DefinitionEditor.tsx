@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { Variation } from "showwhat";
 import {
   AlertTriangle,
@@ -36,9 +36,9 @@ export function DefinitionEditor({
   const [editingKey, setEditingKey] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [keyDraft, setKeyDraft] = useState(definitionKey);
-  const prevKeyRef = useRef(definitionKey);
-  if (prevKeyRef.current !== definitionKey) {
-    prevKeyRef.current = definitionKey;
+  const [prevKey, setPrevKey] = useState(definitionKey);
+  if (prevKey !== definitionKey) {
+    setPrevKey(definitionKey);
     setKeyDraft(definitionKey);
   }
 

@@ -31,7 +31,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 
 export function AddConditionMenu({ onAdd }: { onAdd: (type: string) => void }) {
   const extensions = useConditionExtensions();
-  const extraTypes = extensions?.extraConditionTypes ?? [];
+  const extraTypes = useMemo(() => extensions?.extraConditionTypes ?? [], [extensions]);
   const [filter, setFilter] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 

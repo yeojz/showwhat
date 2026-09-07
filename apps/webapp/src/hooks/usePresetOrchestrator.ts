@@ -89,6 +89,8 @@ export function usePresetOrchestrator() {
     if (!effectiveReader) return;
 
     let cancelled = false;
+    // Marks the start of an external fetch, which is what effects are for.
+    // oxlint-disable-next-line react/set-state-in-effect
     setSourcePresetsLoading(true);
 
     effectiveReader

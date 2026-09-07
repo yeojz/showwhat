@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Input } from "../ui/input.js";
 import { Textarea } from "../ui/textarea.js";
 import { Button } from "../ui/button.js";
@@ -23,9 +23,9 @@ export function ValueInput({ value, onChange, placeholder }: ValueInputProps) {
 
   // Sync type and jsonText only when the value prop changes type from outside
   // (e.g. parent switches which variation is selected)
-  const prevValueRef = useRef(value);
-  if (prevValueRef.current !== value) {
-    prevValueRef.current = value;
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     const newType = detectType(value);
     if (newType !== type) {
       setType(newType);

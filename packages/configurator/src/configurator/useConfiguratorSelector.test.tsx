@@ -79,6 +79,8 @@ describe("useConfiguratorSelector", () => {
 
     function SelectedKeyProbe() {
       const selectedKey = useConfiguratorSelector((s) => s.selectedKey);
+      // Counting renders is the point of these probes.
+      // oxlint-disable-next-line react/immutability
       renderCount.selectedKey++;
       return <div>{selectedKey}</div>;
     }
@@ -115,6 +117,8 @@ describe("useConfiguratorSelector", () => {
 
     function SelectedKeyProbe() {
       const selectedKey = useConfiguratorSelector((s) => s.selectedKey);
+      // Counting renders is the point of these probes.
+      // oxlint-disable-next-line react/immutability
       renderCount.selectedKey++;
       return <div data-testid="key">{selectedKey}</div>;
     }

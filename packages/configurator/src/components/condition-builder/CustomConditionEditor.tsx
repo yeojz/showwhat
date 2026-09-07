@@ -25,9 +25,11 @@ export function CustomConditionEditor({
   const [jsonError, setJsonError] = useState<string | null>(null);
   const focusedRef = useRef(false);
 
-  const prevConditionRef = useRef(condition);
-  if (prevConditionRef.current !== condition) {
-    prevConditionRef.current = condition;
+  const [prevCondition, setPrevCondition] = useState(condition);
+  if (prevCondition !== condition) {
+    setPrevCondition(condition);
+    // focusedRef tracks focus without driving rendering, so reading it here is deliberate.
+    // oxlint-disable-next-line react/refs
     if (!focusedRef.current) {
       const derived = argsToText(extractArgs(rec));
       if (derived !== text) {

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { Calendar, Code } from "lucide-react";
 import { Input } from "../ui/input.js";
 import type { DateTimeInputProps } from "../../types.js";
@@ -26,9 +26,9 @@ function fromLocalDatetime(local: string): string {
 export function DateTimeInput({ value, onChange, disabled }: DateTimeInputProps) {
   const [rawValue, setRawValue] = useState(value);
   const [showRaw, setShowRaw] = useState(true);
-  const prevValueRef = useRef(value);
-  if (prevValueRef.current !== value) {
-    prevValueRef.current = value;
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
     setRawValue(value);
   }
 

@@ -1,4 +1,4 @@
-import { useCallback, useState, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useCallback, useMemo, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { Badge } from "../ui/badge.js";
 
 export type NumberTagInputProps = {
@@ -9,7 +9,7 @@ export type NumberTagInputProps = {
 };
 
 export function NumberTagInput({ value, onChange, placeholder, disabled }: NumberTagInputProps) {
-  const values = Array.isArray(value) ? value : [value];
+  const values = useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
   const [text, setText] = useState("");
 
   const emit = useCallback(

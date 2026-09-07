@@ -28,8 +28,11 @@ export function ConditionValueEditor({ condition, onChange }: ConditionValueEdit
     case "endAt":
       return <EndAtConditionEditor condition={condition} onChange={onChange} />;
     default: {
+      // Looked up from the extension registry, not constructed here, so its identity is
+      // stable across renders and state is not reset.
       const OverrideEditor = extensions?.editorOverrides.get(condition.type);
       if (OverrideEditor) {
+        // oxlint-disable-next-line react/static-components
         return <OverrideEditor condition={condition} onChange={onChange} />;
       }
       const isPresetBacked =

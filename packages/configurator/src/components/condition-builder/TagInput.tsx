@@ -1,4 +1,4 @@
-import { useCallback, useState, type ClipboardEvent, type KeyboardEvent } from "react";
+import { useCallback, useMemo, useState, type ClipboardEvent, type KeyboardEvent } from "react";
 import { Badge } from "../ui/badge.js";
 
 export type TagInputProps = {
@@ -9,7 +9,10 @@ export type TagInputProps = {
 };
 
 export function TagInput({ value, onChange, placeholder, disabled }: TagInputProps) {
-  const values = Array.isArray(value) ? value.filter(Boolean) : value ? [value] : [];
+  const values = useMemo(
+    () => (Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []),
+    [value],
+  );
   const [text, setText] = useState("");
 
   const emit = useCallback(
