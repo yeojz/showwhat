@@ -43,7 +43,7 @@
   "scripts": {
     "build": "tsdown",
     "clean": "rm -rf dist .tsbuildinfo",
-    "lint": "eslint src",
+    "lint": "oxlint src",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

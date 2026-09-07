@@ -38,7 +38,7 @@
     "build": "tsdown",
     "clean": "rm -rf dist .tsbuildinfo",
     "dev": "tsdown --watch",
-    "lint": "eslint src",
+    "lint": "oxlint src",
     "postbuild": "node scripts/assert-package-artifacts.mjs",
     "typecheck": "tsc --noEmit"
   },

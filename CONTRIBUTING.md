@@ -20,7 +20,7 @@ This is a pnpm monorepo using Turbo. Packages live under `packages/` and apps un
 ```bash
 pnpm build          # Build all packages (turbo)
 pnpm test           # Build all + run all tests with coverage
-pnpm lint           # Lint all packages
+pnpm lint           # Lint all packages (oxlint)
 pnpm typecheck      # Type-check all packages
 pnpm format:check   # Check formatting (prettier)
 
@@ -42,7 +42,7 @@ npx tsc --noEmit                        # Type-check (from package dir)
 
 ```
 packages/core/          # @showwhat/core — rule engine, schemas, parsers
-packages/configurator/  # @showwhat/configurator — reusable React UI library (tsup)
+packages/configurator/  # @showwhat/configurator — reusable React UI library (tsdown)
 apps/webapp/            # @showwhat/webapp — Vite + React file-based app shell
 apps/docs/              # @showwhat/docs — VitePress documentation site
 ```
