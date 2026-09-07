@@ -1,4 +1,4 @@
-import { defineConfig } from "tsup";
+import { defineConfig } from "tsdown";
 
 export default defineConfig({
   entry: {
@@ -9,4 +9,6 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   outDir: "dist",
+  // Preserve the .js/.d.ts artifact names the published exports map points at.
+  fixedExtension: false,
 });

@@ -35,9 +35,9 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "clean": "rm -rf dist .tsbuildinfo",
-    "dev": "tsup --watch",
+    "dev": "tsdown --watch",
     "lint": "eslint src",
     "postbuild": "node scripts/assert-package-artifacts.mjs",
     "typecheck": "tsc --noEmit"
@@ -68,7 +68,7 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "tailwindcss": "^4.2.4",
-    "tsup": "^8.5.1",
+    "tsdown": "^0.23.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.9"
   }
