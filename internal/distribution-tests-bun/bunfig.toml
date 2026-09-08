@@ -1,0 +1,5 @@
+# Bun does not read pnpm's minimumReleaseAge, so the repository's supply-chain
+# delay is restated here. 259200 seconds is the 4320 minutes set in
+# pnpm-workspace.yaml; keep the two in step.
+[install]
+minimumReleaseAge = 259200
