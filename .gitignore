@@ -48,6 +48,12 @@ coverage-*/
 .nyc_output/
 *.lcov
 
+# The distribution suites install their own deps to simulate a fresh consumer.
+# pnpm-lock.yaml already covers these workspaces; the bun and deno locks are
+# throwaway and no updater maintains them, so they would only drift.
+internal/distribution-tests-bun/bun.lock
+internal/distribution-tests-deno/deno.lock
+
 # Logs
 logs/
 *.log
