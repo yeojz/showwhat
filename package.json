@@ -52,12 +52,12 @@
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.1.9",
-    "eslint": "^10.2.1",
+    "eslint": "^10.11.0",
     "lefthook": "^2.1.9",
-    "prettier": "^3.8.3",
-    "turbo": "2.9.18",
+    "prettier": "^3.9.9",
+    "turbo": "2.11.5",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.58.1",
+    "typescript-eslint": "^8.71.0",
     "vitest": "^4.1.9"
   }
 }
